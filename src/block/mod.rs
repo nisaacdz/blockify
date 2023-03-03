@@ -103,7 +103,7 @@ pub struct BlockBuilder<R: Record> {
 }
 
 impl<R: Record> BlockBuilder<R> {
-    pub fn get_merkle_root(&self) -> &[u8] {
+    pub fn merkle_root(&self) -> &[u8] {
         &self.merkle.merkle_root()
     }
 
@@ -126,21 +126,45 @@ impl<R: Record> BlockBaseInsertable<SignedRecord<R>, R> for BlockBuilder<R> {
     }
 
     fn hash(&self) -> &[u8] {
-        self.get_merkle_root()
+        self.merkle_root()
     }
 
-    fn generate(&self, hash: Vec<u8>, timestamp: TimeStamp, range: Range) -> Block<R> {
-        todo!()
+    fn generate(
+        &self,
+        hash: Vec<u8>,
+        prev_hash: Vec<u8>,
+        time_stamp: TimeStamp,
+        range: Range,
+        position: u64,
+    ) -> Block<R> {
+        Block::new(
+            self.nonce,
+            position,
+            time_stamp,
+            hash,
+            prev_hash,
+            self.merkle_root().to_vec(),
+            range,
+        )
     }
 
     fn records(&self) -> Iter<SignedRecord<R>> {
         self.records.iter()
     }
 
-    fn insertion(&self, hash: Vec<u8>, prev: Vec<u8>, range: Range, timestamp: TimeStamp) -> &[String] {
-        // ["Hash", "Previous", "Merkle", "Range", "TimeStamp"];
-        let mut res = [String::new(), String::new(), String::new()];
-
-        &res
+    fn insertion(
+        &self,
+        hash: &[u8],
+        prev: &[u8],
+        range: Range,
+        timestamp: TimeStamp,
+    ) -> Vec<String> {
+        vec![
+            format! {"{:?}", hash},
+            format! {"{:?}", prev},
+            format! {"{:?}", self.merkle_root()},
+            serde_json::to_string(&range).unwrap(),
+            serde_json::to_string(&timestamp).unwrap(),
+        ]
     }
 }

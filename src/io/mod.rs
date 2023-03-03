@@ -13,11 +13,11 @@ pub trait BlockBaseInsertable<R: RecordBaseInsertable<X>, X: Record> {
 
     fn insertion(
         &self,
-        hash: Vec<u8>,
-        prev: Vec<u8>,
+        hash: &[u8],
+        prev: &[u8],
         range: Range,
         timestamp: TimeStamp,
-    ) -> &[String];
+    ) -> Vec<String>;
 
     fn size(&self) -> u64;
 
@@ -29,6 +29,7 @@ pub trait BlockBaseInsertable<R: RecordBaseInsertable<X>, X: Record> {
         prev_hash: Vec<u8>,
         timestamp: TimeStamp,
         range: Range,
+        position: u64,
     ) -> Block<X>;
 }
 
@@ -82,9 +83,14 @@ pub trait BlockBase<B: BlockBaseInsertable<R, X>, R: RecordBaseInsertable<X>, X:
 
         let timestamp = chrono::Local::now().naive_utc().to_local_timestamp();
 
-        self.insert_block(block.insertion(hash, prev_hash, range, timestamp))?;
+        let position = match self.count_rows(B::name()) {
+            Some(v) => v,
+            _ => return Err(BlockBaseErrs::NoSuchTable(B::name())),
+        };
 
-        Ok(block.generate(hash, prev_hash, timestamp, range))
+        self.insert_block(&block.insertion(&hash, &prev_hash, range, timestamp))?;
+
+        Ok(block.generate(hash, prev_hash, timestamp, range, position))
     }
 
     fn insert_record(&self, record: &R) -> Result<(), BlockBaseErrs>;

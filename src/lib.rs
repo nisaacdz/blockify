@@ -1,6 +1,7 @@
 use std::fmt::Display;
 
 use chrono::{Datelike, Timelike};
+use serde::Serialize;
 
 pub mod block;
 pub mod errs;
@@ -8,7 +9,7 @@ pub mod gen;
 pub mod io;
 pub mod record;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Serialize)]
 pub struct TimeStamp {
     millis: u8,
     second: u8,
@@ -21,7 +22,15 @@ pub struct TimeStamp {
 
 impl TimeStamp {
     pub fn debug() -> Self {
-        Self { millis: todo!(), second: todo!(), minute: todo!(), hour: todo!(), day: todo!(), month: todo!(), year: todo!()  }
+        Self {
+            millis: 0,
+            second: 0,
+            minute: 0,
+            hour: 0,
+            day: 0,
+            month: 0,
+            year: 0,
+        }
     }
 }
 
@@ -29,7 +38,7 @@ pub trait ToTimeStamp {
     fn to_local_timestamp(&self) -> TimeStamp;
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Serialize)]
 pub struct Range {
     begin: u64,
     end: u64,
