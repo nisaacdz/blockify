@@ -155,13 +155,17 @@ impl<R: Record> SignedRecord<R> {
 ///
 ///
 
-impl<R: Record> RecordBaseInsertable for SignedRecord<R> {
+impl<R: Record> RecordBaseInsertable<R> for SignedRecord<R> {
     fn get_name() -> &'static str {
         &NAME
     }
 
     fn columns() -> &'static [&'static str] {
         &RECORDS
+    }
+
+    fn get_record(&self) -> &R {
+        &self.record
     }
 }
 

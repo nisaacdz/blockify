@@ -5,6 +5,6 @@ pub enum SignErrs {
     FailedVerification,
 }
 
-pub enum BlockBaseErrs {
-    
+pub enum BlockBaseErrs<'a> {
+    NoSuchTable(&'a str),
 }

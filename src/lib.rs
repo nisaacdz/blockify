@@ -5,8 +5,8 @@ use chrono::{Datelike, Timelike};
 pub mod block;
 pub mod errs;
 pub mod gen;
-pub mod record;
 pub mod io;
+pub mod record;
 
 #[derive(Clone, Copy)]
 pub struct TimeStamp {
@@ -20,9 +20,10 @@ pub struct TimeStamp {
 }
 
 pub trait ToTimeStamp {
-    fn to_date_time(&self) -> TimeStamp;
+    fn timestamp(&self) -> TimeStamp;
 }
 
+#[derive(Clone, Copy)]
 pub struct Range {
     begin: u64,
     end: u64,
@@ -41,7 +42,7 @@ impl Display for Range {
 }
 
 impl ToTimeStamp for chrono::DateTime<chrono::Utc> {
-    fn to_date_time(&self) -> TimeStamp {
+    fn timestamp(&self) -> TimeStamp {
         let naive_dt = self.naive_utc();
         TimeStamp {
             millis: 0,

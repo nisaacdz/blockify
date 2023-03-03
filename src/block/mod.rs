@@ -1,14 +1,9 @@
-use std::slice::Iter;
+use std::marker::PhantomData;
 
 use crate::{
-    io::BlockBaseInsertable,
     record::{Record, SignedRecord},
-    TimeStamp,
+    TimeStamp, Range,
 };
-
-const BLOCKS: [&'static str; 5] = ["Hash", "Previous", "Merkle", "Range", "TimeStamp"];
-
-const NAME: &'static str = "Blockchain";
 
 pub struct Block<R: Record> {
     nonce: u64,
@@ -17,14 +12,11 @@ pub struct Block<R: Record> {
     hash: Vec<u8>,
     prev_block_hash: Vec<u8>,
     merkle_root: Vec<u8>,
-    records: Vec<SignedRecord<R>>,
+    records_range: Range,
+    phantom_data: PhantomData<R>,
 }
 
 impl<R: Record> Block<R> {
-    pub fn get_records(&self) -> &Vec<SignedRecord<R>> {
-        &self.records
-    }
-
     pub fn get_hash(&self) -> &[u8] {
         &self.hash
     }
@@ -48,23 +40,9 @@ impl<R: Record> Block<R> {
     pub fn position(&self) -> u64 {
         self.position
     }
-}
 
-impl<R: Record> BlockBaseInsertable<SignedRecord<R>> for Block<R> {
-    fn get_name() -> &'static str {
-        &NAME
-    }
-
-    fn columns() -> &'static [&'static str] {
-        &BLOCKS
-    }
-
-    fn get_rows(&self) -> Iter<SignedRecord<R>> {
-        self.records.iter()
-    }
-
-    fn len(&self) -> u64 {
-        self.records.len() as u64
+    pub fn records_range(&self) -> Range {
+        self.records_range
     }
 }
 
@@ -86,4 +64,10 @@ impl<R: Record> BlockCopy<R> {
     pub fn local_position(&self) -> u64 {
         self.local_position
     }
+}
+
+
+struct BlockAssemblage<R: Record> {
+    records: SignedRecord<R>,
+    
 }
