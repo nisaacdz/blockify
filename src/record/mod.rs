@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{errs::SignErrs, gen, io::RecordBaseInsertable};
+use crate::{errs::GenErrs, gen, io::RecordBaseInsertable};
 
 /// # Disclaimer
 /// In this context, a `Record` object is any data or information that needs to be
@@ -71,9 +71,9 @@ pub trait Record: Serialize + Clone + for<'a> Deserialize<'a> {
     ///
     /// * `Ok(SignedRecord)` - If signing is successful, returns the signed record as a
     /// `SignedRecord`.
-    /// * `Err(SignErrs)` - If signing fails, returns a `SignErrs` variant representing
+    /// * `Err(GenErrs)` - If signing fails, returns a `GenErrs` variant representing
     /// the type of failure.
-    fn sign(&self, private_key: &[u8]) -> Result<SignedRecord<Self>, SignErrs> {
+    fn sign(&self, private_key: &[u8]) -> Result<SignedRecord<Self>, GenErrs> {
         let msg = bincode::serialize(self).unwrap();
         let signature = gen::sign(&msg, private_key)?;
         Ok(SignedRecord {
@@ -106,9 +106,9 @@ pub trait Record: Serialize + Clone + for<'a> Deserialize<'a> {
     ///
     /// * `Ok(true)` - If the signature is valid and no errors were encountered.
     /// * `Ok(false)` - If the signature is not valid but no errors were encountered.
-    /// * `Err(SignErrs::InvalidSignature)` - If the value of `sign` is invalid.
-    /// * `Err(SignErrs::InvalidPublicKey)` - If the public key of the signer is invalid.
-    fn verify_signature(&self, sign: &[u8]) -> Result<bool, SignErrs> {
+    /// * `Err(GenErrs::InvalidSignature)` - If the value of `sign` is invalid.
+    /// * `Err(GenErrs::InvalidPublicKey)` - If the public key of the signer is invalid.
+    fn verify_signature(&self, sign: &[u8]) -> Result<bool, GenErrs> {
         let msg = bincode::serialize(self).unwrap();
         gen::verify_signature(&msg, sign, self.get_signer())
     }
@@ -156,7 +156,7 @@ impl<R: Record> SignedRecord<R> {
 ///
 
 impl<R: Record> RecordBaseInsertable<R> for SignedRecord<R> {
-    fn get_name() -> &'static str {
+    fn name() -> &'static str {
         &NAME
     }
 
@@ -164,7 +164,7 @@ impl<R: Record> RecordBaseInsertable<R> for SignedRecord<R> {
         &RECORDS
     }
 
-    fn get_record(&self) -> &R {
+    fn record(&self) -> &R {
         &self.record
     }
 }
@@ -175,13 +175,13 @@ impl<R: Record> RecordBaseInsertable<R> for SignedRecord<R> {
 ///
 pub trait Entity<T: Record> {
     fn public_key(&self) -> &[u8];
-    fn sign_record(&self, record: T, key: &[u8]) -> Result<SignedRecord<T>, SignErrs> {
+    fn sign_record(&self, record: T, key: &[u8]) -> Result<SignedRecord<T>, GenErrs> {
         record.sign(key)
     }
 
     /// [Click Here](#verify_signature) for full details about return value
 
-    fn verify_signature(&self, r: T, sign: &[u8]) -> Result<bool, SignErrs> {
+    fn verify_signature(&self, r: T, sign: &[u8]) -> Result<bool, GenErrs> {
         r.verify_signature(sign)
     }
 }

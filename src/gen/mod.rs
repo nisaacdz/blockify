@@ -1,5 +1,6 @@
 use std::{fmt::Debug, ops::Deref};
 
+use rand::{thread_rng, Rng};
 use serde::Serialize;
 use sha2::{
     digest::{
@@ -9,7 +10,7 @@ use sha2::{
     Digest, Sha256,
 };
 
-use crate::errs::SignErrs;
+use crate::errs::GenErrs;
 
 type Hxsh = GenericArray<u8, UInt<UInt<UInt<UInt<UInt<UInt<UTerm, B1>, B0>, B0>, B0>, B0>, B0>>;
 
@@ -38,6 +39,28 @@ pub fn encrypt<T: Sized + Serialize>(data: &T) -> Hash {
     let data: Hxsh = hasher.finalize();
 
     Hash { data }
+}
+
+pub fn random_sha256() -> Vec<u8> {
+    let mut rng = thread_rng();
+    let mut bytes = vec![0; 32];
+    rng.fill(&mut bytes[..]);
+    bytes
+}
+
+pub fn sha_from_2(data: &[u8], data1: &[u8]) -> Vec<u8> {
+    let mut hasher = Sha256::new();
+    hasher.update(data);
+    hasher.update(data1);
+    hasher.finalize().to_vec()
+}
+
+pub fn sha_from_3(data: &[u8], data1: &[u8], data2: &[u8]) -> Vec<u8> {
+    let mut hasher = Sha256::new();
+    hasher.update(data);
+    hasher.update(data1);
+    hasher.update(data2);
+    hasher.finalize().to_vec()
 }
 
 pub fn validate<T: Sized + Serialize>(obj: &T, hash: Hash) -> bool {
@@ -79,7 +102,7 @@ pub fn generate_key_pair() -> AuthKeyPair {
     AuthKeyPair(public_key, private_key)
 }
 
-pub fn sign(msg: &[u8], key: &[u8]) -> Result<Vec<u8>, SignErrs> {
+pub fn sign(msg: &[u8], key: &[u8]) -> Result<Vec<u8>, GenErrs> {
     // Parse the private key
     match SecretKey::from_bytes(key) {
         Ok(secret) => {
@@ -91,21 +114,17 @@ pub fn sign(msg: &[u8], key: &[u8]) -> Result<Vec<u8>, SignErrs> {
             let signature = keypair.sign(msg);
             Ok(signature.as_ref().to_vec())
         }
-        Err(_) => Err(SignErrs::InvalidPrivateKey),
+        Err(_) => Err(GenErrs::InvalidPrivateKey),
     }
 }
 
-pub fn verify_signature(msg: &[u8], signature: &[u8], signer: &[u8]) -> Result<bool, SignErrs> {
-    let dalek = Signature::from_bytes(signature).map_err(|_| SignErrs::InvalidSignature)?;
+pub fn verify_signature(msg: &[u8], signature: &[u8], signer: &[u8]) -> Result<bool, GenErrs> {
+    let dalek = Signature::from_bytes(signature).map_err(|_| GenErrs::InvalidSignature)?;
     match PublicKey::from_bytes(signer) {
         Ok(key) => match key.verify(msg, &dalek) {
             Ok(_) => Ok(true),
             Err(_) => Ok(false),
         },
-        Err(_) => Err(SignErrs::InvalidPublicKey),
+        Err(_) => Err(GenErrs::InvalidPublicKey),
     }
-}
-
-pub fn default_hash() -> Vec<u8> {
-    vec![]
 }

@@ -19,8 +19,14 @@ pub struct TimeStamp {
     year: u16,
 }
 
+impl TimeStamp {
+    pub fn debug() -> Self {
+        Self { millis: todo!(), second: todo!(), minute: todo!(), hour: todo!(), day: todo!(), month: todo!(), year: todo!()  }
+    }
+}
+
 pub trait ToTimeStamp {
-    fn timestamp(&self) -> TimeStamp;
+    fn to_local_timestamp(&self) -> TimeStamp;
 }
 
 #[derive(Clone, Copy)]
@@ -41,17 +47,16 @@ impl Display for Range {
     }
 }
 
-impl ToTimeStamp for chrono::DateTime<chrono::Utc> {
-    fn timestamp(&self) -> TimeStamp {
-        let naive_dt = self.naive_utc();
+impl ToTimeStamp for chrono::NaiveDateTime {
+    fn to_local_timestamp(&self) -> TimeStamp {
         TimeStamp {
             millis: 0,
-            second: naive_dt.second() as u8,
-            minute: naive_dt.minute() as u8,
-            hour: naive_dt.hour() as u8,
-            day: naive_dt.day() as u8,
-            month: naive_dt.month() as u8,
-            year: naive_dt.year() as u16,
+            second: self.second() as u8,
+            minute: self.minute() as u8,
+            hour: self.hour() as u8,
+            day: self.day() as u8,
+            month: self.month() as u8,
+            year: self.year() as u16,
         }
     }
 }

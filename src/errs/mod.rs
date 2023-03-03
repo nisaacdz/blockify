@@ -1,4 +1,4 @@
-pub enum SignErrs {
+pub enum GenErrs {
     InvalidPublicKey,
     InvalidPrivateKey,
     InvalidSignature,
