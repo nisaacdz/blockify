@@ -8,6 +8,7 @@ use crate::{
 
 use self::merkle::MerkleTree;
 
+pub mod chain;
 pub mod merkle;
 
 const COLUMNS: [&'static str; 5] = ["Hash", "Previous", "Merkle", "Range", "TimeStamp"];

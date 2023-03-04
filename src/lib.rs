@@ -1,9 +1,15 @@
-use std::fmt::Display;
+use std::{
+    fmt::Debug,
+    fmt::Display,
+    sync::{Arc, Mutex},
+};
 
 use chrono::{Datelike, Timelike};
+use io::UnitBase;
 use serde::Serialize;
 
 pub mod block;
+pub mod dist;
 pub mod errs;
 pub mod gen;
 pub mod io;
@@ -99,5 +105,57 @@ impl TimeStamp {
     }
     pub fn millis(&self) -> u8 {
         self.millis
+    }
+}
+
+#[derive(Clone)]
+pub struct GenID {
+    value: [u8; 10],
+}
+
+impl Debug for GenID {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.value.fmt(f)
+    }
+}
+
+impl GenID {
+    pub fn generate() -> Self {
+        Self {
+            value: gen::random_bytes10(),
+        }
+    }
+}
+
+pub struct UnitManager {
+    _db: Arc<Mutex<dyn UnitBase>>,
+}
+
+impl UnitManager {
+    pub fn all_units(&self) -> f64 {
+        todo!()
+    }
+
+    pub fn all_units_raw(&self) -> u128 {
+        todo!()
+    }
+}
+
+pub struct Unit {
+    val: u64,
+    cat: GenID,
+}
+
+impl Unit {
+    pub fn get_value(&self) -> f64 {
+        todo!()
+    }
+
+    pub fn get_value_raw(&self) -> u64 {
+        self.val
+    }
+
+    pub fn id(&self) -> GenID {
+        self.cat.clone()
     }
 }

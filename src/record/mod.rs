@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{errs::GenErrs, gen, io::RecordBaseInsertable};
+use crate::{errs::*, gen, io::RecordBaseInsertable};
 
 /// # Disclaimer
 /// In this context, a `Record` object is any data or information that needs to be
@@ -166,22 +166,5 @@ impl<R: Record> RecordBaseInsertable<R> for SignedRecord<R> {
 
     fn record(&self) -> &R {
         &self.record
-    }
-}
-
-/// Entity represent parties within a blockchain network that can execute
-/// the following abilites:
-///
-///
-pub trait Entity<T: Record> {
-    fn public_key(&self) -> &[u8];
-    fn sign_record(&self, record: T, key: &[u8]) -> Result<SignedRecord<T>, GenErrs> {
-        record.sign(key)
-    }
-
-    /// [Click Here](#verify_signature) for full details about return value
-
-    fn verify_signature(&self, r: T, sign: &[u8]) -> Result<bool, GenErrs> {
-        r.verify_signature(sign)
     }
 }

@@ -1,8 +1,6 @@
 use std::slice::Iter;
 
-use crate::{
-    block::Block, errs::BlockBaseErrs, gen, record::Record, Range, TimeStamp, ToTimeStamp,
-};
+use crate::{block::Block, errs::*, gen, record::Record, Range, TimeStamp, ToTimeStamp, Unit};
 
 pub trait BlockBaseInsertable<R: RecordBaseInsertable<X>, X: Record> {
     fn name() -> &'static str;
@@ -97,4 +95,14 @@ pub trait BlockBase<B: BlockBaseInsertable<R, X>, R: RecordBaseInsertable<X>, X:
     fn insert_block(&self, insertion: &[String]) -> Result<(), BlockBaseErrs>;
 
     fn prev_hash_or_default(&self) -> Result<Vec<u8>, BlockBaseErrs>;
+}
+
+pub trait UnitBase {
+    fn units_for(&self, entity: &[u8]) -> Option<Vec<Unit>>;
+}
+
+
+
+pub trait ChainBase {
+    
 }

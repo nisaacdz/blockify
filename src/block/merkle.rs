@@ -1,7 +1,4 @@
-use std::{
-    cell::{Ref, RefCell},
-    rc::Rc,
-};
+use std::{cell::RefCell, rc::Rc};
 
 use crate::gen;
 
@@ -81,17 +78,8 @@ impl MerkleTree {
         &self.root.hash
     }
 
-    pub fn insert(&mut self, new_node: MerkleNode) {
+    pub fn insert(&mut self, _new_node: MerkleNode) {
         self.size += 1;
-        let r = &mut self.root;
-        let rh = r.hash();
-        let nh = new_node.hash();
-
-        let left = r.left().clone();
-        let center = r.center().clone();
-        let right = r.center().clone();
-
-        let lh = left.unwrap();
 
         todo!()
     }

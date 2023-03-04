@@ -10,7 +10,7 @@ use sha2::{
     Digest, Sha256,
 };
 
-use crate::errs::GenErrs;
+use crate::errs::*;
 
 type Hxsh = GenericArray<u8, UInt<UInt<UInt<UInt<UInt<UInt<UTerm, B1>, B0>, B0>, B0>, B0>, B0>>;
 
@@ -42,9 +42,14 @@ pub fn encrypt<T: Sized + Serialize>(data: &T) -> Hash {
 }
 
 pub fn random_sha256() -> Vec<u8> {
-    let mut rng = thread_rng();
     let mut bytes = vec![0; 32];
-    rng.fill(&mut bytes[..]);
+    thread_rng().fill(&mut bytes[..]);
+    bytes
+}
+
+pub fn random_bytes10() -> [u8; 10] {
+    let mut bytes = [0; 10];
+    thread_rng().fill(&mut bytes);
     bytes
 }
 
