@@ -15,6 +15,7 @@ pub mod gen;
 pub mod io;
 pub mod record;
 
+
 #[derive(Clone, Copy, Serialize)]
 pub struct TimeStamp {
     millis: u8,
@@ -110,19 +111,25 @@ impl TimeStamp {
 
 #[derive(Clone)]
 pub struct GenID {
-    value: [u8; 10],
+    value: String,
 }
 
 impl Debug for GenID {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.value.fmt(f)
+        Debug::fmt(&self.value, f)
+    }
+}
+
+impl Display for GenID {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        Display::fmt(&self.value, f)
     }
 }
 
 impl GenID {
     pub fn generate() -> Self {
         Self {
-            value: gen::random_bytes10(),
+            value: gen::quick_id(),
         }
     }
 }

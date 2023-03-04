@@ -35,27 +35,25 @@ use crate::{errs::*, gen, io::RecordBaseInsertable};
 /// data is securely and transparently recorded on the blockchain, with all the benefits
 /// of decentralization, transparency, and immutability that blockchain technology provides.
 ///
-///
-/// # Example
-///
+/// 
 /// ```
+/// struct Voter {
+///     id: i32,
+///     public_key: Vec<u8>,
+/// }
+/// 
+/// #[derive(Serialize, Deserialize, Clone)]
 /// struct Vote {
-///     voter_id: i32,
-///     vote: i32,
+///     voterId: Voter,
+///     votedFor: Candidate,
 /// }
-/// ```
-///
-/// ```
+/// 
 /// impl Record for Vote {
-///
+///     /// Fill methods
 /// }
+/// 
 /// ```
-/// ```
-/// fn main() {
-///     let my_vote = Vote {voter_id: 1, vote: 1};
-///     my_vote.
-/// }
-/// ```
+/// 
 
 pub trait Record: Serialize + Clone + for<'a> Deserialize<'a> {
     /// Signs the current record object using the provided `private_key`.
@@ -89,7 +87,9 @@ pub trait Record: Serialize + Clone + for<'a> Deserialize<'a> {
     /// to complete the transaction.
     fn is_valid(&self) -> bool;
 
-    fn hash(&self) {}
+    fn hash(&self) -> Vec<u8> {
+        gen::hash(self)
+    }
 
     /// Returns the public key of the signer of this record.
     ///
@@ -139,7 +139,8 @@ impl<R: Record> SignedRecord<R> {
     /// # Returns:
     /// - `true` if the signature is valid for the record and the `verify_signature` function
     /// returns `Ok(true)`.
-    /// - `false` if the signature is not valid or the `verify_signature` function returns `Err(_)` or `Ok(false)`.
+    /// - `false` if the signature is not valid or the `verify_signature` returns `Err(_)` or `Ok(false)`.
+    /// 
 
     pub fn verify_signature(&self) -> bool {
         match self.get_record().verify_signature(self.get_signature()) {
