@@ -1,12 +1,11 @@
-use std::{cell::RefCell, rc::Rc};
-
 use crate::gen;
 
+#[derive(Clone)]
 pub struct MerkleNode {
     hash: Vec<u8>,
-    left: Option<Rc<RefCell<MerkleNode>>>,
-    right: Option<Rc<RefCell<MerkleNode>>>,
-    center: Option<Rc<RefCell<MerkleNode>>>,
+    left: Option<Box<MerkleNode>>,
+    right: Option<Box<MerkleNode>>,
+    center: Option<Box<MerkleNode>>,
 }
 
 impl MerkleNode {
@@ -19,9 +18,9 @@ impl MerkleNode {
     ) -> Self {
         Self {
             hash,
-            left: left.map(RefCell::new).map(Rc::new),
-            center: center.map(RefCell::new).map(Rc::new),
-            right: right.map(RefCell::new).map(Rc::new),
+            left: left.map(Box::new),
+            center: center.map(Box::new),
+            right: right.map(Box::new),
         }
     }
 
@@ -40,16 +39,16 @@ impl MerkleNode {
     }
 
     /// Returns a reference to the left child of the node.
-    pub fn left(&self) -> &Option<Rc<RefCell<MerkleNode>>> {
+    pub fn left(&self) -> &Option<Box<MerkleNode>> {
         &self.left
     }
 
     /// Returns a reference to the right child of the node.
-    pub fn right(&self) -> &Option<Rc<RefCell<MerkleNode>>> {
+    pub fn right(&self) -> &Option<Box<MerkleNode>> {
         &self.right
     }
 
-    pub fn center(&self) -> &Option<Rc<RefCell<MerkleNode>>> {
+    pub fn center(&self) -> &Option<Box<MerkleNode>> {
         &self.center
     }
 }
@@ -78,10 +77,54 @@ impl MerkleTree {
         &self.root.hash
     }
 
-    pub fn insert(&mut self, _new_node: MerkleNode) {
+    pub fn insert(&mut self, hash: Vec<u8>) {
         self.size += 1;
 
-        todo!()
+        let left_hash = self.root.left().as_deref().unwrap().hash();
+
+        if let None = &self.root.center {
+            let new_hash = gen::sha_from_3(&hash, left_hash, self.merkle_root());
+
+            let mut new_node = MerkleNode::build(new_hash, None, None, None);
+
+            new_node.left = self.root.left().clone();
+
+            self.root.left = None;
+            new_node.center = Some(Box::new(self.root.clone()));
+
+            self.root = new_node;
+        } else if let None = self.root.right {
+            let center_hash = self.root.center().as_deref().unwrap().hash();
+            let new_hash = gen::sha_from_4(&hash, left_hash, center_hash, self.merkle_root());
+
+            let mut new_node = MerkleNode::build(new_hash, None, None, None);
+
+            new_node.left = self.root.left().clone();
+            new_node.center = self.root.center().clone();
+
+            self.root.left = None;
+            self.root.center = None;
+            new_node.center = Some(Box::new(self.root.clone()));
+
+            self.root = new_node;
+        } else {
+            let center_hash = self.root.center().as_deref().unwrap().hash();
+            let right_hash = self.root.right().as_deref().unwrap().hash();
+            let new_hash = gen::sha_from_5(
+                &hash,
+                left_hash,
+                center_hash,
+                right_hash,
+                self.merkle_root(),
+            );
+
+            let mut new_node = MerkleNode::build(new_hash, None, None, None);
+
+            new_node.left = Some(Box::new(self.root.clone()));
+
+            self.root = new_node;
+        }
+
     }
 
     pub fn size(&self) -> usize {

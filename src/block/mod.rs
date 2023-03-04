@@ -1,4 +1,4 @@
-use std::{marker::PhantomData, slice::Iter};
+use std::{marker::PhantomData, slice::Iter, sync::{Arc, Mutex}};
 
 use crate::{
     errs::*,
@@ -101,12 +101,15 @@ impl<R: Record> BlockCopy<R> {
 pub struct BlockBuilder<R: Record> {
     nonce: u64,
     records: Vec<SignedRecord<R>>,
-    merkle: MerkleTree,
+    merkle: Arc<Mutex<MerkleTree>>,
 }
 
 impl<R: Record> BlockBuilder<R> {
-    pub fn merkle_root(&self) -> &[u8] {
-        &self.merkle.merkle_root()
+    pub fn merkle_root(&self) -> Option<&[u8]> {
+        match self.merkle.lock() {
+            Ok(mg) => Some(mg.merkle_root()),
+            Err(_) => None,
+        }
     }
 
     pub fn push(&mut self, item: SignedRecord<R>) -> Result<(), GenErrs> {

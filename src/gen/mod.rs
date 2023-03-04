@@ -187,6 +187,25 @@ pub fn sha_from_3(data: &[u8], data1: &[u8], data2: &[u8]) -> Vec<u8> {
     hasher.finalize().to_vec()
 }
 
+pub fn sha_from_4(data: &[u8], data1: &[u8], data2: &[u8], data3: &[u8]) -> Vec<u8> {
+    let mut hasher = Sha256::new();
+    hasher.update(data);
+    hasher.update(data1);
+    hasher.update(data2);
+    hasher.update(data3);
+    hasher.finalize().to_vec()
+}
+
+pub fn sha_from_5(data: &[u8], data1: &[u8], data2: &[u8], data3: &[u8], data4: &[u8]) -> Vec<u8> {
+    let mut hasher = Sha256::new();
+    hasher.update(data);
+    hasher.update(data1);
+    hasher.update(data2);
+    hasher.update(data3);
+    hasher.update(data4);
+    hasher.finalize().to_vec()
+}
+
 /// Computes the SHA-256 hash of the serialized version of a given object and checks if it matches a given hash value.
 ///
 /// # Arguments
