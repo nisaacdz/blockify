@@ -16,7 +16,7 @@ pub mod io;
 pub mod record;
 
 
-#[derive(Clone, Copy, Serialize)]
+#[derive(Clone, Copy, Serialize, Deserialize)]
 pub struct TimeStamp {
     millis: u8,
     second: u8,
@@ -45,7 +45,7 @@ pub trait ToTimeStamp {
     fn to_local_timestamp(&self) -> TimeStamp;
 }
 
-#[derive(Clone, Copy, Serialize)]
+#[derive(Clone, Copy, Serialize, Deserialize)]
 pub struct Range {
     begin: u64,
     end: u64,
