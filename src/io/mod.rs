@@ -65,7 +65,7 @@ pub trait BlockBase<B: BlockBaseInsertable<R, X>, R: RecordBaseInsertable<X>, X:
     fn insert(&mut self, block: B) -> Result<Block<X>, BlockBaseErrs> {
         let begin = match self.count_rows(R::name()) {
             Some(v) => v,
-            _ => return Err(BlockBaseErrs::NoSuchTable(R::name())),
+            _ => return Err(BlockBaseErrs::NoSuchTable(R::name().to_owned())),
         };
 
         let end = begin + block.size() - 1;
@@ -83,7 +83,7 @@ pub trait BlockBase<B: BlockBaseInsertable<R, X>, R: RecordBaseInsertable<X>, X:
 
         let position = match self.count_rows(B::name()) {
             Some(v) => v,
-            _ => return Err(BlockBaseErrs::NoSuchTable(B::name())),
+            _ => return Err(BlockBaseErrs::NoSuchTable(B::name().to_owned())),
         };
 
         self.insert_block(&block.insertion(&hash, &prev_hash, range, timestamp))?;
@@ -99,10 +99,4 @@ pub trait BlockBase<B: BlockBaseInsertable<R, X>, R: RecordBaseInsertable<X>, X:
 
 pub trait UnitBase {
     fn units_for(&self, entity: &[u8]) -> Option<Vec<Unit>>;
-}
-
-
-
-pub trait ChainBase {
-    
 }

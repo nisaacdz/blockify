@@ -35,25 +35,25 @@ use crate::{errs::*, gen, io::RecordBaseInsertable};
 /// data is securely and transparently recorded on the blockchain, with all the benefits
 /// of decentralization, transparency, and immutability that blockchain technology provides.
 ///
-/// 
+///
 /// ```
 /// struct Voter {
 ///     id: i32,
 ///     public_key: Vec<u8>,
 /// }
-/// 
+///
 /// #[derive(Serialize, Deserialize, Clone)]
 /// struct Vote {
 ///     voterId: Voter,
 ///     votedFor: Candidate,
 /// }
-/// 
+///
 /// impl Record for Vote {
 ///     /// Fill methods
 /// }
-/// 
+///
 /// ```
-/// 
+///
 
 pub trait Record: Serialize + Clone + for<'a> Deserialize<'a> {
     /// Signs the current record object using the provided `private_key`.
@@ -85,7 +85,7 @@ pub trait Record: Serialize + Clone + for<'a> Deserialize<'a> {
     /// For example, if the Record object represents a transaction,
     /// this function might verify that the sender has sufficient funds
     /// to complete the transaction.
-    fn is_valid(&self) -> bool;
+    fn verify(&self) -> bool;
 
     fn hash(&self) -> Vec<u8> {
         gen::hash(self)
@@ -117,6 +117,7 @@ pub trait Record: Serialize + Clone + for<'a> Deserialize<'a> {
 const RECORDS: [&'static str; 3] = ["Record", "Signature", "Signer"];
 const NAME: &'static str = "Records";
 
+#[derive(Clone)]
 pub struct SignedRecord<R: Record> {
     sign: Vec<u8>,
     record: R,
@@ -140,7 +141,7 @@ impl<R: Record> SignedRecord<R> {
     /// - `true` if the signature is valid for the record and the `verify_signature` function
     /// returns `Ok(true)`.
     /// - `false` if the signature is not valid or the `verify_signature` returns `Err(_)` or `Ok(false)`.
-    /// 
+    ///
 
     pub fn verify_signature(&self) -> bool {
         match self.get_record().verify_signature(self.get_signature()) {
@@ -148,6 +149,10 @@ impl<R: Record> SignedRecord<R> {
             Ok(false) => false,
             _ => true,
         }
+    }
+
+    pub fn verify(&self) -> bool {
+        self.record.verify()
     }
 }
 

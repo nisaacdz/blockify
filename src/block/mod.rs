@@ -1,6 +1,7 @@
 use std::{marker::PhantomData, slice::Iter};
 
 use crate::{
+    errs::*,
     io::BlockBaseInsertable,
     record::{Record, SignedRecord},
     Range, TimeStamp,
@@ -108,8 +109,28 @@ impl<R: Record> BlockBuilder<R> {
         &self.merkle.merkle_root()
     }
 
-    pub fn push(&mut self, _item: SignedRecord<R>) -> bool {
-        todo!()
+    pub fn push(&mut self, item: SignedRecord<R>) -> Result<(), GenErrs> {
+        if !item.verify_signature() {
+            return Err(GenErrs::FailedVerification)
+        }
+
+        if !item.verify() {
+            return Err(GenErrs::FailedVerification)
+        }
+
+        self.records.push(item);
+
+        Ok(())
+    }
+
+    pub fn verify(&self) -> Result<(), Errs<R>> {
+        for record in self.records.iter() {
+            if !record.verify() {
+                return Err(Errs::InvalidBlockItem(record));
+            }
+        }
+
+        Ok(())
     }
 }
 
