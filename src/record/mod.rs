@@ -15,10 +15,10 @@ use crate::{errs::*, gen, io::RecordBaseInsertable};
 /// record.
 ///
 /// # Examples of Records
-/// * transaction data
-/// * metadata
+/// * A transaction data
+/// * A metadata
 /// * A vote
-/// * smart contract state
+/// * A smart contract state
 /// * Any other type of information that needs to be recorded and verified on a blockchain.
 ///
 /// # How to Use

@@ -6,7 +6,7 @@ use std::{
 
 use chrono::{Datelike, Timelike};
 use io::UnitBase;
-use serde::Serialize;
+use serde::{Serialize, Deserialize};
 
 pub mod block;
 pub mod dist;
@@ -109,7 +109,7 @@ impl TimeStamp {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct GenID {
     value: String,
 }
