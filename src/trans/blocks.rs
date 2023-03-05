@@ -1,16 +1,13 @@
-use std::{marker::PhantomData, slice::Iter, sync::{Arc, Mutex}};
+use std::{marker::PhantomData, slice::Iter};
 
 use crate::{
-    errs::*,
+    errs::BError,
     io::BlockBaseInsertable,
-    record::{Record, SignedRecord},
-    Range, TimeStamp,
+    sec::merkle::MerkleTree,
+    *,
 };
 
-use self::merkle::MerkleTree;
-
-pub mod chain;
-pub mod merkle;
+use super::record::{Record, SignedRecord};
 
 const COLUMNS: [&'static str; 5] = ["Hash", "Previous", "Merkle", "Range", "TimeStamp"];
 
@@ -102,38 +99,24 @@ pub struct BlockBuilder<R: Record> {
     nonce: u64,
     records: Vec<SignedRecord<R>>,
     merkle: Arc<Mutex<MerkleTree>>,
+    merkle_root: Vec<u8>,
 }
 
 impl<R: Record> BlockBuilder<R> {
-    pub fn merkle_root(&self) -> Option<&[u8]> {
-        match self.merkle.lock() {
-            Ok(mg) => Some(mg.merkle_root()),
-            Err(_) => None,
-        }
+    pub fn merkle_root(&self) -> &[u8] {
+        &self.merkle_root
     }
 
-    pub fn push(&mut self, item: SignedRecord<R>) -> Result<(), GenErrs> {
-        if !item.verify_signature() {
-            return Err(GenErrs::FailedVerification)
-        }
-
-        if !item.verify() {
-            return Err(GenErrs::FailedVerification)
-        }
-
+    pub fn push(&mut self, item: SignedRecord<R>) -> Result<(), BError> {
+        let hash = item.hash().to_vec();
         self.records.push(item);
-
-        Ok(())
-    }
-
-    pub fn verify(&self) -> Result<(), Errs<R>> {
-        for record in self.records.iter() {
-            if !record.verify() {
-                return Err(Errs::InvalidBlockItem(record));
+        match self.merkle.lock() {
+            Ok(mut mg) => {
+                mg.insert(hash);
+                Ok(())
             }
+            Err(_) => Err(BError::CannotUpdateMerkleRoot),
         }
-
-        Ok(())
     }
 }
 

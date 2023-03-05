@@ -6,10 +6,14 @@ use std::{
 use crate::{
     errs::*,
     io::BlockBase,
-    record::{Record, SignedRecord},
+    net::Pusher,
+    ver::vers::{BlockVerifier, VerificationResult},
 };
 
-use super::{Block, BlockBuilder};
+use super::{
+    blocks::{Block, BlockBuilder},
+    record::{Record, SignedRecord},
+};
 
 pub struct ChainBase {}
 
@@ -26,8 +30,14 @@ pub struct Chain {
 }
 
 impl Chain {
-    pub fn push<'a, X: Record>(&self, data: BlockBuilder<X>) -> Result<Block<X>, ChainBaseErrs<X>> {
-        self.verify_block(&data)?;
+    pub fn push<'a, X: Record, P: Pusher<V>, V: BlockVerifier>(
+        &self,
+        data: BlockBuilder<X>,
+        pusher: &P,
+    ) -> Result<Block<X>, ChainBaseErrs<X>> {
+        if !Self::verify_block(&data, pusher.get_verifier()).allow() {
+            return Err(ChainBaseErrs::VerificationFailed);
+        }
 
         match self.cb.get_base::<X>() {
             Some(bb) => match bb.lock() {
@@ -41,13 +51,10 @@ impl Chain {
         }
     }
 
-    fn verify_block<X: Record>(&self, block: &BlockBuilder<X>) -> Result<(), ChainBaseErrs<X>> {
-        match block.verify() {
-            Ok(()) => Ok(()),
-            Err(e) => match e {
-                Errs::InvalidRecord(v) => Err(ChainBaseErrs::InvalidRecordInBlock(v.clone())),
-                _ => Err(ChainBaseErrs::UnknownErrs), // Will never occur,
-            },
-        }
+    fn verify_block<X: Record, V: BlockVerifier>(
+        block: &BlockBuilder<X>,
+        verifier: Arc<Mutex<V>>,
+    ) -> VerificationResult {
+        todo!()
     }
 }

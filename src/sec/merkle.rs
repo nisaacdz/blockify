@@ -1,5 +1,3 @@
-use crate::gen;
-
 #[derive(Clone)]
 pub struct MerkleNode {
     hash: Vec<u8>,
@@ -26,7 +24,7 @@ impl MerkleNode {
 
     pub fn new() -> Self {
         Self {
-            hash: gen::random_sha256(),
+            hash: super::random_sha256(),
             left: None,
             center: None,
             right: None,
@@ -64,7 +62,7 @@ impl MerkleTree {
     pub fn new() -> Self {
         let left = MerkleNode::new();
         let center = MerkleNode::new();
-        let dummy_root = MerkleNode::build(gen::random_sha256(), Some(left), Some(center), None);
+        let dummy_root = MerkleNode::build(super::random_sha256(), Some(left), Some(center), None);
 
         Self {
             root: dummy_root,
@@ -83,7 +81,7 @@ impl MerkleTree {
         let left_hash = self.root.left().as_deref().unwrap().hash();
 
         if let None = &self.root.center {
-            let new_hash = gen::sha_from_3(&hash, left_hash, self.merkle_root());
+            let new_hash = super::sha_from_3(&hash, left_hash, self.merkle_root());
 
             let mut new_node = MerkleNode::build(new_hash, None, None, None);
 
@@ -95,7 +93,7 @@ impl MerkleTree {
             self.root = new_node;
         } else if let None = self.root.right {
             let center_hash = self.root.center().as_deref().unwrap().hash();
-            let new_hash = gen::sha_from_4(&hash, left_hash, center_hash, self.merkle_root());
+            let new_hash = super::sha_from_4(&hash, left_hash, center_hash, self.merkle_root());
 
             let mut new_node = MerkleNode::build(new_hash, None, None, None);
 
@@ -110,7 +108,7 @@ impl MerkleTree {
         } else {
             let center_hash = self.root.center().as_deref().unwrap().hash();
             let right_hash = self.root.right().as_deref().unwrap().hash();
-            let new_hash = gen::sha_from_5(
+            let new_hash = super::sha_from_5(
                 &hash,
                 left_hash,
                 center_hash,
@@ -124,7 +122,6 @@ impl MerkleTree {
 
             self.root = new_node;
         }
-
     }
 
     pub fn size(&self) -> usize {

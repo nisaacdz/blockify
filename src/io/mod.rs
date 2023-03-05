@@ -1,6 +1,6 @@
 use std::slice::Iter;
 
-use crate::{block::Block, errs::*, gen, record::Record, Range, TimeStamp, ToTimeStamp, Unit};
+use crate::{*, errs::BlockBaseErrs, trans::{blocks::Block, record::Record}};
 
 pub trait BlockBaseInsertable<R: RecordBaseInsertable<X>, X: Record> {
     fn name() -> &'static str;
@@ -73,7 +73,7 @@ pub trait BlockBase<B: BlockBaseInsertable<R, X>, R: RecordBaseInsertable<X>, X:
         let range = Range::new(begin, end);
 
         let prev_hash = self.prev_hash_or_default()?;
-        let hash = gen::sha_from_2(&prev_hash, block.hash());
+        let hash = sec::sha_from_2(&prev_hash, block.hash());
 
         for record in block.records() {
             self.insert_record(record)?;

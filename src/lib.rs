@@ -8,12 +8,12 @@ use chrono::{Datelike, Timelike};
 use io::UnitBase;
 use serde::{Serialize, Deserialize};
 
-pub mod block;
-pub mod dist;
+pub mod trans;
+pub mod net;
 pub mod errs;
-pub mod gen;
+pub mod sec;
 pub mod io;
-pub mod record;
+pub mod ver;
 
 
 #[derive(Clone, Copy, Serialize, Deserialize)]
@@ -129,7 +129,7 @@ impl Display for GenID {
 impl GenID {
     pub fn generate() -> Self {
         Self {
-            value: gen::quick_id(),
+            value: sec::quick_id(),
         }
     }
 }

@@ -1,4 +1,4 @@
-use crate::record::{Record, SignedRecord};
+use crate::trans::record::{Record, SignedRecord};
 
 pub enum Errs<'b, R: Record> {
     InvalidRecord(&'b SignedRecord<R>),
@@ -19,7 +19,12 @@ pub enum BlockBaseErrs {
 pub enum ChainBaseErrs<R: Record> {
     NoSuchChain,
     PoisonedMutex,
+    VerificationFailed,
     InvalidRecordInBlock(SignedRecord<R>),
     FromBlockBaseErrs(BlockBaseErrs),
     UnknownErrs,
+}
+
+pub enum BError {
+    CannotUpdateMerkleRoot,
 }
