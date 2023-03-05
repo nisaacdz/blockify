@@ -67,7 +67,7 @@ pub trait Record: Serialize + Clone + for<'a> Deserialize<'a> {
     ) -> Result<SignedRecord<Self>, Failure> {
         sec::sign(self, public_key, private_key, algorithm)
     }
-    
+
     fn validate(&self) -> bool;
 
     fn hash(&self) -> Vec<u8> {
@@ -127,11 +127,11 @@ impl<R: Record> SignedRecord<R> {
     /// Returns the public key of the signer of this record.
     ///
     /// Consider adding a signer field to the implementing struct
-    fn get_signer(&self) -> &[u8] {
+    pub fn get_signer(&self) -> &[u8] {
         &self.signer
     }
 
-    fn get_algorithm(&self) -> &'static dyn ring::signature::VerificationAlgorithm {
+    pub fn get_algorithm(&self) -> &'static dyn ring::signature::VerificationAlgorithm {
         self.algorithm
     }
 
@@ -147,7 +147,7 @@ impl<R: Record> SignedRecord<R> {
     /// - `false` if the signature is not valid or the `verify_signature` returns `Err(_)` or `Ok(false)`.
     ///
 
-    fn verify_signature(&self, sign: &[u8]) -> Result<(), ring::error::Unspecified> {
+    pub fn verify_signature(&self) -> Result<(), ring::error::Unspecified> {
         let msg = bincode::serialize(self.record()).unwrap();
         sec::verify_signature(&msg, &self.signature, &self.signer, self.algorithm)
     }
