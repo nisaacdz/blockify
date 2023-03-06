@@ -8,9 +8,16 @@ use sha2::{
     Digest, Sha256,
 };
 
-use crate::{errs::*, trans::record::{Record, SignedRecord}};
-pub mod merkle;
+use crate::{
+    errs::*,
+    trans::{
+        blocks::BlockBuilder,
+        record::{Record, SignedRecord},
+    },
+    Range, TimeStamp,
+};
 pub mod errs;
+pub mod merkle;
 
 // Define a type alias `Hxsh` for a fixed-size array of 32 bytes using the `GenericArray` type from the `typenum` crate.
 // The type alias represents the output of a SHA-256 hash function.
@@ -69,6 +76,16 @@ pub fn hash_bytes(bytes: &[u8]) -> Vec<u8> {
     let data: Hxsh = hasher.finalize();
     // Convert the `Hxsh` value to a `Vec<u8>` for easier use.
     data.to_vec()
+}
+
+pub fn hash_block<R: Record>(
+    block: &BlockBuilder<R>,
+    prev_hash: &[u8],
+    metadata: (&TimeStamp, &Range, &u64),
+) -> Vec<u8> {
+    let records = bincode::serialize(block.records()).unwrap();
+    let metabytes = bincode::serialize(&metadata).unwrap();
+    sha_from_4(prev_hash, &records, block.merkle_root(), &metabytes)
 }
 
 /// Generates a random 256-bit (32 byte) hash as a byte vector using a secure random number generator.
@@ -338,7 +355,9 @@ pub fn sign_msg(msg: &[u8], key: &[u8]) -> Result<Vec<u8>, Failure> {
             let signature = keypair.sign(msg);
             Ok(signature.as_ref().to_vec())
         }
-        Err(_) => Err(Failure::SigningFailure(errs::SigningFailures::InvalidPrivateKey)),
+        Err(_) => Err(Failure::SigningFailure(
+            errs::SigningFailures::InvalidPrivateKey,
+        )),
     }
 }
 ///
@@ -380,7 +399,11 @@ pub fn sign_msg(msg: &[u8], key: &[u8]) -> Result<Vec<u8>, Failure> {
 ///
 /// This function uses the Ed25519 digital signature algorithm, which is a fast and secure signature algorithm that provides strong security guarantees. The algorithm is resistant to a wide range of attacks, including side-channel attacks, and has been extensively reviewed by the cryptographic community.
 
-pub fn verify_signature_ed25519(msg: &[u8], signature: &[u8], signer: &[u8]) -> Result<bool, GenErrs> {
+pub fn verify_signature_ed25519(
+    msg: &[u8],
+    signature: &[u8],
+    signer: &[u8],
+) -> Result<bool, GenErrs> {
     let dalek = Signature::from_bytes(signature).map_err(|_| GenErrs::InvalidSignature)?;
     match PublicKey::from_bytes(signer) {
         Ok(key) => match key.verify(msg, &dalek) {
@@ -395,16 +418,31 @@ use ring::signature::{self, VerificationAlgorithm};
 
 use self::errs::Failure;
 
-pub fn verify_signature(msg: &[u8], signature: &[u8], signer: &[u8], algo: &'static dyn VerificationAlgorithm) -> Result<(), ring::error::Unspecified> {
+pub fn verify_signature(
+    msg: &[u8],
+    signature: &[u8],
+    signer: &[u8],
+    algo: &'static dyn VerificationAlgorithm,
+) -> Result<(), ring::error::Unspecified> {
     let public_key = signature::UnparsedPublicKey::new(algo, signer);
-    
+
     public_key.verify(msg, signature)
 }
 
-
-pub fn sign<R: Record>(record: &R, public_key: &[u8], private_key: &[u8], algorithm: &'static dyn ring::signature::VerificationAlgorithm) -> Result<SignedRecord<R>, errs::Failure> {
+pub fn sign<R: Record>(
+    record: &R,
+    public_key: &[u8],
+    private_key: &[u8],
+    algorithm: &'static dyn ring::signature::VerificationAlgorithm,
+) -> Result<SignedRecord<R>, errs::Failure> {
     let msg = bincode::serialize(record).unwrap();
     let signature = sign_msg(&msg, private_key)?;
     let hash = hash_bytes(&msg);
-    Ok(SignedRecord::new(record.clone(), signature, algorithm, public_key, hash))
+    Ok(SignedRecord::new(
+        record.clone(),
+        signature,
+        algorithm,
+        public_key,
+        hash,
+    ))
 }

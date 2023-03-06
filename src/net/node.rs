@@ -1,11 +1,14 @@
 use std::{
     collections::{HashMap, HashSet},
-    sync::{Arc, Mutex},
+    sync::{Arc, Mutex, RwLock},
 };
 
-use crate::{block::chain::Chain, record::SignedRecord, UnitManager};
+use crate::{
+    trans::{chain::Chain, record::SignedRecord},
+    UnitManager,
+};
 
-use super::{Entity, Record};
+use super::{Entity, Pusher, Record};
 
 #[derive(Clone, Debug)]
 pub struct NodeId {
@@ -40,6 +43,8 @@ pub struct Node<R: Record> {
     ///
     /// A network can be for diverse purposes
     pub network: Arc<Mutex<Vec<NodeId>>>,
+
+    pub miners: Arc<RwLock<Vec<Box<dyn Pusher>>>>,
 
     pub units: UnitManager,
 }

@@ -1,11 +1,6 @@
 use std::{marker::PhantomData, slice::Iter};
 
-use crate::{
-    errs::BError,
-    io::BlockBaseInsertable,
-    sec::merkle::MerkleTree,
-    *,
-};
+use crate::{errs::BError, io::BlockBaseInsertable, sec::merkle::MerkleTree, *};
 
 use super::record::{Record, SignedRecord};
 
@@ -118,6 +113,10 @@ impl<R: Record> BlockBuilder<R> {
             Err(_) => Err(BError::CannotUpdateMerkleRoot),
         }
     }
+
+    pub fn records(&self) -> &Vec<SignedRecord<R>> {
+        &self.records
+    }
 }
 
 impl<R: Record> BlockBaseInsertable<SignedRecord<R>, R> for BlockBuilder<R> {
@@ -133,8 +132,8 @@ impl<R: Record> BlockBaseInsertable<SignedRecord<R>, R> for BlockBuilder<R> {
         self.records.len() as u64
     }
 
-    fn hash(&self) -> &[u8] {
-        self.merkle_root()
+    fn merke_root(&self) -> &[u8] {
+        &self.merkle_root
     }
 
     fn generate(

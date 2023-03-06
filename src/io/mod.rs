@@ -1,6 +1,10 @@
 use std::slice::Iter;
 
-use crate::{*, errs::BlockBaseErrs, trans::{blocks::Block, record::Record}};
+use crate::{
+    errs::BlockBaseErrs,
+    trans::{blocks::Block, record::Record},
+    *,
+};
 
 pub trait BlockBaseInsertable<R: RecordBaseInsertable<X>, X: Record> {
     fn name() -> &'static str;
@@ -8,6 +12,8 @@ pub trait BlockBaseInsertable<R: RecordBaseInsertable<X>, X: Record> {
     fn columns() -> &'static [&'static str];
 
     fn records(&self) -> Iter<R>;
+
+    fn merke_root(&self) -> &[u8];
 
     fn insertion(
         &self,
@@ -18,8 +24,6 @@ pub trait BlockBaseInsertable<R: RecordBaseInsertable<X>, X: Record> {
     ) -> Vec<String>;
 
     fn size(&self) -> u64;
-
-    fn hash(&self) -> &[u8];
 
     fn generate(
         &self,
@@ -73,8 +77,6 @@ pub trait BlockBase<B: BlockBaseInsertable<R, X>, R: RecordBaseInsertable<X>, X:
         let range = Range::new(begin, end);
 
         let prev_hash = self.prev_hash_or_default()?;
-        let hash = sec::sha_from_2(&prev_hash, block.hash());
-
         for record in block.records() {
             self.insert_record(record)?;
         }
@@ -85,6 +87,9 @@ pub trait BlockBase<B: BlockBaseInsertable<R, X>, R: RecordBaseInsertable<X>, X:
             Some(v) => v,
             _ => return Err(BlockBaseErrs::NoSuchTable(B::name().to_owned())),
         };
+
+        
+        let hash = sec::sha_from_2(&prev_hash, block.merke_root());
 
         self.insert_block(&block.insertion(&hash, &prev_hash, range, timestamp))?;
 

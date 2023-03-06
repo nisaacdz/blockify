@@ -1,4 +1,4 @@
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, Serializer};
 
 use crate::{
     io::RecordBaseInsertable,
@@ -86,6 +86,22 @@ pub struct SignedRecord<R: Record> {
     algorithm: &'static dyn ring::signature::VerificationAlgorithm,
 }
 
+impl<R: Record> Serialize for SignedRecord<R> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let br = bincode::serialize(self.record()).unwrap();
+
+        let bytes = [&br, self.signer(), self.signature(), self.hash()];
+        let n = bytes.into_iter().fold(0, |acc, v| acc + v.len());
+        let mut col = Vec::with_capacity(n);
+
+        bytes
+            .into_iter()
+            .for_each(|v| v.into_iter().for_each(|x| col.push(*x)));
+
+        serializer.serialize_bytes(&col)
+    }
+}
+
 impl<R: Record> Clone for SignedRecord<R> {
     fn clone(&self) -> Self {
         Self {
@@ -127,11 +143,11 @@ impl<R: Record> SignedRecord<R> {
     /// Returns the public key of the signer of this record.
     ///
     /// Consider adding a signer field to the implementing struct
-    pub fn get_signer(&self) -> &[u8] {
+    pub fn signer(&self) -> &[u8] {
         &self.signer
     }
 
-    pub fn get_algorithm(&self) -> &'static dyn ring::signature::VerificationAlgorithm {
+    pub fn algorithm(&self) -> &'static dyn ring::signature::VerificationAlgorithm {
         self.algorithm
     }
 

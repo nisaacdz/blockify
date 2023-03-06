@@ -3,12 +3,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use crate::{
-    errs::*,
-    io::BlockBase,
-    net::Pusher,
-    ver::vers::{BlockVerifier, VerificationResult},
-};
+use crate::{errs::*, io::BlockBase};
 
 use super::{
     blocks::{Block, BlockBuilder},
@@ -30,15 +25,10 @@ pub struct Chain {
 }
 
 impl Chain {
-    pub fn push<'a, X: Record, P: Pusher<V>, V: BlockVerifier>(
+    pub fn append<'a, X: Record>(
         &self,
         data: BlockBuilder<X>,
-        pusher: &P,
     ) -> Result<Block<X>, ChainBaseErrs<X>> {
-        if !Self::verify_block(&data, pusher.get_verifier()).allow() {
-            return Err(ChainBaseErrs::VerificationFailed);
-        }
-
         match self.cb.get_base::<X>() {
             Some(bb) => match bb.lock() {
                 Ok(mut val) => match val.borrow_mut().insert(data) {
@@ -49,12 +39,5 @@ impl Chain {
             },
             None => Err(ChainBaseErrs::NoSuchChain),
         }
-    }
-
-    fn verify_block<X: Record, V: BlockVerifier>(
-        block: &BlockBuilder<X>,
-        verifier: Arc<Mutex<V>>,
-    ) -> VerificationResult {
-        todo!()
     }
 }

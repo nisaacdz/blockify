@@ -1,7 +1,8 @@
 use crate::trans::{blocks::BlockBuilder, record::Record};
 
 pub trait BlockVerifier {
-    fn verify<X: Record>(&self, block: &BlockBuilder<X>) -> VerificationResult;
+    type Item: Record;
+    fn verify(&self, block: &BlockBuilder<Self::Item>) -> VerificationResult;
 }
 
 pub struct VerificationResult;
