@@ -9,6 +9,6 @@ pub struct VerificationResult;
 
 impl VerificationResult {
     pub fn allow(&self) -> bool {
-        false
+        todo!()
     }
 }
