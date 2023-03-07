@@ -1,20 +1,21 @@
 use std::{
     fmt::Debug,
     fmt::Display,
+    rc::Rc,
     sync::{Arc, Mutex},
 };
 
 use chrono::{Datelike, Timelike};
 use io::UnitBase;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize, Serializer};
 
-pub mod trans;
-pub mod net;
 pub mod errs;
-pub mod sec;
 pub mod io;
+pub mod net;
+pub mod sec;
+pub mod tests;
+pub mod trans;
 pub mod ver;
-
 
 #[derive(Clone, Copy, Serialize, Deserialize)]
 pub struct TimeStamp {
@@ -164,5 +165,34 @@ impl Unit {
 
     pub fn id(&self) -> GenID {
         self.cat.clone()
+    }
+}
+
+pub trait Detail {
+    fn title(&self) -> String;
+    fn item(&self) -> Rc<dyn std::any::Any>;
+}
+
+#[derive(Clone)]
+pub struct MetaData {
+    details: Vec<Rc<dyn Detail>>,
+}
+
+
+impl MetaData {
+    pub fn new(&self) -> Self {
+        Self { details: vec![] }
+    }
+    pub fn get(&self, title: &str) -> Option<Rc<dyn Detail>> {
+        for detail in &self.details {
+            if detail.title() == title {
+                return Some(detail.clone());
+            }
+        }
+        None
+    }
+
+    pub fn details(&self) -> &Vec<Rc<dyn Detail>> {
+        &self.details
     }
 }

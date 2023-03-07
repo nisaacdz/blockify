@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize, Serializer};
 use crate::{
     io::RecordBaseInsertable,
     sec::{self, errs::Failure},
+    MetaData,
 };
 
 /// # Disclaimer
@@ -37,26 +38,6 @@ use crate::{
 /// By implementing the Record trait on their type, users can ensure that their
 /// data is securely and transparently recorded on the blockchain, with all the benefits
 /// of decentralization, transparency, and immutability that blockchain technology provides.
-///
-///
-/// ```
-/// struct Voter {
-///     id: i32,
-///     public_key: Vec<u8>,
-/// }
-///
-/// #[derive(Serialize, Deserialize, Clone)]
-/// struct Vote {
-///     voterId: Voter,
-///     votedFor: Candidate,
-/// }
-///
-/// impl Record for Vote {
-///     /// Fill methods
-/// }
-///
-/// ```
-///
 
 pub trait Record: Serialize + Clone + for<'a> Deserialize<'a> {
     fn sign(
@@ -68,11 +49,11 @@ pub trait Record: Serialize + Clone + for<'a> Deserialize<'a> {
         sec::sign(self, public_key, private_key, algorithm)
     }
 
-    fn validate(&self) -> bool;
-
     fn hash(&self) -> Vec<u8> {
         sec::hash(self)
     }
+
+    fn metadata(&self) -> MetaData;
 }
 
 const RECORDS: [&'static str; 3] = ["Record", "Signature", "Signer"];
@@ -115,7 +96,6 @@ impl<R: Record> Clone for SignedRecord<R> {
 }
 
 impl<R: Record> SignedRecord<R> {
-    /// Constructs a new SignedRecord object
     pub fn new(
         record: R,
         signature: Vec<u8>,
@@ -140,9 +120,6 @@ impl<R: Record> SignedRecord<R> {
         &self.record
     }
 
-    /// Returns the public key of the signer of this record.
-    ///
-    /// Consider adding a signer field to the implementing struct
     pub fn signer(&self) -> &[u8] {
         &self.signer
     }
@@ -151,9 +128,7 @@ impl<R: Record> SignedRecord<R> {
         self.algorithm
     }
 
-    /// Verifies the validity of the signature for this `SignedRecord` object by
-    /// calling the `verify_signature`
-    /// function on the corresponding `Record` object.
+    /// Verifies the validity of the signature for this `SignedRecord` object.
     /// Returns a boolean value indicating whether the signature
     /// is valid or not.
     ///
@@ -168,19 +143,14 @@ impl<R: Record> SignedRecord<R> {
         sec::verify_signature(&msg, &self.signature, &self.signer, self.algorithm)
     }
 
-    pub fn validate(&self) -> bool {
-        self.record.validate()
-    }
-
     pub fn hash(&self) -> &[u8] {
         &self.hash
     }
-}
 
-///
-///
-///
-///
+    pub fn metadata(&self) -> MetaData {
+        self.record().metadata()
+    }
+}
 
 impl<R: Record> RecordBaseInsertable<R> for SignedRecord<R> {
     fn name() -> &'static str {

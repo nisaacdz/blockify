@@ -103,5 +103,5 @@ pub trait BlockBase<B: BlockBaseInsertable<R, X>, R: RecordBaseInsertable<X>, X:
 }
 
 pub trait UnitBase {
-    fn units_for(&self, entity: &[u8]) -> Option<Vec<Unit>>;
+    fn units(&self, entity: &[u8]) -> Option<Vec<Unit>>;
 }
