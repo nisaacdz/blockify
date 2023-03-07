@@ -7,7 +7,7 @@ use std::{
 
 use chrono::{Datelike, Timelike};
 use io::UnitBase;
-use serde::{Deserialize, Serialize, Serializer};
+use serde::{Deserialize, Serialize};
 
 pub mod errs;
 pub mod io;
@@ -178,9 +178,8 @@ pub struct MetaData {
     details: Vec<Rc<dyn Detail>>,
 }
 
-
 impl MetaData {
-    pub fn new(&self) -> Self {
+    pub fn new() -> Self {
         Self { details: vec![] }
     }
     pub fn get(&self, title: &str) -> Option<Rc<dyn Detail>> {
