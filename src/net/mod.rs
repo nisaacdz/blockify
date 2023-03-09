@@ -7,7 +7,7 @@ pub mod node;
 
 /// Entity represent parties within a blockchain network that can execute
 /// the following abilites:
-pub trait Entity<R: Record> {
+pub trait Peer<R: Record> {
     fn public_key(&self) -> &[u8];
     fn sign_record(
         &self,

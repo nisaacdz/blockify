@@ -1,4 +1,5 @@
 use std::{
+    collections::HashMap,
     fmt::Debug,
     fmt::Display,
     rc::Rc,
@@ -41,7 +42,6 @@ impl TimeStamp {
         }
     }
 }
-
 pub trait ToTimeStamp {
     fn to_local_timestamp(&self) -> TimeStamp;
 }
@@ -77,14 +77,6 @@ impl ToTimeStamp for chrono::NaiveDateTime {
         }
     }
 }
-
-///
-///
-///
-///
-///
-///
-///
 
 impl TimeStamp {
     pub fn year(&self) -> u16 {
@@ -171,6 +163,8 @@ impl Unit {
 pub trait Detail {
     fn title(&self) -> String;
     fn item(&self) -> Rc<dyn std::any::Any>;
+    fn to_bytes(&self) -> &[u8];
+    fn from_bytes(&self) -> Rc<dyn std::any::Any>;
 }
 
 #[derive(Clone)]
@@ -193,5 +187,21 @@ impl MetaData {
 
     pub fn details(&self) -> &Vec<Rc<dyn Detail>> {
         &self.details
+    }
+}
+
+impl Serialize for MetaData {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let details_vec: Vec<&[u8]> = self.details.iter().map(|d| d.to_bytes()).collect();
+        details_vec.serialize(serializer)
+    }
+}
+
+impl Debug for MetaData {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for detail in self.details() {
+            detail.to_bytes().fmt(f)?;
+        }
+        Ok(())
     }
 }

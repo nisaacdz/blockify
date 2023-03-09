@@ -8,7 +8,7 @@ use crate::{
     UnitManager,
 };
 
-use super::{Entity, Pusher, Record};
+use super::{Peer, Pusher, Record};
 
 #[derive(Clone, Debug)]
 pub struct NodeId {
@@ -25,7 +25,7 @@ pub struct Node<R: Record> {
     pub id: NodeId,
 
     /// Connected peers
-    pub peers: HashSet<Box<dyn Entity<R>>>,
+    pub peers: HashSet<Box<dyn Peer<R>>>,
 
     /// A set of unconfirmed records held by this Node
     pub mem_pool: Arc<Mutex<Vec<SignedRecord<R>>>>,
