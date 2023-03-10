@@ -2,8 +2,8 @@ use std::slice::Iter;
 
 use crate::{
     errs::BlockBaseErrs,
+    refs::{Range, TimeStamp, ToTimeStamp, Unit},
     trans::{blocks::Block, record::Record},
-    *,
 };
 
 pub trait BlockBaseInsertable<R: RecordBaseInsertable<X>, X: Record> {
@@ -88,8 +88,7 @@ pub trait BlockBase<B: BlockBaseInsertable<R, X>, R: RecordBaseInsertable<X>, X:
             _ => return Err(BlockBaseErrs::NoSuchTable(B::name().to_owned())),
         };
 
-        
-        let hash = sec::sha_from_2(&prev_hash, block.merke_root());
+        let hash = crate::sec::sha_from_2(&prev_hash, block.merke_root());
 
         self.insert_block(&block.insertion(&hash, &prev_hash, range, timestamp))?;
 

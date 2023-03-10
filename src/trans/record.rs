@@ -2,8 +2,7 @@ use serde::{Deserialize, Serialize, Serializer};
 
 use crate::{
     io::RecordBaseInsertable,
-    sec::{self, errs::Failure},
-    MetaData,
+    sec::{self, errs::Failure}, refs::MetaData,
 };
 
 /// # Disclaimer

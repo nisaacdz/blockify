@@ -4,8 +4,7 @@ use std::{
 };
 
 use crate::{
-    trans::{chain::Chain, record::SignedRecord},
-    UnitManager,
+    trans::{chain::Chain, record::SignedRecord}, refs::UnitManager,
 };
 
 use super::{Peer, Pusher, Record};

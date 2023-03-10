@@ -10,11 +10,11 @@ use sha2::{
 
 use crate::{
     errs::*,
+    refs::{Range, TimeStamp},
     trans::{
         blocks::BlockBuilder,
         record::{Record, SignedRecord},
     },
-    Range, TimeStamp,
 };
 pub mod errs;
 pub mod merkle;

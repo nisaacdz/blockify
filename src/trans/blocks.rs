@@ -1,6 +1,11 @@
 use std::{marker::PhantomData, slice::Iter};
 
-use crate::{errs::BError, io::BlockBaseInsertable, sec::merkle::MerkleTree, *};
+use crate::{
+    errs::BError,
+    io::BlockBaseInsertable,
+    refs::{Range, TimeStamp},
+    sec::merkle::MerkleTree,
+};
 
 use super::record::{Record, SignedRecord};
 
@@ -93,7 +98,7 @@ impl<R: Record> BlockCopy<R> {
 pub struct BlockBuilder<R: Record> {
     nonce: u64,
     records: Vec<SignedRecord<R>>,
-    merkle: Arc<Mutex<MerkleTree>>,
+    merkle: std::sync::Arc<std::sync::Mutex<MerkleTree>>,
     merkle_root: Vec<u8>,
 }
 
