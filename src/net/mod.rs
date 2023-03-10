@@ -1,14 +1,13 @@
 use crate::{
     sec::errs::Failure,
-    trans::record::{Record, SignedRecord},
+    trans::record::{Record, SignedRecord}, refs::Unit,
 };
 
 pub mod node;
 
-/// Entity represent parties within a blockchain network that can execute
-/// the following abilites:
 pub trait Peer<R: Record> {
     fn public_key(&self) -> &[u8];
+    fn units(&self) -> &Unit;
     fn sign_record(
         &self,
         record: R,

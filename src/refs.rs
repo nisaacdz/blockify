@@ -103,6 +103,7 @@ pub enum FixedDetails {
     Text(detailsamples::TextDetail),
 }
 
+
 pub mod detailsamples {
     use super::Deserialize;
     use super::Detail;
