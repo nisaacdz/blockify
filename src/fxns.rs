@@ -1,5 +1,3 @@
-use std::{ops::{Deref, DerefMut}, marker::PhantomData, cell::RefCell, sync::{RwLock, Arc}};
-
 pub unsafe fn mem_copy<T>(obj: &T) -> T {
     let len = std::mem::size_of::<T>();
 
@@ -10,4 +8,6 @@ pub unsafe fn mem_copy<T>(obj: &T) -> T {
         std::ptr::copy_nonoverlapping(src, dst, len);
         std::ptr::read(dst as *const T)
     }
+    // This is a dangerous function
+    // Shoot yourself in the foot at your own risk
 }

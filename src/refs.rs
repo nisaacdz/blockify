@@ -193,7 +193,7 @@ impl MetaData {
             details: Vec::new(),
         }
     }
-    pub fn get<T>(&self, title: &str) -> &T {
+    pub fn get<T>(&self, _title: &str) -> &T {
         todo!()
     }
 
