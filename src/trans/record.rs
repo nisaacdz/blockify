@@ -2,7 +2,8 @@ use serde::{Deserialize, Serialize, Serializer};
 
 use crate::{
     io::RecordBaseInsertable,
-    sec::{self, errs::Failure}, refs::MetaData,
+    refs::MetaData,
+    sec::{self, errs::Failure},
 };
 
 /// # Disclaimer
@@ -58,6 +59,7 @@ pub trait Record: Serialize + Clone + for<'a> Deserialize<'a> {
 const RECORDS: [&'static str; 3] = ["Record", "Signature", "Signer"];
 const NAME: &'static str = "Records";
 
+#[derive(Debug, Clone)]
 pub struct SignedRecord<R: Record> {
     signer: Vec<u8>,
     signature: Vec<u8>,
@@ -79,18 +81,6 @@ impl<R: Record> Serialize for SignedRecord<R> {
             .for_each(|v| v.into_iter().for_each(|x| col.push(*x)));
 
         serializer.serialize_bytes(&col)
-    }
-}
-
-impl<R: Record> Clone for SignedRecord<R> {
-    fn clone(&self) -> Self {
-        Self {
-            signer: self.signer.clone(),
-            signature: self.signature.clone(),
-            hash: self.hash.clone(),
-            record: self.record.clone(),
-            algorithm: self.algorithm.clone(),
-        }
     }
 }
 

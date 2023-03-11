@@ -82,7 +82,7 @@ impl TimeStamp {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub struct MetaData {
     details: Vec<Detail>,
 }
@@ -108,7 +108,7 @@ impl MetaData {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub struct ID {
     value: String,
 }

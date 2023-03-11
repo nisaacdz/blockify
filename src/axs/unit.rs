@@ -3,6 +3,8 @@ use std::{
     sync::{Arc, Mutex},
 };
 
+use serde::{Serialize, Deserialize};
+
 use crate::refs::ID;
 
 pub struct UnitManager {
@@ -19,6 +21,7 @@ impl UnitManager {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Hash)]
 pub struct Micron {
     val: u64,
     cat: ID,
@@ -30,11 +33,15 @@ impl Micron {
     }
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Units {
     vals: Vec<Micron>,
 }
 
 impl Units {
+    pub fn new(microns: Vec<Micron>) -> Self {
+        Self { vals: microns }
+    }
     pub fn get_value(&self) -> f64 {
         todo!()
     }
