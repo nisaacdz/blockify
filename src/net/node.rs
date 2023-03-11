@@ -3,9 +3,7 @@ use std::{
     sync::{Arc, Mutex, RwLock},
 };
 
-use crate::{
-    trans::{chain::Chain, record::SignedRecord}, refs::UnitManager,
-};
+use crate::trans::{chain::Chain, record::SignedRecord};
 
 use super::{Peer, Pusher, Record};
 
@@ -45,5 +43,5 @@ pub struct Node<R: Record> {
 
     pub miners: Arc<RwLock<Vec<Box<dyn Pusher>>>>,
 
-    pub units: UnitManager,
+    pub units: crate::axs::unit::UnitManager,
 }

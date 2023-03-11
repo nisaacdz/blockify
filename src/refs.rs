@@ -1,10 +1,8 @@
-use std::sync::{Arc, Mutex};
-
 use serde::{Deserialize, Serialize};
 
 use chrono::{Datelike, Timelike};
 
-use crate::io::UnitBase;
+use crate::axs::detail::Detail;
 
 #[derive(Clone, Copy, Serialize, Deserialize)]
 pub struct TimeStamp {
@@ -84,107 +82,9 @@ impl TimeStamp {
     }
 }
 
-pub trait Detail {
-    type Item;
-
-    fn title(&self) -> &str;
-
-    fn item(&self) -> &Self::Item;
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Picture {}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum FixedDetails {
-    Bool(detailsamples::BoolDetail),
-    Int(detailsamples::IntDetail),
-    Float(detailsamples::FloatDetail),
-    Text(detailsamples::TextDetail),
-}
-
-
-pub mod detailsamples {
-    use super::Deserialize;
-    use super::Detail;
-    use super::Serialize;
-
-    #[derive(Debug, Clone, Serialize, Deserialize)]
-    pub struct IntDetail {
-        title: String,
-        item: usize,
-    }
-
-    impl Detail for IntDetail {
-        type Item = usize;
-
-        fn title(&self) -> &str {
-            &self.title
-        }
-
-        fn item(&self) -> &Self::Item {
-            &self.item
-        }
-    }
-
-    #[derive(Debug, Clone, Serialize, Deserialize)]
-    pub struct BoolDetail {
-        title: String,
-        item: bool,
-    }
-
-    impl Detail for BoolDetail {
-        type Item = bool;
-
-        fn title(&self) -> &str {
-            &self.title
-        }
-
-        fn item(&self) -> &Self::Item {
-            &self.item
-        }
-    }
-
-    #[derive(Debug, Clone, Serialize, Deserialize)]
-    pub struct FloatDetail {
-        title: String,
-        item: f64,
-    }
-
-    impl Detail for FloatDetail {
-        type Item = f64;
-
-        fn title(&self) -> &str {
-            &self.title
-        }
-
-        fn item(&self) -> &Self::Item {
-            &self.item
-        }
-    }
-
-    #[derive(Debug, Clone, Serialize, Deserialize)]
-    pub struct TextDetail {
-        title: String,
-        item: String,
-    }
-
-    impl Detail for TextDetail {
-        type Item = String;
-
-        fn title(&self) -> &str {
-            &self.title
-        }
-
-        fn item(&self) -> &Self::Item {
-            &self.item
-        }
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct MetaData {
-    details: Vec<FixedDetails>,
+    details: Vec<Detail>,
 }
 
 impl MetaData {
@@ -193,57 +93,30 @@ impl MetaData {
             details: Vec::new(),
         }
     }
+
+    #[inline(always)]
+    pub fn empty() -> Self {
+        Self::new()
+    }
+
     pub fn get<T>(&self, _title: &str) -> &T {
         todo!()
     }
 
-    pub fn details(&self) -> &Vec<FixedDetails> {
+    pub fn details(&self) -> &Vec<Detail> {
         &self.details
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct GenID {
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ID {
     value: String,
 }
 
-impl GenID {
-    pub fn generate() -> Self {
+impl ID {
+    pub fn random() -> Self {
         Self {
             value: crate::sec::quick_id(),
         }
-    }
-}
-
-pub struct UnitManager {
-    _db: Arc<Mutex<dyn UnitBase>>,
-}
-
-impl UnitManager {
-    pub fn all_units(&self) -> f64 {
-        todo!()
-    }
-
-    pub fn all_units_raw(&self) -> u128 {
-        todo!()
-    }
-}
-
-pub struct Unit {
-    val: u64,
-    cat: GenID,
-}
-
-impl Unit {
-    pub fn get_value(&self) -> f64 {
-        todo!()
-    }
-
-    pub fn get_value_raw(&self) -> u64 {
-        self.val
-    }
-
-    pub fn id(&self) -> GenID {
-        self.cat.clone()
     }
 }

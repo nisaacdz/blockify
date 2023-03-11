@@ -1,8 +1,9 @@
 use std::slice::Iter;
 
 use crate::{
+    axs::unit::Units,
     errs::BlockBaseErrs,
-    refs::{Range, TimeStamp, ToTimeStamp, Unit},
+    refs::{Range, TimeStamp, ToTimeStamp},
     trans::{blocks::Block, record::Record},
 };
 
@@ -59,10 +60,9 @@ pub trait BlockBase<B: BlockBaseInsertable<R, X>, R: RecordBaseInsertable<X>, X:
         self.count_rows(R::name())
     }
 
-    ///
     fn count_rows(&self, table_name: &str) -> Option<u64>;
 
-    /// Checks if there is a table with name `table_name` present in the database
+    /// Checks if there is a table with the given name present in the database
     fn table_exists(&self, table_name: &str) -> bool;
 
     /// Inserts the given `BlockBaseInsertable` item into its table in the database
@@ -102,5 +102,5 @@ pub trait BlockBase<B: BlockBaseInsertable<R, X>, R: RecordBaseInsertable<X>, X:
 }
 
 pub trait UnitBase {
-    fn units(&self, entity: &[u8]) -> Option<Vec<Unit>>;
+    fn units(&self, peer: &[u8]) -> Option<Vec<Units>>;
 }

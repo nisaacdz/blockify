@@ -112,7 +112,7 @@ impl<R: Record> BlockBuilder<R> {
         self.records.push(item);
         match self.merkle.lock() {
             Ok(mut mg) => {
-                mg.insert(hash);
+                mg.push(hash);
                 Ok(())
             }
             Err(_) => Err(BError::CannotUpdateMerkleRoot),

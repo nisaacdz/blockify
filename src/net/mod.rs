@@ -1,13 +1,13 @@
 use crate::{
     sec::errs::Failure,
-    trans::record::{Record, SignedRecord}, refs::Unit,
+    trans::record::{Record, SignedRecord},
 };
 
 pub mod node;
 
 pub trait Peer<R: Record> {
     fn public_key(&self) -> &[u8];
-    fn units(&self) -> &Unit;
+    fn units(&self) -> &crate::axs::unit::Units;
     fn sign_record(
         &self,
         record: R,

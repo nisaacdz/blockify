@@ -40,4 +40,8 @@ impl Chain {
             None => Err(ChainBaseErrs::NoSuchChain),
         }
     }
+
+    pub fn unroll(&self) -> bool {
+        todo!()
+    }
 }

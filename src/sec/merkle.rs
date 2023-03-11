@@ -7,7 +7,6 @@ pub struct MerkleNode {
 }
 
 impl MerkleNode {
-    /// Creates a new MerkleNode with the given hash and children.
     pub fn build(
         hash: Vec<u8>,
         left: Option<MerkleNode>,
@@ -29,6 +28,10 @@ impl MerkleNode {
             center: None,
             right: None,
         }
+    }
+
+    pub fn dummy() -> Self {
+        Self::new()
     }
 
     /// Returns the hash of the node.
@@ -60,9 +63,15 @@ pub struct MerkleTree {
 impl MerkleTree {
     /// Creates a new Merkle tree from the given leaf node hashes.
     pub fn new() -> Self {
-        let left = MerkleNode::new();
-        let center = MerkleNode::new();
-        let dummy_root = MerkleNode::build(super::random_sha256(), Some(left), Some(center), None);
+        let left = MerkleNode::dummy();
+        let center = MerkleNode::dummy();
+        let right = MerkleNode::dummy();
+        let dummy_root = MerkleNode::build(
+            super::random_sha256(),
+            Some(left),
+            Some(center),
+            Some(right),
+        );
 
         Self {
             root: dummy_root,
@@ -75,7 +84,7 @@ impl MerkleTree {
         &self.root.hash
     }
 
-    pub fn insert(&mut self, hash: Vec<u8>) {
+    pub fn push(&mut self, hash: Vec<u8>) {
         self.size += 1;
 
         let left_hash = self.root.left().as_deref().unwrap().hash();
@@ -122,6 +131,10 @@ impl MerkleTree {
 
             self.root = new_node;
         }
+    }
+
+    pub fn pop(&self) -> bool {
+        todo!()
     }
 
     pub fn size(&self) -> usize {
