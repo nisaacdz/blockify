@@ -4,7 +4,7 @@ use chrono::{Datelike, Timelike};
 
 use crate::axs::detail::Detail;
 
-#[derive(Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub struct TimeStamp {
     millis: u8,
     second: u8,
@@ -32,7 +32,7 @@ pub trait ToTimeStamp {
     fn to_local_timestamp(&self) -> TimeStamp;
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub struct Range {
     begin: u64,
     end: u64,
