@@ -1,12 +1,12 @@
 # BLOCKIFY
 
 
-A Rust blockchain library could provide the building blocks for creating a full-fledged blockchain application or platform, allowing developers to focus on the higher-level features of their project without worrying about the low-level details of block validation, data serialization, and cryptographic operations.
+A Rust blockchain library could provide the building blocks for creating a full-fledged blockchain application or platform, allowing you to focus on the higher-level features of your project without worrying about the low-level details of block validation, data serialization, and cryptographic operations.
 
 
 
 
-# MODULES
+# FEATURES
 
 
 ## IO - Data storage layer
@@ -29,6 +29,22 @@ This layer is responsible for handling transactions on the blockchain, including
 This layer is responsible for verifying blocks and broadcasts as well as various
 logics for mining and validating data.
 
+
+
+
+
+
+
+
+
+# Contributing
+
+Contributions to this project are welcome. If you find a bug or want to suggest an improvement, please create an issue or submit a pull request.
+
+
+# License
+
+This project is licensed under the MIT License.
 
 
 

@@ -1,10 +1,12 @@
-use serde::{Deserialize, Serialize, Serializer};
+use serde::{Deserialize, Serialize};
 
 use crate::{
     io::RecordBaseInsertable,
     refs::MetaData,
     sec::{self, errs::Failure},
 };
+
+use super::algos::KeyPairAlgorithm;
 
 /// # Disclaimer
 /// In this context, a `Record` object is any data or information that needs to be
@@ -39,14 +41,14 @@ use crate::{
 /// data is securely and transparently recorded on the blockchain, with all the benefits
 /// of decentralization, transparency, and immutability that blockchain technology provides.
 
-pub trait Record: Serialize + Clone + for<'a> Deserialize<'a> {
+pub trait Record: Serialize + Clone + for<'de> Deserialize<'de> {
     fn sign(
         &self,
         public_key: &[u8],
         private_key: &[u8],
-        algorithm: &'static dyn ring::signature::VerificationAlgorithm,
+        algorithm: KeyPairAlgorithm,
     ) -> Result<SignedRecord<Self>, Failure> {
-        sec::sign(self, public_key, private_key, algorithm)
+        sec::sign(self, public_key, private_key, algorithm, self.metadata())
     }
 
     fn hash(&self) -> Vec<u8> {
@@ -59,38 +61,24 @@ pub trait Record: Serialize + Clone + for<'a> Deserialize<'a> {
 const RECORDS: [&'static str; 3] = ["Record", "Signature", "Signer"];
 const NAME: &'static str = "Records";
 
-#[derive(Debug, Clone)]
+#[derive(Serialize, Debug, Clone)]
 pub struct SignedRecord<R: Record> {
     signer: Vec<u8>,
     signature: Vec<u8>,
     hash: Vec<u8>,
     record: R,
-    algorithm: &'static dyn ring::signature::VerificationAlgorithm,
-}
-
-impl<R: Record> Serialize for SignedRecord<R> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let br = bincode::serialize(self.record()).unwrap();
-
-        let bytes = [&br, self.signer(), self.signature(), self.hash()];
-        let n = bytes.into_iter().fold(0, |acc, v| acc + v.len());
-        let mut col = Vec::with_capacity(n);
-
-        bytes
-            .into_iter()
-            .for_each(|v| v.into_iter().for_each(|x| col.push(*x)));
-
-        serializer.serialize_bytes(&col)
-    }
+    algorithm: KeyPairAlgorithm,
+    metadata: MetaData,
 }
 
 impl<R: Record> SignedRecord<R> {
     pub fn new(
         record: R,
         signature: Vec<u8>,
-        algorithm: &'static dyn ring::signature::VerificationAlgorithm,
+        algorithm: KeyPairAlgorithm,
         public_key: &[u8],
         hash: Vec<u8>,
+        metadata: MetaData,
     ) -> Self {
         Self {
             record,
@@ -98,6 +86,7 @@ impl<R: Record> SignedRecord<R> {
             hash,
             signer: public_key.to_vec(),
             algorithm,
+            metadata,
         }
     }
 
@@ -113,7 +102,7 @@ impl<R: Record> SignedRecord<R> {
         &self.signer
     }
 
-    pub fn algorithm(&self) -> &'static dyn ring::signature::VerificationAlgorithm {
+    pub fn algorithm(&self) -> KeyPairAlgorithm {
         self.algorithm
     }
 

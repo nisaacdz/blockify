@@ -1,19 +1,16 @@
-use std::{
-    collections::{HashMap, HashSet},
-    sync::{Arc, Mutex, RwLock},
-};
+use std::{sync::{Mutex, RwLock, Arc}, collections::HashSet};
 
-use crate::trans::{chain::Chain, record::SignedRecord};
+use crate::{trans::{chain::Chain, record::{SignedRecord, Record}}, io::{NodeRecord, MemPool}, refs::ID};
 
-use super::{Peer, Pusher, Record};
+use super::{Miner, Peer};
 
 #[derive(Clone, Debug)]
 pub struct NodeId {
-    pub id: u128,
+    pub id: ID,
     pub address: String,
 }
 
-pub struct Node<R: Record> {
+pub struct Node {
     /// An instance of the blockchain held by this node
     pub chain: Arc<Mutex<Chain>>,
 
@@ -22,14 +19,14 @@ pub struct Node<R: Record> {
     pub id: NodeId,
 
     /// Connected peers
-    pub peers: HashSet<Box<dyn Peer<R>>>,
+    pub peers: HashSet<Arc<RwLock<dyn Peer>>>,
 
     /// A set of unconfirmed records held by this Node
-    pub mem_pool: Arc<Mutex<Vec<SignedRecord<R>>>>,
+    pub mem_pool: Arc<RwLock<dyn MemPool>>,
 
     /// A map of confirmed and published records cast and signed by each user
     /// Only records between members of this Node are kept within this node
-    pub transactions: Arc<Mutex<HashMap<u32, HashSet<R>>>>,
+    pub transactions: Arc<Mutex<dyn NodeRecord>>,
 
     /// A copy of the blockchain containing records that
     /// are relevant to peers in this Node
@@ -41,7 +38,18 @@ pub struct Node<R: Record> {
     /// A network can be for diverse purposes
     pub network: Arc<Mutex<Vec<NodeId>>>,
 
-    pub miners: Arc<RwLock<Vec<Box<dyn Pusher>>>>,
+    pub miners: Arc<RwLock<Vec<Box<dyn Miner>>>>,
 
     pub units: crate::axs::unit::UnitManager,
+}
+
+impl Node {
+    pub async fn broadcast<R: Record>(&self, block: SignedRecord<R>) {
+        todo!()
+    }
+
+    pub fn poll_mem_pool<R: Record>(&self) -> Option<SignedRecord<R>>{
+        todo!()
+    }
+    
 }

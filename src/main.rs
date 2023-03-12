@@ -8,6 +8,11 @@ use blockify::{
 mod test;
 
 fn main() {
+    
+}
+
+
+fn test_co() {
     let election_id = ID::random();
 
     let keypair = blockify::sec::generate_key_pair();

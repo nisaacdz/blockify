@@ -104,3 +104,14 @@ pub trait BlockBase<B: BlockBaseInsertable<R, X>, R: RecordBaseInsertable<X>, X:
 pub trait UnitBase {
     fn units(&self, peer: &[u8]) -> Option<Vec<Units>>;
 }
+
+pub trait MemPool {
+    fn pool_raw(&self) -> Vec<String>;
+    fn append(&self) -> bool;
+    fn poll(&self) -> String;
+    fn size(&self) -> u64;
+}
+
+pub trait NodeRecord {
+    fn records_of(&self, peer: &[u8]) -> Vec<String>;
+}

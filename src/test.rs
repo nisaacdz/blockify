@@ -70,7 +70,7 @@ impl Voter {
     }
 }
 
-impl Peer<Vote> for Voter {
+impl Peer for Voter {
     fn public_key(&self) -> &[u8] {
         &self.id
     }
@@ -142,6 +142,10 @@ pub trait CandidatesBase {
     fn all_candidates(&self) -> Rc<dyn Iterator<Item = Candidate>>;
     fn add(&mut self, candidate: Candidate) -> bool;
     fn drop(&mut self, candidate: Candidate) -> bool;
+}
+
+pub struct Centers {
+
 }
 
 pub struct MyVoteDB {
