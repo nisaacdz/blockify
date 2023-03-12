@@ -61,13 +61,13 @@ pub fn random_bytes5() -> [u8; 5] {
     bytes
 }
 
-pub fn random_bytes(len: usize) -> [u8] {
+pub fn random_bytes(len: usize) -> Vec<u8> {
     let mut bytes = vec![0; 5];
-    thread_rng().fill(&mut bytes);
+    thread_rng().fill(&mut bytes[..]);
     bytes
 }
 
-pub fn quick_id(len: i32) -> String {
+pub fn quick_id(len: usize) -> String {
     hex::encode(random_bytes(len))
 }
 
