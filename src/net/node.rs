@@ -1,6 +1,16 @@
-use std::{sync::{Mutex, RwLock, Arc}, collections::HashSet};
+use std::{
+    collections::HashSet,
+    sync::{Arc, Mutex, RwLock},
+};
 
-use crate::{trans::{chain::Chain, record::{SignedRecord, Record}}, io::{NodeRecord, MemPool}, refs::ID};
+use crate::{
+    io::{MemPool, NodeRecord},
+    refs::ID,
+    trans::{
+        chain::Chain,
+        record::{Record, SignedRecord},
+    },
+};
 
 use super::{Miner, Peer};
 
@@ -11,31 +21,20 @@ pub struct NodeId {
 }
 
 pub struct Node {
-    /// An instance of the blockchain held by this node
     pub chain: Arc<Mutex<Chain>>,
 
-    /// Contains a unique identifier for this Node
-    /// and it's associated Ip Address
     pub id: NodeId,
 
-    /// Connected peers
     pub peers: HashSet<Arc<RwLock<dyn Peer>>>,
 
-    /// A set of unconfirmed records held by this Node
     pub mem_pool: Arc<RwLock<dyn MemPool>>,
 
-    /// A map of confirmed and published records cast and signed by each user
-    /// Only records between members of this Node are kept within this node
+    pub pending: Arc<RwLock<dyn MemPool>>,
+
     pub transactions: Arc<Mutex<dyn NodeRecord>>,
 
-    /// A copy of the blockchain containing records that
-    /// are relevant to peers in this Node
-    ///
     pub local_chain: Chain,
 
-    /// Network of nodes connected to this node
-    ///
-    /// A network can be for diverse purposes
     pub network: Arc<Mutex<Vec<NodeId>>>,
 
     pub miners: Arc<RwLock<Vec<Box<dyn Miner>>>>,
@@ -48,8 +47,13 @@ impl Node {
         todo!()
     }
 
-    pub fn poll_mem_pool<R: Record>(&self) -> Option<SignedRecord<R>>{
-        todo!()
+    pub fn poll_mem_pool<R: Record>(&self) -> Option<SignedRecord<R>> {
+        match self.mem_pool.write() {
+            Ok(v) => match serde_json::from_str::<SignedRecord<R>>(&v.poll()) {
+                Ok(k) => return Some(k),
+                Err(_) => return None,
+            },
+            _ => return None,
+        }
     }
-    
 }

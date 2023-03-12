@@ -9,10 +9,10 @@ use sha2::{
 };
 
 use crate::{
+    axs::algos::KeyPairAlgorithm,
     errs::*,
     refs::{MetaData, Range, TimeStamp},
     trans::{
-        algos::KeyPairAlgorithm,
         blocks::BlockBuilder,
         record::{Record, SignedRecord},
     },
@@ -62,7 +62,7 @@ pub fn random_bytes5() -> [u8; 5] {
 }
 
 pub fn random_bytes(len: usize) -> Vec<u8> {
-    let mut bytes = vec![0; 5];
+    let mut bytes = vec![0; len];
     thread_rng().fill(&mut bytes[..]);
     bytes
 }
@@ -184,7 +184,10 @@ pub fn verify_signature(
     let signature = untrusted::Input::from(signature);
 
     match algo {
-        KeyPairAlgorithm::ED25519 => ring::signature::ED25519.verify(public_key, msg, signature),
+        KeyPairAlgorithm::Ed25519 => ring::signature::ED25519.verify(public_key, msg, signature),
+        KeyPairAlgorithm::Ecdsa => {
+            ring::signature::ECDSA_P256_SHA256_ASN1.verify(public_key, msg, signature)
+        }
     }
 }
 

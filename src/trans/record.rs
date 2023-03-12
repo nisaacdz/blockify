@@ -1,12 +1,11 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    axs::algos::KeyPairAlgorithm,
     io::RecordBaseInsertable,
     refs::MetaData,
     sec::{self, errs::Failure},
 };
-
-use super::algos::KeyPairAlgorithm;
 
 /// # Disclaimer
 /// In this context, a `Record` object is any data or information that needs to be
@@ -105,7 +104,7 @@ impl<R: Record> SignedRecord<R> {
     pub fn algorithm(&self) -> KeyPairAlgorithm {
         self.algorithm
     }
-    
+
     pub fn verify_signature(&self) -> Result<(), ring::error::Unspecified> {
         let msg = bincode::serialize(self.record()).unwrap();
         sec::verify_signature(&msg, &self.signature, &self.signer, self.algorithm)

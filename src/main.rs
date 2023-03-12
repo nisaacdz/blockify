@@ -1,12 +1,12 @@
 use std::sync::{Arc, Mutex};
 
 use blockify::{
-    axs::unit::{Micron, Units},
-    refs::ID,
-    trans::{
+    axs::{
         algos::KeyPairAlgorithm,
-        record::{Record, SignedRecord},
+        unit::{Micron, Units},
     },
+    refs::ID,
+    trans::record::{Record, SignedRecord},
 };
 use serde::{Deserialize, Serialize};
 
@@ -30,7 +30,7 @@ fn my_func() {
     let trans = Trans(1, "Hello".to_owned(), false);
 
     let sg = trans
-        .sign(kp.public_key(), kp.private_key(), KeyPairAlgorithm::ED25519)
+        .sign(kp.public_key(), kp.private_key(), KeyPairAlgorithm::Ed25519)
         .unwrap();
     let ss = serde_json::to_string(&sg).unwrap();
     let res = match serde_json::from_str::<SignedRecord<Trans>>(&ss) {

@@ -5,9 +5,4 @@ use serde::{Serialize, Deserialize};
 pub enum KeyPairAlgorithm {
     Ed25519,
     Ecdsa,
-    EcdsaFixed,
-}
-
-fn hi() {
-    let s = ring::signature::ECDSA_P256_SHA256_FIXED
 }
