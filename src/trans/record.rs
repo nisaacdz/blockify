@@ -102,7 +102,11 @@ impl<R: Record> SignedRecord<R> {
     pub fn algorithm(&self) -> &KeyPairAlgorithm {
         &self.algorithm
     }
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> 00a601c74c099bbaa286a615177d5a4896c58884
     pub fn verify_signature(&self) -> Result<(), ring::error::Unspecified> {
         let msg = bincode::serialize(self.record()).unwrap();
         sec::verify_signature(&msg, &self.signature, &self.signer, &self.algorithm)
