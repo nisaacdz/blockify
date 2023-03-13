@@ -6,25 +6,16 @@ use blockify::{
         unit::{Micron, Units},
     },
     refs::ID,
-<<<<<<< HEAD
-    trans::record::{Record, SignedRecord},
-=======
     trans::{
-        algos::KeyPairAlgorithm,
         record::{Record, SignedRecord},
     },
->>>>>>> 00a601c74c099bbaa286a615177d5a4896c58884
 };
 use serde::{Deserialize, Serialize};
 
 mod test;
 
 fn main() {
-<<<<<<< HEAD
-    test_co()
-=======
     my_func()
->>>>>>> 00a601c74c099bbaa286a615177d5a4896c58884
 }
 
 fn my_func() {
@@ -41,11 +32,7 @@ fn my_func() {
     let trans = Trans(1, "Hello".to_owned(), false);
 
     let sg = trans
-<<<<<<< HEAD
         .sign(kp.public_key(), kp.private_key(), KeyPairAlgorithm::Ed25519)
-=======
-        .sign(kp.public_key(), kp.private_key(), KeyPairAlgorithm::ED25519)
->>>>>>> 00a601c74c099bbaa286a615177d5a4896c58884
         .unwrap();
     let ss = serde_json::to_string(&sg).unwrap();
     let res = match serde_json::from_str::<SignedRecord<Trans>>(&ss) {
