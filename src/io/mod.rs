@@ -33,11 +33,9 @@ pub trait BlockBaseInsertable<R: RecordBaseInsertable<X>, X: Record> {
         timestamp: TimeStamp,
         range: Range,
         position: u64,
-    ) -> Block<X>;
+    ) -> Block;
 }
 
-/// This considers the implementing struct fit for inserting into the blockchain
-/// as an individual record
 pub trait RecordBaseInsertable<X: Record> {
     fn name() -> &'static str;
 
@@ -47,9 +45,6 @@ pub trait RecordBaseInsertable<X: Record> {
 }
 
 pub trait BlockBase<B: BlockBaseInsertable<R, X>, R: RecordBaseInsertable<X>, X: Record> {
-    /// Creates a new table with the given name and columns, if table doesn't already exist.
-    /// `ALL` columns are stored as text
-    /// `Ok(())` value indicates success whiles `BlockBaseErrs` indicate different failures
     fn create_table(&mut self, table_name: &str, colums: &[&str]) -> Result<(), BlockifyError>;
 
     fn number_of_blocks(&self) -> Option<u64> {
@@ -62,11 +57,9 @@ pub trait BlockBase<B: BlockBaseInsertable<R, X>, R: RecordBaseInsertable<X>, X:
 
     fn count_rows(&self, table_name: &str) -> Option<u64>;
 
-    /// Checks if there is a table with the given name present in the database
     fn table_exists(&self, table_name: &str) -> bool;
 
-    /// Inserts the given `BlockBaseInsertable` item into its table in the database
-    fn insert(&mut self, block: B) -> Result<Block<X>, BlockifyError> {
+    fn insert(&mut self, block: B) -> Result<Block, BlockifyError> {
         let begin = match self.count_rows(R::name()) {
             Some(v) => v,
             _ => return Err(BlockifyError::new(&format!("No Such Table: {}", R::name()))),
@@ -99,6 +92,8 @@ pub trait BlockBase<B: BlockBaseInsertable<R, X>, R: RecordBaseInsertable<X>, X:
     fn insert_block(&self, insertion: &[String]) -> Result<(), BlockifyError>;
 
     fn prev_hash_or_default(&self) -> Result<Vec<u8>, BlockifyError>;
+
+    fn view_records(&self, range: Range) -> Result<Vec<R>, BlockifyError>;
 }
 
 pub trait UnitBase {
