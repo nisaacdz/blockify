@@ -1,8 +1,8 @@
-use std::{marker::PhantomData, slice::Iter};
+use std::slice::Iter;
 
 use crate::{
     errs::BlockifyError,
-    io::BlockBaseInsertable,
+    io::{BlockBase, BlockBaseInsertable},
     refs::{Range, TimeStamp},
     sec::merkle::MerkleTree,
 };
@@ -13,7 +13,7 @@ const COLUMNS: [&'static str; 5] = ["Hash", "Previous", "Merkle", "Range", "Time
 
 const TITLE: &'static str = "Blockchain";
 
-pub struct Block<R: Record> {
+pub struct Block {
     nonce: u64,
     position: u64,
     time_stamp: TimeStamp,
@@ -21,10 +21,9 @@ pub struct Block<R: Record> {
     prev_block_hash: Vec<u8>,
     merkle_root: Vec<u8>,
     records_range: Range,
-    phantom_data: PhantomData<R>,
 }
 
-impl<R: Record> Block<R> {
+impl Block {
     pub fn new(
         nonce: u64,
         position: u64,
@@ -42,7 +41,6 @@ impl<R: Record> Block<R> {
             prev_block_hash,
             merkle_root,
             records_range: range,
-            phantom_data: PhantomData,
         }
     }
 
@@ -73,6 +71,13 @@ impl<R: Record> Block<R> {
     pub fn records_range(&self) -> Range {
         self.records_range
     }
+
+    pub fn records<J: BlockBase<BlockBuilder<R>, SignedRecord<R>, R>, R: Record>(
+        &self,
+        rb: J,
+    ) -> Result<Vec<SignedRecord<R>>, BlockifyError> {
+        rb.view_records(self.records_range())
+    }
 }
 
 /// Nodes may keep instances of block Copy in their local chains
@@ -80,13 +85,13 @@ impl<R: Record> Block<R> {
 /// BlockCopy consists of the original block and other metadata
 ///
 
-pub struct BlockCopy<R: Record> {
-    block: Block<R>,
+pub struct BlockCopy {
+    block: Block,
     local_position: u64,
 }
 
-impl<R: Record> BlockCopy<R> {
-    pub fn original_block(&self) -> &Block<R> {
+impl BlockCopy {
+    pub fn original_block(&self) -> &Block {
         &self.block
     }
 
@@ -148,7 +153,7 @@ impl<R: Record> BlockBaseInsertable<SignedRecord<R>, R> for BlockBuilder<R> {
         time_stamp: TimeStamp,
         range: Range,
         position: u64,
-    ) -> Block<R> {
+    ) -> Block {
         Block::new(
             self.nonce,
             position,

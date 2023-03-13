@@ -25,15 +25,12 @@ pub struct Chain {
 }
 
 impl Chain {
-    pub fn append<'a, X: Record>(
-        &self,
-        data: BlockBuilder<X>,
-    ) -> Result<Block<X>, BlockifyError> {
+    pub fn append<'a, X: Record>(&self, data: BlockBuilder<X>) -> Result<Block, BlockifyError> {
         match self.cb.get_base::<X>() {
             Some(bb) => match bb.lock() {
                 Ok(mut val) => match val.borrow_mut().insert(data) {
                     Ok(v) => Ok(v),
-                    Err(e) => Err(BlockifyError::unknown()),
+                    Err(_) => Err(BlockifyError::unknown()),
                 },
                 Err(_) => Err(BlockifyError::new("Poisoned Mutex")),
             },
