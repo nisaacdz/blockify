@@ -3,7 +3,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use crate::{errs::*, io::BlockBase};
+use crate::{errs::BlockifyError, io::BlockBase};
 
 use super::{
     blocks::{Block, BlockBuilder},
@@ -28,16 +28,16 @@ impl Chain {
     pub fn append<'a, X: Record>(
         &self,
         data: BlockBuilder<X>,
-    ) -> Result<Block<X>, ChainBaseErrs<X>> {
+    ) -> Result<Block<X>, BlockifyError> {
         match self.cb.get_base::<X>() {
             Some(bb) => match bb.lock() {
                 Ok(mut val) => match val.borrow_mut().insert(data) {
                     Ok(v) => Ok(v),
-                    Err(e) => Err(ChainBaseErrs::FromBlockBaseErrs(e)),
+                    Err(e) => Err(BlockifyError::unknown()),
                 },
-                Err(_) => Err(ChainBaseErrs::PoisonedMutex),
+                Err(_) => Err(BlockifyError::new("Poisoned Mutex")),
             },
-            None => Err(ChainBaseErrs::NoSuchChain),
+            None => Err(BlockifyError::new("No Such Chain")),
         }
     }
 

@@ -1,7 +1,7 @@
 use std::{marker::PhantomData, slice::Iter};
 
 use crate::{
-    errs::BError,
+    errs::BlockifyError,
     io::BlockBaseInsertable,
     refs::{Range, TimeStamp},
     sec::merkle::MerkleTree,
@@ -107,7 +107,7 @@ impl<R: Record> BlockBuilder<R> {
         &self.merkle_root
     }
 
-    pub fn push(&mut self, item: SignedRecord<R>) -> Result<(), BError> {
+    pub fn push(&mut self, item: SignedRecord<R>) -> Result<(), BlockifyError> {
         let hash = item.hash().to_vec();
         self.records.push(item);
         match self.merkle.lock() {
@@ -115,7 +115,7 @@ impl<R: Record> BlockBuilder<R> {
                 mg.push(hash);
                 Ok(())
             }
-            Err(_) => Err(BError::CannotUpdateMerkleRoot),
+            Err(_) => Err(BlockifyError::new("Cannot Update Merkle Root")),
         }
     }
 

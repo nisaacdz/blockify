@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 mod test;
 
 fn main() {
-    my_func()
+    test_co()
 }
 
 fn my_func() {

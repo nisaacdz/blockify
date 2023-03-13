@@ -1,10 +1,8 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    axs::algos::KeyPairAlgorithm,
-    io::RecordBaseInsertable,
-    refs::MetaData,
-    sec::{self, errs::Failure},
+    axs::algos::KeyPairAlgorithm, errs::BlockifyError, io::RecordBaseInsertable, refs::MetaData,
+    sec,
 };
 
 /// # Disclaimer
@@ -46,7 +44,7 @@ pub trait Record: Serialize + for<'a> Deserialize<'a> + Clone {
         public_key: &[u8],
         private_key: &[u8],
         algorithm: KeyPairAlgorithm,
-    ) -> Result<SignedRecord<Self>, Failure> {
+    ) -> Result<SignedRecord<Self>, BlockifyError> {
         sec::sign(self, public_key, private_key, algorithm, self.metadata())
     }
 
@@ -101,13 +99,13 @@ impl<R: Record> SignedRecord<R> {
         &self.signer
     }
 
-    pub fn algorithm(&self) -> KeyPairAlgorithm {
-        self.algorithm
+    pub fn algorithm(&self) -> &KeyPairAlgorithm {
+        &self.algorithm
     }
 
     pub fn verify_signature(&self) -> Result<(), ring::error::Unspecified> {
         let msg = bincode::serialize(self.record()).unwrap();
-        sec::verify_signature(&msg, &self.signature, &self.signer, self.algorithm)
+        sec::verify_signature(&msg, &self.signature, &self.signer, &self.algorithm)
     }
 
     pub fn hash(&self) -> &[u8] {

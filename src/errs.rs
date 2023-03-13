@@ -1,30 +1,62 @@
-use crate::trans::record::{Record, SignedRecord};
+use serde::{Deserialize, Serialize};
 
-pub enum Errs<'b, R: Record> {
-    InvalidRecord(&'b SignedRecord<R>),
-    InvalidBlockItem(&'b SignedRecord<R>),
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Hash, thiserror::Error)]
+pub struct BlockifyError {
+    msg: String,
 }
 
-pub enum GenErrs {
-    InvalidPublicKey,
-    InvalidPrivateKey,
-    InvalidSignature,
-    FailedVerification,
+impl std::fmt::Display for BlockifyError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        std::fmt::Debug::fmt(self, f)
+    }
 }
 
-pub enum BlockBaseErrs {
-    NoSuchTable(String),
-}
+impl BlockifyError {
+    pub fn emptytable() -> Self {
+        Self {
+            msg: String::from("Empty Table"),
+        }
+    }
 
-pub enum ChainBaseErrs<R: Record> {
-    NoSuchChain,
-    PoisonedMutex,
-    VerificationFailed,
-    InvalidRecordInBlock(SignedRecord<R>),
-    FromBlockBaseErrs(BlockBaseErrs),
-    UnknownErrs,
-}
+    pub fn unknown() -> Self {
+        Self {
+            msg: String::from("Unknown Error"),
+        }
+    }
 
-pub enum BError {
-    CannotUpdateMerkleRoot,
+    pub fn invalid_signature() -> Self {
+        Self {
+            msg: String::from("Invalid Signature"),
+        }
+    }
+
+    pub fn invalid_signer() -> Self {
+        Self {
+            msg: String::from("Invalid Public Key"),
+        }
+    }
+
+    pub fn invalid_key() -> Self {
+        Self {
+            msg: String::from("Invalid Private Key"),
+        }
+    }
+
+    pub fn failed_verification() -> Self {
+        Self {
+            msg: String::from("Failed Verification"),
+        }
+    }
+
+    pub fn invalid_record() -> Self {
+        Self {
+            msg: String::from("Invalid Record"),
+        }
+    }
+
+    pub fn new(msg: &str) -> Self {
+        Self {
+            msg: msg.to_owned(),
+        }
+    }
 }
