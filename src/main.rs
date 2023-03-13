@@ -1,16 +1,47 @@
 use std::sync::{Arc, Mutex};
 
 use blockify::{
-    axs::unit::{Micron, Units},
+    axs::{
+        algos::KeyPairAlgorithm,
+        unit::{Micron, Units},
+    },
     refs::ID,
+    trans::record::{Record, SignedRecord},
 };
+use serde::{Deserialize, Serialize};
 
 mod test;
 
 fn main() {
-    
+    test_co()
 }
 
+fn my_func() {
+    #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+    struct Trans(i32, String, bool);
+
+    impl Record for Trans {
+        fn metadata(&self) -> blockify::refs::MetaData {
+            blockify::refs::MetaData::empty()
+        }
+    }
+
+    let kp = blockify::sec::generate_key_pair();
+    let trans = Trans(1, "Hello".to_owned(), false);
+
+    let sg = trans
+        .sign(kp.public_key(), kp.private_key(), KeyPairAlgorithm::Ed25519)
+        .unwrap();
+    let ss = serde_json::to_string(&sg).unwrap();
+    let res = match serde_json::from_str::<SignedRecord<Trans>>(&ss) {
+        Ok(v) => v,
+        Err(_) => panic!("Failure !"),
+    };
+
+    res.verify_signature().unwrap();
+
+    assert_eq!(sg, res);
+}
 
 fn test_co() {
     let election_id = ID::random();
@@ -36,7 +67,7 @@ fn test_co() {
     let mut records = vec![];
     for voter in voters {
         records.push(voter.cast_vote(cid.clone(), keypair.private_key(), db.clone()));
-    };
+    }
 
     print!("{:?}", records);
 }

@@ -1,12 +1,9 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    io::RecordBaseInsertable,
-    refs::MetaData,
-    sec::{self, errs::Failure},
+    axs::algos::KeyPairAlgorithm, errs::BlockifyError, io::RecordBaseInsertable, refs::MetaData,
+    sec,
 };
-
-use super::algos::KeyPairAlgorithm;
 
 /// # Disclaimer
 /// In this context, a `Record` object is any data or information that needs to be
@@ -41,13 +38,13 @@ use super::algos::KeyPairAlgorithm;
 /// data is securely and transparently recorded on the blockchain, with all the benefits
 /// of decentralization, transparency, and immutability that blockchain technology provides.
 
-pub trait Record: Serialize + Clone + for<'de> Deserialize<'de> {
+pub trait Record: Serialize + for<'a> Deserialize<'a> + Clone {
     fn sign(
         &self,
         public_key: &[u8],
         private_key: &[u8],
         algorithm: KeyPairAlgorithm,
-    ) -> Result<SignedRecord<Self>, Failure> {
+    ) -> Result<SignedRecord<Self>, BlockifyError> {
         sec::sign(self, public_key, private_key, algorithm, self.metadata())
     }
 
@@ -61,8 +58,8 @@ pub trait Record: Serialize + Clone + for<'de> Deserialize<'de> {
 const RECORDS: [&'static str; 3] = ["Record", "Signature", "Signer"];
 const NAME: &'static str = "Records";
 
-#[derive(Serialize, Debug, Clone)]
-pub struct SignedRecord<R: Record> {
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+pub struct SignedRecord<R> {
     signer: Vec<u8>,
     signature: Vec<u8>,
     hash: Vec<u8>,
@@ -102,23 +99,13 @@ impl<R: Record> SignedRecord<R> {
         &self.signer
     }
 
-    pub fn algorithm(&self) -> KeyPairAlgorithm {
-        self.algorithm
+    pub fn algorithm(&self) -> &KeyPairAlgorithm {
+        &self.algorithm
     }
-
-    /// Verifies the validity of the signature for this `SignedRecord` object.
-    /// Returns a boolean value indicating whether the signature
-    /// is valid or not.
-    ///
-    /// # Returns:
-    /// - `true` if the signature is valid for the record and the `verify_signature` function
-    /// returns `Ok(true)`.
-    /// - `false` if the signature is not valid or the `verify_signature` returns `Err(_)` or `Ok(false)`.
-    ///
 
     pub fn verify_signature(&self) -> Result<(), ring::error::Unspecified> {
         let msg = bincode::serialize(self.record()).unwrap();
-        sec::verify_signature(&msg, &self.signature, &self.signer, self.algorithm)
+        sec::verify_signature(&msg, &self.signature, &self.signer, &self.algorithm)
     }
 
     pub fn hash(&self) -> &[u8] {

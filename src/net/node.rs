@@ -1,6 +1,17 @@
-use std::{sync::{Mutex, RwLock, Arc}, collections::HashSet};
+use std::{
+    collections::HashSet,
+    sync::{Arc, Mutex, RwLock},
+};
 
-use crate::{trans::{chain::Chain, record::{SignedRecord, Record}}, io::{NodeRecord, MemPool}, refs::ID};
+use crate::{
+    errs::BlockifyError,
+    io::{MemPool, NodeRecord},
+    refs::ID,
+    trans::{
+        chain::Chain,
+        record::{Record, SignedRecord},
+    },
+};
 
 use super::{Miner, Peer};
 
@@ -11,31 +22,20 @@ pub struct NodeId {
 }
 
 pub struct Node {
-    /// An instance of the blockchain held by this node
     pub chain: Arc<Mutex<Chain>>,
 
-    /// Contains a unique identifier for this Node
-    /// and it's associated Ip Address
     pub id: NodeId,
 
-    /// Connected peers
     pub peers: HashSet<Arc<RwLock<dyn Peer>>>,
 
-    /// A set of unconfirmed records held by this Node
     pub mem_pool: Arc<RwLock<dyn MemPool>>,
 
-    /// A map of confirmed and published records cast and signed by each user
-    /// Only records between members of this Node are kept within this node
+    pub pending: Arc<RwLock<dyn MemPool>>,
+
     pub transactions: Arc<Mutex<dyn NodeRecord>>,
 
-    /// A copy of the blockchain containing records that
-    /// are relevant to peers in this Node
-    ///
     pub local_chain: Chain,
 
-    /// Network of nodes connected to this node
-    ///
-    /// A network can be for diverse purposes
     pub network: Arc<Mutex<Vec<NodeId>>>,
 
     pub miners: Arc<RwLock<Vec<Box<dyn Miner>>>>,
@@ -44,12 +44,44 @@ pub struct Node {
 }
 
 impl Node {
+    pub fn publish<R: Record>(&mut self, record: SignedRecord<R>) -> Result<(), BlockifyError> {
+        self.push_to_pending(&record)?;
+        todo!()
+    }
+
+    pub fn push_to_pending<R: Record>(
+        &mut self,
+        record: &SignedRecord<R>,
+    ) -> Result<(), BlockifyError> {
+        let record = match serde_json::to_string(record) {
+            Ok(v) => v,
+            Err(_) => {
+                return Err(BlockifyError::new(
+                    "Can't Convert record To String: Occurring At node.rs impl for Node",
+                ))
+            }
+        };
+
+        match self.pending.write() {
+            Err(_) => return Err(BlockifyError::new("Unable to acquire RwLock")),
+            Ok(mut v) => v.append(&record),
+        }
+    }
+
     pub async fn broadcast<R: Record>(&self, block: SignedRecord<R>) {
         todo!()
     }
 
-    pub fn poll_mem_pool<R: Record>(&self) -> Option<SignedRecord<R>>{
-        todo!()
+    pub fn poll_mem_pool<R: Record>(&self) -> Result<SignedRecord<R>, BlockifyError> {
+        match self.mem_pool.write() {
+            Ok(v) => match v.poll() {
+                Ok(val) => match serde_json::from_str::<SignedRecord<R>>(&val) {
+                    Ok(k) => return Ok(k),
+                    Err(_) => return Err(BlockifyError::new("Deserialization failed")),
+                },
+                Err(_) => todo!(),
+            },
+            _ => return Err(BlockifyError::new("Cannot Acquire RwLock")),
+        }
     }
-    
 }

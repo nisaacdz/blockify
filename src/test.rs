@@ -55,13 +55,13 @@ impl Voter {
         db: Arc<Mutex<dyn VotersBase>>,
     ) -> Option<SignedRecord<Vote>> {
         let vote = Vote::new(self.id.clone(), choice);
-        let r = match vote.sign(self.public_key(), key, todo!()) {
+        let r = match vote.sign(self.public_key(), key, blockify::axs::algos::KeyPairAlgorithm::Ed25519) {
             Ok(v) => v,
             _ => return None,
         };
 
         match db.lock() {
-            Ok(v) => match v.add_vote(r) {
+            Ok(mut v) => match v.add_vote(r.clone()) {
                 true => Some(r),
                 false => None,
             },

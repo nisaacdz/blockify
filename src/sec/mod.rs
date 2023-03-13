@@ -9,15 +9,14 @@ use sha2::{
 };
 
 use crate::{
+    axs::algos::KeyPairAlgorithm,
     errs::*,
     refs::{MetaData, Range, TimeStamp},
     trans::{
-        algos::KeyPairAlgorithm,
         blocks::BlockBuilder,
         record::{Record, SignedRecord},
     },
 };
-pub mod errs;
 pub mod merkle;
 
 type Hxsh = GenericArray<u8, UInt<UInt<UInt<UInt<UInt<UInt<UTerm, B1>, B0>, B0>, B0>, B0>, B0>>;
@@ -62,7 +61,7 @@ pub fn random_bytes5() -> [u8; 5] {
 }
 
 pub fn random_bytes(len: usize) -> Vec<u8> {
-    let mut bytes = vec![0; 5];
+    let mut bytes = vec![0; len];
     thread_rng().fill(&mut bytes[..]);
     bytes
 }
@@ -136,7 +135,7 @@ pub fn generate_key_pair() -> AuthKeyPair {
     AuthKeyPair(public_key, private_key)
 }
 
-pub fn sign_msg(msg: &[u8], key: &[u8]) -> Result<Vec<u8>, Failure> {
+pub fn sign_msg(msg: &[u8], key: &[u8]) -> Result<Vec<u8>, BlockifyError> {
     // Parse the private key
     match SecretKey::from_bytes(key) {
         Ok(secret) => {
@@ -148,9 +147,7 @@ pub fn sign_msg(msg: &[u8], key: &[u8]) -> Result<Vec<u8>, Failure> {
             let signature = keypair.sign(msg);
             Ok(signature.as_ref().to_vec())
         }
-        Err(_) => Err(Failure::SigningFailure(
-            errs::SigningFailures::InvalidPrivateKey,
-        )),
+        Err(_) => Err(BlockifyError::invalid_key()),
     }
 }
 
@@ -158,33 +155,34 @@ pub fn verify_signature_ed25519(
     msg: &[u8],
     signature: &[u8],
     signer: &[u8],
-) -> Result<bool, GenErrs> {
-    let dalek = Signature::from_bytes(signature).map_err(|_| GenErrs::InvalidSignature)?;
+) -> Result<(), BlockifyError> {
+    let dalek = Signature::from_bytes(signature).map_err(|_| BlockifyError::invalid_signature())?;
     match PublicKey::from_bytes(signer) {
         Ok(key) => match key.verify(msg, &dalek) {
-            Ok(_) => Ok(true),
-            Err(_) => Ok(false),
+            Ok(_) => Ok(()),
+            Err(_) => Err(BlockifyError::failed_verification()),
         },
-        Err(_) => Err(GenErrs::InvalidPublicKey),
+        Err(_) => Err(BlockifyError::invalid_signer()),
     }
 }
 
 use ring::signature::VerificationAlgorithm;
 
-use self::errs::Failure;
-
 pub fn verify_signature(
     msg: &[u8],
     signature: &[u8],
     signer: &[u8],
-    algo: KeyPairAlgorithm,
+    algo: &KeyPairAlgorithm,
 ) -> Result<(), ring::error::Unspecified> {
     let msg = untrusted::Input::from(msg);
     let public_key = untrusted::Input::from(signer);
     let signature = untrusted::Input::from(signature);
 
     match algo {
-        KeyPairAlgorithm::ED25519 => ring::signature::ED25519.verify(public_key, msg, signature),
+        KeyPairAlgorithm::Ed25519 => ring::signature::ED25519.verify(public_key, msg, signature),
+        KeyPairAlgorithm::Ecdsa => {
+            ring::signature::ECDSA_P256_SHA256_ASN1.verify(public_key, msg, signature)
+        }
     }
 }
 
@@ -194,7 +192,7 @@ pub fn sign<R: Record>(
     private_key: &[u8],
     algorithm: KeyPairAlgorithm,
     metadata: MetaData,
-) -> Result<SignedRecord<R>, errs::Failure> {
+) -> Result<SignedRecord<R>, BlockifyError> {
     let msg = bincode::serialize(record).unwrap();
     let signature = sign_msg(&msg, private_key)?;
     let hash = hash_bytes(&msg);
