@@ -1,6 +1,6 @@
 [package]
 name = "blockify"
-version = "0.1.0"
+version = "0.0.1"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -18,3 +18,10 @@ sha2 = "0.10.6"
 thiserror = "1.0.39"
 tokio = "1.26.0"
 untrusted = "0.7.0"
+
+[package.metadata]
+# set the crate as under development
+# this prevents someone else from uploading the same crate name to crates.io
+# while you are still working on it
+cargo-features = ["publish-lockfile"]
+publish-lockfile = true

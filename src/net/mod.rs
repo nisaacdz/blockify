@@ -1,4 +1,5 @@
 pub mod node;
+pub mod nodeserver;
 
 pub trait Peer {
     fn public_key(&self) -> &[u8];
