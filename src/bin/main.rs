@@ -17,5 +17,5 @@ fn main() {
 
     let signature = my_record.sign(&keypair).unwrap();
     
-    assert!(my_record.verify(signature, keypair.into_public_key()).is_ok())
+    assert!(my_record.verify(&signature, &keypair.into_public_key()).is_ok())
 }

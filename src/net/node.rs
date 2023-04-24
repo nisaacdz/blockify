@@ -10,7 +10,7 @@ use super::{Miner, Peer};
 
 #[derive(Clone, Debug)]
 pub struct NodeId {
-    pub id: crate::refs::ID,
+    pub id: crate::dat::ID,
     pub address: String,
 }
 

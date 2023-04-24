@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    refs::MetaData,
+    dat::MetaData,
     sec::{self, rscs::*, VerificationError},
 };
 
@@ -51,7 +51,7 @@ use crate::{
 ///
 /// let signature = my_record.sign(&keypair).unwrap();
 ///
-/// assert!(my_record.verify(signature, keypair.into_public_key()).is_ok())
+/// assert!(my_record.verify(&signature, &keypair.into_public_key()).is_ok())
 /// ```
 ///
 pub trait Record: Serialize + for<'a> Deserialize<'a> {
@@ -74,9 +74,9 @@ pub trait Record: Serialize + for<'a> Deserialize<'a> {
         Ok(signature)
     }
 
-    fn verify(&self, signature: DigitalSignature, key: PublicKey) -> Result<(), VerificationError> {
+    fn verify(&self, signature: &DigitalSignature, key: &PublicKey) -> Result<(), VerificationError> {
         let msg = bincode::serialize(self).map_err(|_| VerificationError::SerializationError)?;
-        key.verify(&msg, &signature)
+        key.verify(&msg, signature)
     }
 
     fn hash(&self) -> Hash {
@@ -109,12 +109,55 @@ impl RecordError {
     }
 }
 
-const RECORDS: [&'static str; 3] = ["Record", "Signature", "Signer"];
-const NAME: &'static str = "Records";
+/// `SignedRecord` is a structure that represents a signed record on the blockchain. It includes the original record, its digital signature, public key, hash, and any associated metadata.
+///
+/// A signed record is used to ensure that data on the blockchain is authentic and has not been tampered with. By signing the record with a private key, it can be proven that the record was created by the holder of the private key and has not been modified since it was signed. The public key is used to verify the signature and confirm the authenticity of the record.
+///
+/// # Type Parameters
+///
+/// - `R`: The type of the original record that was signed.
+///
+/// # Fields
+///
+/// - `key`: The public key used to sign the record.
+/// - `signature`: The digital signature of the record.
+/// - `hash`: The hash of the record.
+/// - `record`: The original record that was signed.
+/// - `metadata`: Any associated metadata for the record.
+///
+/// # Examples
+///
+/// ```
+/// use blockify::{sec, trans::{record::{Record, SignedRecord}}};
+/// use serde::{Serialize, Deserialize};
+/// use record_derive::Record;
+///
+/// #[derive(Debug, Clone, Serialize, Deserialize, Record, PartialEq)]
+/// struct Vote {
+///     session: i32,
+///     choice: i32,
+/// }
+///
+/// let keypair = sec::generate_ed25519_key_pair();
+/// let original_vote = Vote { session: 0, choice: 2 };
+/// let my_vote = original_vote.clone();
+///
+/// // Create a signed record from the original record and the keypair
+/// let signed_record = my_vote.record(keypair.clone()).unwrap();
+///
+/// // Verify that the signed record contains the original record
+/// assert_eq!(signed_record.record(), &original_vote);
+///
+/// // Verify that the signed record has no metadata
+/// assert_eq!(signed_record.metadata(), &blockify::dat::MetaData::empty());
+///
+/// // Verify the authenticity of the record using the public key
+/// assert!(signed_record.verify().is_ok());
+/// ```
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct SignedRecord<R> {
-    key: PublicKey,
+    signer: PublicKey,
     signature: DigitalSignature,
     hash: Hash,
     record: R,
@@ -125,7 +168,7 @@ impl<R: Record> SignedRecord<R> {
     pub fn new(
         record: R,
         signature: DigitalSignature,
-        key: PublicKey,
+        signer: PublicKey,
         hash: Hash,
         metadata: MetaData,
     ) -> Self {
@@ -133,13 +176,13 @@ impl<R: Record> SignedRecord<R> {
             record,
             signature,
             hash,
-            key,
+            signer,
             metadata,
         }
     }
 
-    pub fn signature(&self) -> &[u8] {
-        &self.signature.buffer
+    pub fn signature(&self) -> &DigitalSignature {
+        &self.signature
     }
 
     pub fn record(&self) -> &R {
@@ -147,24 +190,22 @@ impl<R: Record> SignedRecord<R> {
     }
 
     pub fn signer(&self) -> &PublicKey {
-        &self.key
+        &self.signer
     }
 
     pub fn algorithm(&self) -> KeyPairAlgorithm {
-        self.key.algorithm()
+        self.signer.algorithm()
     }
 
-    pub fn verify_signature(&self) -> Result<(), VerificationError> {
-        let msg =
-            bincode::serialize(self.record()).map_err(|_| VerificationError::SerializationError)?;
-        sec::verify_signature(&msg, &self.signature, &self.key)
+    pub fn verify(&self) -> Result<(), VerificationError> {
+            self.record.verify(self.signature(), self.signer())
     }
 
     pub fn hash(&self) -> &Hash {
         &self.hash
     }
 
-    pub fn metadata(&self) -> MetaData {
-        self.record().metadata()
+    pub fn metadata(&self) -> &MetaData {
+        &self.metadata
     }
 }

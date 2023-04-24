@@ -5,7 +5,7 @@ pub mod sec;
 pub mod trans;
 pub mod ver;
 pub mod fxns;
-pub mod refs;
+pub mod dat;
 
 #[cfg(test)]
 mod tests {

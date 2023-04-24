@@ -8,7 +8,7 @@ use sha2::{
 };
 
 use crate::{
-    refs::{Range, TimeStamp},
+    dat::{Range, TimeStamp},
     trans::{blocks::BlockBuilder, record::Record},
 };
 
