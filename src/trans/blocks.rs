@@ -1,3 +1,5 @@
+use serde::{Deserialize, Serialize};
+
 use crate::{
     dat::{Range, TimeStamp},
     sec::merkle::MerkleTree,
@@ -6,13 +8,9 @@ use crate::{
 use super::record::{Record, SignedRecord};
 use crate::sec::rscs::*;
 
-const COLUMNS: [&'static str; 5] = ["Hash", "Previous", "Merkle", "Range", "TimeStamp"];
-
-const TITLE: &'static str = "Blockchain";
-
 pub struct BlockError {}
 
-pub struct Block {
+pub struct ChainedBlock {
     nonce: u64,
     position: u64,
     time_stamp: TimeStamp,
@@ -22,7 +20,7 @@ pub struct Block {
     records_range: Range,
 }
 
-impl Block {
+impl ChainedBlock {
     pub fn new(
         nonce: u64,
         position: u64,
@@ -47,7 +45,7 @@ impl Block {
         &self.hash
     }
 
-    pub fn prev_block_hash(&self) -> &Hash {
+    pub fn prev_hash(&self) -> &Hash {
         &self.prev_hash
     }
 
@@ -72,23 +70,23 @@ impl Block {
     }
 
     pub fn records<R: Record>(&self) -> Result<Vec<SignedRecord<R>>, BlockError> {
-        todo!()
+        unimplemented!()
     }
 }
 
-/// Nodes may keep instances of block Copy in their local chains
+/// Nodes may keep instances of ChainedBlock Copy in their local chains
 ///
-/// BlockCopy consists of the original block and other metadata
+/// copybbckdl consists of the original ChainedBlock and other metadata
 ///
 
-pub struct BlockCopy {
-    block: Block,
+pub struct LocalChainedBlock {
+    chained_block: ChainedBlock,
     local_position: u64,
 }
 
-impl BlockCopy {
-    pub fn original_block(&self) -> &Block {
-        &self.block
+impl LocalChainedBlock {
+    pub fn original_block(&self) -> &ChainedBlock {
+        &self.chained_block
     }
 
     pub fn local_position(&self) -> u64 {
@@ -96,14 +94,15 @@ impl BlockCopy {
     }
 }
 
-pub struct BlockBuilder<R: Record> {
+#[derive(Serialize, Debug, Deserialize, Clone, Hash)]
+pub struct Block<R> {
     nonce: u64,
     records: Vec<SignedRecord<R>>,
     merkle: MerkleTree,
     merkle_root: Hash,
 }
 
-impl<R: Record> BlockBuilder<R> {
+impl<R: Record> Block<R> {
     pub fn merkle_root(&self) -> &Hash {
         &self.merkle_root
     }

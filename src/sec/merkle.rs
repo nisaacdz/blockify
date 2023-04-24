@@ -1,6 +1,9 @@
+use serde::{Serialize, Deserialize};
+
 use crate::sec::rscs::*;
 
-#[derive(Clone)]
+
+#[derive(Debug, Clone, Serialize, Deserialize, Hash)]
 pub struct MerkleNode {
     hash: Hash,
     left: Option<Box<MerkleNode>>,
@@ -57,6 +60,8 @@ impl MerkleNode {
 }
 
 /// A Merkle tree.
+/// 
+#[derive(Debug, Clone, Serialize, Deserialize, Hash)]
 pub struct MerkleTree {
     root: MerkleNode,
     size: usize,

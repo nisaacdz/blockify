@@ -1,4 +1,4 @@
-use crate::{net::node::NodeId };
+use crate::net::node::NodeId;
 
 pub trait ConsensusProtocol {
     // The ConsensusMessage type represents the messages exchanged between nodes in the network.

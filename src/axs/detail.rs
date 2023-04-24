@@ -6,7 +6,6 @@ pub struct Detail {
     body: Vec<u8>,
 }
 
-
 pub trait AsDetail {
     type Body;
     fn title(&self) -> &str;
@@ -17,10 +16,7 @@ pub trait ToDetail {
     fn to_detail(&self) -> Detail;
 }
 
-impl<T: AsDetail> ToDetail for T
-where
-    T::Body: AsRef<[u8]>,
-{
+impl<T: AsDetail<Body = B>, B: AsRef<[u8]>> ToDetail for T {
     fn to_detail(&self) -> Detail {
         Detail {
             title: self.title().to_string(),
@@ -29,11 +25,13 @@ where
     }
 }
 
-impl Detail {
-    pub fn from<T: ToDetail>(&self, item: T) -> Self {
-        item.to_detail()
+impl<T: ToDetail> From<T> for Detail {
+    fn from(value: T) -> Self {
+        value.to_detail()
     }
-    
+}
+
+impl Detail {
     pub fn body_i8(title: String, body: i8) -> Self {
         Self {
             title,

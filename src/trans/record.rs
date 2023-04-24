@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     dat::MetaData,
-    sec::{self, rscs::*, VerificationError},
+    sec::{self, rscs::*, SigningError, VerificationError},
 };
 
 /// # Record
@@ -55,7 +55,16 @@ use crate::{
 /// ```
 ///
 pub trait Record: Serialize + for<'a> Deserialize<'a> {
-    fn record(self, keypair: AuthKeyPair) -> Result<SignedRecord<Self>, RecordError> {
+    /// converts self into a `SignedRecord` instance by singing it with the provided keys
+    ///
+    /// # Arguments
+    /// `AuthKeyPair` - The Keypair for the signing.
+    ///
+    /// # Returns
+    /// - `Ok()` -> A `SignedRecord<T>` instance.
+    /// - `Err()` -> A `SigningError` instance.
+    ///
+    fn record(self, keypair: AuthKeyPair) -> Result<SignedRecord<Self>, SigningError> {
         let signature = self.sign(&keypair)?;
         let hash = self.hash();
         let metadata = self.metadata();
@@ -68,13 +77,17 @@ pub trait Record: Serialize + for<'a> Deserialize<'a> {
         ))
     }
 
-    fn sign(&self, key: &AuthKeyPair) -> Result<DigitalSignature, RecordError> {
-        let msg = bincode::serialize(self).map_err(|_| RecordError::serialization_error())?;
-        let signature = sec::sign_msg(&msg, key).map_err(|_| RecordError::default())?;
+    fn sign(&self, key: &AuthKeyPair) -> Result<DigitalSignature, SigningError> {
+        let msg = bincode::serialize(self).map_err(|_| SigningError::SerializationError)?;
+        let signature = sec::sign_msg(&msg, key)?;
         Ok(signature)
     }
 
-    fn verify(&self, signature: &DigitalSignature, key: &PublicKey) -> Result<(), VerificationError> {
+    fn verify(
+        &self,
+        signature: &DigitalSignature,
+        key: &PublicKey,
+    ) -> Result<(), VerificationError> {
         let msg = bincode::serialize(self).map_err(|_| VerificationError::SerializationError)?;
         key.verify(&msg, signature)
     }
@@ -88,30 +101,11 @@ pub trait Record: Serialize + for<'a> Deserialize<'a> {
     }
 }
 
-#[derive(Debug, Clone, Default)]
-pub enum ErrorCode {
-    #[default]
-    CouldNotSerialize,
-}
-
-#[derive(Debug, Clone, Default)]
-pub struct RecordError {
-    code: ErrorCode,
-    src: &'static str,
-}
-
-impl RecordError {
-    const fn new(code: ErrorCode, src: &'static str) -> RecordError {
-        RecordError { code, src }
-    }
-    const fn serialization_error() -> RecordError {
-        RecordError::new(ErrorCode::CouldNotSerialize, "unknown")
-    }
-}
-
+/// # SignedRecord
+///
 /// `SignedRecord` is a structure that represents a signed record on the blockchain. It includes the original record, its digital signature, public key, hash, and any associated metadata.
 ///
-/// A signed record is used to ensure that data on the blockchain is authentic and has not been tampered with. By signing the record with a private key, it can be proven that the record was created by the holder of the private key and has not been modified since it was signed. The public key is used to verify the signature and confirm the authenticity of the record.
+/// A `SignedRecord` is used to ensure that data on the blockchain is authentic and has not been tampered with. By signing the record with a private key, it can be proven that the record was created by the holder of the private key and has not been modified since it was signed. The public key is used to verify the signature and confirm the authenticity of the record.
 ///
 /// # Type Parameters
 ///
@@ -119,7 +113,7 @@ impl RecordError {
 ///
 /// # Fields
 ///
-/// - `key`: The public key used to sign the record.
+/// - `signer`: The public key used to sign the record along with the key pair generation algorithm.
 /// - `signature`: The digital signature of the record.
 /// - `hash`: The hash of the record.
 /// - `record`: The original record that was signed.
@@ -198,7 +192,7 @@ impl<R: Record> SignedRecord<R> {
     }
 
     pub fn verify(&self) -> Result<(), VerificationError> {
-            self.record.verify(self.signature(), self.signer())
+        self.record.verify(self.signature(), self.signer())
     }
 
     pub fn hash(&self) -> &Hash {

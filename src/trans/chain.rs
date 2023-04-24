@@ -1,4 +1,4 @@
-use super::{record::Record, blocks::{BlockBuilder, Block}};
+use super::{record::Record, blocks::{ChainedBlock, Block}};
 
 pub enum ChainErrors {
     IndexExceedsSize,
@@ -8,6 +8,6 @@ pub enum ChainErrors {
 
 
 pub trait Chain {
-    fn append<'a, X: Record>(&self, data: &BlockBuilder<X>) -> Result<Block, ChainErrors>;
-    fn get<'a, X: Record>(&self, pos: usize) -> Result<Block, ChainErrors>;
+    fn append<'a, X: Record>(&self, data: &Block<X>) -> Result<ChainedBlock, ChainErrors>;
+    fn get<'a, X: Record>(&self, pos: usize) -> Result<ChainedBlock, ChainErrors>;
 }

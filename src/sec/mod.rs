@@ -9,7 +9,7 @@ use sha2::{
 
 use crate::{
     dat::{Range, TimeStamp},
-    trans::{blocks::BlockBuilder, record::Record},
+    trans::{blocks::Block, record::Record},
 };
 
 pub mod merkle;
@@ -22,6 +22,7 @@ type Hxsh = GenericArray<u8, UInt<UInt<UInt<UInt<UInt<UInt<UTerm, B1>, B0>, B0>,
 pub enum SigningError {
     KeyRejected,
     Unspecified,
+    SerializationError,
 }
 
 impl From<ring::error::KeyRejected> for SigningError {
@@ -69,7 +70,7 @@ pub fn hash_bytes(bytes: &[u8]) -> Vec<u8> {
 }
 
 pub fn hash_block<R: Record>(
-    block: &BlockBuilder<R>,
+    block: &Block<R>,
     prev_hash: &Hash,
     metadata: (&TimeStamp, &Range, &u64),
 ) -> Hash {
