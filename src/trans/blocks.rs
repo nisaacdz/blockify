@@ -1,25 +1,24 @@
-use std::slice::Iter;
-
 use crate::{
-    errs::BlockifyError,
-    io::{BlockBase, BlockBaseInsertable},
     refs::{Range, TimeStamp},
     sec::merkle::MerkleTree,
 };
 
 use super::record::{Record, SignedRecord};
+use crate::sec::rscs::*;
 
 const COLUMNS: [&'static str; 5] = ["Hash", "Previous", "Merkle", "Range", "TimeStamp"];
 
 const TITLE: &'static str = "Blockchain";
 
+pub struct BlockError {}
+
 pub struct Block {
     nonce: u64,
     position: u64,
     time_stamp: TimeStamp,
-    hash: Vec<u8>,
-    prev_block_hash: Vec<u8>,
-    merkle_root: Vec<u8>,
+    hash: Hash,
+    prev_hash: Hash,
+    merkle_root: Hash,
     records_range: Range,
 }
 
@@ -28,9 +27,9 @@ impl Block {
         nonce: u64,
         position: u64,
         time_stamp: TimeStamp,
-        hash: Vec<u8>,
-        prev_block_hash: Vec<u8>,
-        merkle_root: Vec<u8>,
+        hash: Hash,
+        prev_hash: Hash,
+        merkle_root: Hash,
         range: Range,
     ) -> Self {
         Self {
@@ -38,21 +37,21 @@ impl Block {
             position,
             time_stamp,
             hash,
-            prev_block_hash,
+            prev_hash,
             merkle_root,
             records_range: range,
         }
     }
 
-    pub fn get_hash(&self) -> &[u8] {
+    pub fn hash(&self) -> &Hash {
         &self.hash
     }
 
-    pub fn prev_block_hash(&self) -> &[u8] {
-        &self.prev_block_hash
+    pub fn prev_block_hash(&self) -> &Hash {
+        &self.prev_hash
     }
 
-    pub fn merkle_root(&self) -> &[u8] {
+    pub fn merkle_root(&self) -> &Hash {
         &self.merkle_root
     }
 
@@ -72,11 +71,8 @@ impl Block {
         self.records_range
     }
 
-    pub fn records<J: BlockBase<BlockBuilder<R>, SignedRecord<R>, R>, R: Record>(
-        &self,
-        rb: J,
-    ) -> Result<Vec<SignedRecord<R>>, BlockifyError> {
-        rb.view_records(self.records_range())
+    pub fn records<R: Record>(&self) -> Result<Vec<SignedRecord<R>>, BlockError> {
+        todo!()
     }
 }
 
@@ -103,85 +99,23 @@ impl BlockCopy {
 pub struct BlockBuilder<R: Record> {
     nonce: u64,
     records: Vec<SignedRecord<R>>,
-    merkle: std::sync::Arc<std::sync::Mutex<MerkleTree>>,
-    merkle_root: Vec<u8>,
+    merkle: MerkleTree,
+    merkle_root: Hash,
 }
 
 impl<R: Record> BlockBuilder<R> {
-    pub fn merkle_root(&self) -> &[u8] {
+    pub fn merkle_root(&self) -> &Hash {
         &self.merkle_root
     }
 
-    pub fn push(&mut self, item: SignedRecord<R>) -> Result<(), BlockifyError> {
-        let hash = item.hash().to_vec();
+    pub fn push(&mut self, item: SignedRecord<R>) -> Result<(), BlockError> {
+        let hash = item.hash();
+        self.merkle.push(hash);
         self.records.push(item);
-        match self.merkle.lock() {
-            Ok(mut mg) => {
-                mg.push(hash);
-                Ok(())
-            }
-            Err(_) => Err(BlockifyError::new("Cannot Update Merkle Root")),
-        }
+        Ok(())
     }
 
     pub fn records(&self) -> &Vec<SignedRecord<R>> {
         &self.records
-    }
-}
-
-impl<R: Record> BlockBaseInsertable<SignedRecord<R>, R> for BlockBuilder<R> {
-    fn name() -> &'static str {
-        &TITLE
-    }
-
-    fn columns() -> &'static [&'static str] {
-        &COLUMNS
-    }
-
-    fn size(&self) -> u64 {
-        self.records.len() as u64
-    }
-
-    fn merke_root(&self) -> &[u8] {
-        &self.merkle_root
-    }
-
-    fn generate(
-        &self,
-        hash: Vec<u8>,
-        prev_hash: Vec<u8>,
-        time_stamp: TimeStamp,
-        range: Range,
-        position: u64,
-    ) -> Block {
-        Block::new(
-            self.nonce,
-            position,
-            time_stamp,
-            hash,
-            prev_hash,
-            self.merkle_root().to_vec(),
-            range,
-        )
-    }
-
-    fn records(&self) -> Iter<SignedRecord<R>> {
-        self.records.iter()
-    }
-
-    fn insertion(
-        &self,
-        hash: &[u8],
-        prev: &[u8],
-        range: Range,
-        timestamp: TimeStamp,
-    ) -> Vec<String> {
-        vec![
-            format! {"{:?}", hash},
-            format! {"{:?}", prev},
-            format! {"{:?}", self.merkle_root()},
-            serde_json::to_string(&range).unwrap(),
-            serde_json::to_string(&timestamp).unwrap(),
-        ]
     }
 }

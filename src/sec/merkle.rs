@@ -1,6 +1,8 @@
+use crate::sec::rscs::*;
+
 #[derive(Clone)]
 pub struct MerkleNode {
-    hash: Vec<u8>,
+    hash: Hash,
     left: Option<Box<MerkleNode>>,
     right: Option<Box<MerkleNode>>,
     center: Option<Box<MerkleNode>>,
@@ -8,7 +10,7 @@ pub struct MerkleNode {
 
 impl MerkleNode {
     pub fn build(
-        hash: Vec<u8>,
+        hash: Hash,
         left: Option<MerkleNode>,
         center: Option<MerkleNode>,
         right: Option<MerkleNode>,
@@ -35,7 +37,7 @@ impl MerkleNode {
     }
 
     /// Returns the hash of the node.
-    pub fn hash(&self) -> &[u8] {
+    pub fn hash(&self) -> &Hash {
         &self.hash
     }
 
@@ -80,17 +82,17 @@ impl MerkleTree {
     }
 
     /// Returns the Merkle root of the tree.
-    pub fn merkle_root(&self) -> &[u8] {
+    pub fn merkle_root(&self) -> &Hash {
         &self.root.hash
     }
 
-    pub fn push(&mut self, hash: Vec<u8>) {
+    pub fn push(&mut self, hash: &Hash) {
         self.size += 1;
 
         let left_hash = self.root.left().as_deref().unwrap().hash();
 
         if let None = &self.root.center {
-            let new_hash = super::sha_from_3(&hash, left_hash, self.merkle_root());
+            let new_hash = super::sha_from_3(hash, left_hash, self.merkle_root());
 
             let mut new_node = MerkleNode::build(new_hash, None, None, None);
 
@@ -102,7 +104,7 @@ impl MerkleTree {
             self.root = new_node;
         } else if let None = self.root.right {
             let center_hash = self.root.center().as_deref().unwrap().hash();
-            let new_hash = super::sha_from_4(&hash, left_hash, center_hash, self.merkle_root());
+            let new_hash = super::sha_from_4(hash, left_hash, center_hash, self.merkle_root());
 
             let mut new_node = MerkleNode::build(new_hash, None, None, None);
 
@@ -118,7 +120,7 @@ impl MerkleTree {
             let center_hash = self.root.center().as_deref().unwrap().hash();
             let right_hash = self.root.right().as_deref().unwrap().hash();
             let new_hash = super::sha_from_5(
-                &hash,
+                hash,
                 left_hash,
                 center_hash,
                 right_hash,

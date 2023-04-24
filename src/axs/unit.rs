@@ -1,24 +1,12 @@
-use std::{
-    ops::Sub,
-    sync::{Arc, Mutex},
-};
+use std::ops::Sub;
 
 use serde::{Serialize, Deserialize};
 
 use crate::refs::ID;
 
-pub struct UnitManager {
-    _db: Arc<Mutex<dyn crate::io::UnitBase>>,
-}
-
-impl UnitManager {
-    pub fn all_units(&self) -> f64 {
-        todo!()
-    }
-
-    pub fn all_units_raw(&self) -> u128 {
-        todo!()
-    }
+pub trait UnitManager {
+    fn all_units(&self);
+    fn all_units_raw(&self);
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Hash)]

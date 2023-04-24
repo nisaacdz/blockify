@@ -1,4 +1,4 @@
-use crate::{net::node::NodeId, trans::chain::Chain};
+use crate::{net::node::NodeId };
 
 pub trait ConsensusProtocol {
     // The ConsensusMessage type represents the messages exchanged between nodes in the network.
@@ -22,9 +22,6 @@ pub trait ConsensusProtocol {
 
     // Determines whether a given block is valid according to the consensus rules.
     fn is_block_valid(&self, block: &Self::Block, current_state: Vec<Self::Block>) -> bool;
-
-    // Returns the current state of the blockchain.
-    fn current_state(&self) -> Chain;
 
     // Returns the IDs of the nodes currently participating in the consensus protocol.
     fn participating_nodes(&self) -> Vec<NodeId>;

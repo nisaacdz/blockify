@@ -1,5 +1,4 @@
 use rand::{thread_rng, Rng};
-use serde::Serialize;
 use sha2::{
     digest::{
         generic_array::GenericArray,
@@ -9,22 +8,53 @@ use sha2::{
 };
 
 use crate::{
-    axs::algos::KeyPairAlgorithm,
-    errs::*,
-    refs::{MetaData, Range, TimeStamp},
-    trans::{
-        blocks::BlockBuilder,
-        record::{Record, SignedRecord},
-    },
+    refs::{Range, TimeStamp},
+    trans::{blocks::BlockBuilder, record::Record},
 };
+
 pub mod merkle;
+pub mod rscs;
+
+use rscs::*;
 
 type Hxsh = GenericArray<u8, UInt<UInt<UInt<UInt<UInt<UInt<UTerm, B1>, B0>, B0>, B0>, B0>, B0>>;
 
-pub fn hash<T: Sized + Serialize>(data: &T) -> Vec<u8> {
+pub enum SigningError {
+    KeyRejected,
+    Unspecified,
+}
+
+impl From<ring::error::KeyRejected> for SigningError {
+    fn from(_: ring::error::KeyRejected) -> Self {
+        SigningError::KeyRejected
+    }
+}
+
+impl From<ring::error::Unspecified> for SigningError {
+    fn from(_: ring::error::Unspecified) -> Self {
+        SigningError::Unspecified
+    }
+}
+
+pub enum VerificationError {
+    InvalidSignature,
+    NoMatch,
+    BadKeyPair,
+    Unspecified,
+    SerializationError,
+}
+
+impl From<ring::error::Unspecified> for VerificationError {
+    fn from(_: ring::error::Unspecified) -> Self {
+        VerificationError::Unspecified
+    }
+}
+
+pub fn hash<T: Sized + serde::Serialize>(data: &T) -> Hash {
     // Serialize the input data into a binary format using the `bincode` crate.
     let bytes = bincode::serialize(data).unwrap();
-    hash_bytes(&bytes)
+    let buffer = hash_bytes(&bytes);
+    buffer.into()
 }
 
 pub fn hash_bytes(bytes: &[u8]) -> Vec<u8> {
@@ -40,18 +70,19 @@ pub fn hash_bytes(bytes: &[u8]) -> Vec<u8> {
 
 pub fn hash_block<R: Record>(
     block: &BlockBuilder<R>,
-    prev_hash: &[u8],
+    prev_hash: &Hash,
     metadata: (&TimeStamp, &Range, &u64),
-) -> Vec<u8> {
-    let records = bincode::serialize(block.records()).unwrap();
-    let metabytes = bincode::serialize(&metadata).unwrap();
-    sha_from_4(prev_hash, &records, block.merkle_root(), &metabytes)
+) -> Hash {
+    let records = bincode::serialize(block.records()).unwrap().into();
+    let metabytes = bincode::serialize(&metadata).unwrap().into();
+    let buffer = sha_from_4(prev_hash, &records, block.merkle_root(), &metabytes);
+    buffer.into()
 }
 
-pub fn random_sha256() -> Vec<u8> {
+pub fn random_sha256() -> Hash {
     let mut bytes = vec![0; 32];
     thread_rng().fill(&mut bytes[..]);
-    bytes
+    bytes.into()
 }
 
 pub fn random_bytes5() -> [u8; 5] {
@@ -70,139 +101,85 @@ pub fn quick_id(len: usize) -> String {
     hex::encode(random_bytes(len))
 }
 
-pub fn sha_from_2(data: &[u8], data1: &[u8]) -> Vec<u8> {
+pub fn sha_from_2(data: &[u8], data1: &[u8]) -> Hash {
     let mut hasher = Sha256::new();
     hasher.update(data);
     hasher.update(data1);
-    hasher.finalize().to_vec()
+    hasher.finalize().to_vec().into()
 }
 
-pub fn sha_from_3(data: &[u8], data1: &[u8], data2: &[u8]) -> Vec<u8> {
+pub fn sha_from_3(data: &Hash, data1: &Hash, data2: &Hash) -> Hash {
     let mut hasher = Sha256::new();
     hasher.update(data);
     hasher.update(data1);
     hasher.update(data2);
-    hasher.finalize().to_vec()
+    hasher.finalize().to_vec().into()
 }
 
-pub fn sha_from_4(data: &[u8], data1: &[u8], data2: &[u8], data3: &[u8]) -> Vec<u8> {
+pub fn sha_from_4(data: &Hash, data1: &Hash, data2: &Hash, data3: &Hash) -> Hash {
     let mut hasher = Sha256::new();
     hasher.update(data);
     hasher.update(data1);
     hasher.update(data2);
     hasher.update(data3);
-    hasher.finalize().to_vec()
+    hasher.finalize().to_vec().into()
 }
 
-pub fn sha_from_5(data: &[u8], data1: &[u8], data2: &[u8], data3: &[u8], data4: &[u8]) -> Vec<u8> {
+pub fn sha_from_5(data: &Hash, data1: &Hash, data2: &Hash, data3: &Hash, data4: &Hash) -> Hash {
     let mut hasher = Sha256::new();
     hasher.update(data);
     hasher.update(data1);
     hasher.update(data2);
     hasher.update(data3);
     hasher.update(data4);
-    hasher.finalize().to_vec()
+    hasher.finalize().to_vec().into()
 }
 
-pub fn validate<T: Sized + Serialize>(obj: &T, value: &[u8]) -> bool {
-    value == hash(obj)
+pub fn validate<T: Sized + serde::Serialize>(obj: &T, value: &Hash) -> bool {
+    value == &hash(obj)
 }
 
-use ed25519_dalek::{Keypair, PublicKey, SecretKey, Signature, Signer, Verifier};
-
-pub struct AuthKeyPair(Vec<u8>, Vec<u8>);
-
-impl AuthKeyPair {
-    pub fn public_key(&self) -> &[u8] {
-        &self.0
-    }
-
-    pub fn private_key(&self) -> &[u8] {
-        &self.1
-    }
-}
-
-pub fn generate_key_pair() -> AuthKeyPair {
+pub fn generate_ed25519_key_pair() -> AuthKeyPair {
     // Generate a new key pair
     let mut c = rand::rngs::OsRng;
-    let keypair = Keypair::generate(&mut c);
+    let keypair = ed25519_dalek::Keypair::generate(&mut c);
 
     // Serialize the private and public keys as byte vectors
     let private_key = keypair.secret.to_bytes().to_vec();
     let public_key = keypair.public.to_bytes().to_vec();
 
     // Returns the public and private keys as byte vectors
-    AuthKeyPair(public_key, private_key)
+    AuthKeyPair::new(
+        private_key.into(),
+        public_key.into(),
+        KeyPairAlgorithm::Ed25519,
+    )
 }
 
-pub fn sign_msg(msg: &[u8], key: &[u8]) -> Result<Vec<u8>, BlockifyError> {
-    // Parse the private key
-    match SecretKey::from_bytes(key) {
-        Ok(secret) => {
-            // Create a signature for the message
-            let keypair = Keypair {
-                public: PublicKey::from(&secret),
-                secret,
-            };
-            let signature = keypair.sign(msg);
-            Ok(signature.as_ref().to_vec())
-        }
-        Err(_) => Err(BlockifyError::invalid_key()),
-    }
+pub fn sign_msg(msg: &[u8], key: &AuthKeyPair) -> Result<DigitalSignature, SigningError> {
+    key.sign(msg)
 }
 
 pub fn verify_signature_ed25519(
     msg: &[u8],
-    signature: &[u8],
-    signer: &[u8],
-) -> Result<(), BlockifyError> {
-    let dalek = Signature::from_bytes(signature).map_err(|_| BlockifyError::invalid_signature())?;
-    match PublicKey::from_bytes(signer) {
-        Ok(key) => match key.verify(msg, &dalek) {
+    signature: DigitalSignature,
+    signer: PublicKey,
+) -> Result<(), VerificationError> {
+    let dalek = ed25519_dalek::Signature::from_bytes(signature.buffer())
+        .map_err(|_| VerificationError::InvalidSignature)?;
+    match ed25519_dalek::PublicKey::from_bytes(signer.buffer()) {
+        Ok(key) => match ed25519_dalek::Verifier::verify(&key, msg, &dalek) {
             Ok(_) => Ok(()),
-            Err(_) => Err(BlockifyError::failed_verification()),
+            Err(_) => Err(VerificationError::NoMatch),
         },
-        Err(_) => Err(BlockifyError::invalid_signer()),
+        Err(_) => Err(VerificationError::BadKeyPair),
     }
 }
-
-use ring::signature::VerificationAlgorithm;
 
 pub fn verify_signature(
     msg: &[u8],
-    signature: &[u8],
-    signer: &[u8],
-    algo: &KeyPairAlgorithm,
-) -> Result<(), ring::error::Unspecified> {
-    let msg = untrusted::Input::from(msg);
-    let public_key = untrusted::Input::from(signer);
-    let signature = untrusted::Input::from(signature);
-
-    match algo {
-        KeyPairAlgorithm::Ed25519 => ring::signature::ED25519.verify(public_key, msg, signature),
-        KeyPairAlgorithm::Ecdsa => {
-            ring::signature::ECDSA_P256_SHA256_ASN1.verify(public_key, msg, signature)
-        }
-    }
-}
-
-pub fn sign<R: Record>(
-    record: &R,
-    public_key: &[u8],
-    private_key: &[u8],
-    algorithm: KeyPairAlgorithm,
-    metadata: MetaData,
-) -> Result<SignedRecord<R>, BlockifyError> {
-    let msg = bincode::serialize(record).unwrap();
-    let signature = sign_msg(&msg, private_key)?;
-    let hash = hash_bytes(&msg);
-
-    Ok(SignedRecord::new(
-        record.clone(),
-        signature,
-        algorithm,
-        public_key,
-        hash,
-        metadata,
-    ))
+    signature: &DigitalSignature,
+    signer: &PublicKey,
+) -> Result<(), VerificationError> {
+    signer.verify(msg, signature)
 }

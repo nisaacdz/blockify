@@ -1,132 +1,143 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    axs::algos::KeyPairAlgorithm, errs::BlockifyError, io::RecordBaseInsertable, refs::MetaData,
-    sec,
+    refs::MetaData,
+    sec::{self, rscs::*, VerificationError},
 };
 
-/// # Disclaimer
-/// In this context, a `Record` object is any data or information that needs to be
-///  securely and `transparently` stored on the blockchain.
+/// # Record
 ///
-/// `transparently` in this sense does not mean that the data necessarily needs to be
-/// viewable by uninvolved parties but it should be `provable` and `verifyable`
+/// This trait defines the structure and properties of any data or information that needs to be securely and transparently stored on the blockchain, referred to as a `Record` object.
 ///
-/// `provable` means it should be possible to demonstrate or confirm the authenticity
-/// of the data.
-/// `verifyable` means it should be possible to demonstrate or confirm the occurance of the
-/// record.
+/// `Transparently` here means that the data should be provable and verifiable, although it may not necessarily be viewable by uninvolved parties.
 ///
-/// # Examples of Records
-/// * A transaction data
-/// * A metadata
-/// * A vote
-/// * A smart contract state
-/// * Any other type of information that needs to be recorded and verified on a blockchain.
+/// `Provable` means that the authenticity of the data can be demonstrated or confirmed, while `verifiable` means that the occurrence of the record can be demonstrated or confirmed.
 ///
-/// # How to Use
-/// To use the blockchain library, users will need to implement the Record trait on their type,
-/// which will define the structure and properties of the record they want to store on the
-/// blockchain.
+/// # Examples
 ///
-/// # What this trait contains
-/// This trait includes methods for serializing and deserializing the
-/// data, as well as for verifying the integrity and authenticity of the record on the
-/// blockchain.
+/// Examples of `Records` include transaction data, metadata, votes, smart contract states, and any other type of information that needs to be recorded and verified on a blockchain.
 ///
-/// By implementing the Record trait on their type, users can ensure that their
-/// data is securely and transparently recorded on the blockchain, with all the benefits
-/// of decentralization, transparency, and immutability that blockchain technology provides.
-
-pub trait Record: Serialize + for<'a> Deserialize<'a> + Clone {
-    fn sign(
-        &self,
-        public_key: &[u8],
-        private_key: &[u8],
-        algorithm: KeyPairAlgorithm,
-    ) -> Result<SignedRecord<Self>, BlockifyError> {
-        sec::sign(self, public_key, private_key, algorithm, self.metadata())
+/// # Usage
+///
+/// To use this blockchain library, users must implement the `Record` trait on their type. This trait includes methods for serializing and deserializing the data, as well as for verifying the integrity and authenticity of the record on the blockchain.
+///
+/// By implementing the `Record` trait on their type, users can ensure that their data is securely and transparently recorded on the blockchain, with all the benefits of decentralization, transparency, and immutability that blockchain technology provides.
+///
+/// # Methods
+///
+/// This trait includes the following methods:
+///
+/// - `record`: Signs the record with the given public and private keys, and generates a `SignedRecord`.
+/// - `sign`: Signs the record with the given private key and returns a digital signature.
+/// - `hash`: Computes and returns the hash of the record.
+/// - `metadata`: Returns metadata associated with the record, if any.
+///
+pub trait Record: Serialize + for<'a> Deserialize<'a> {
+    fn record(self, keypair: AuthKeyPair) -> Result<SignedRecord<Self>, RecordError> {
+        let signature = self.sign(&keypair)?;
+        let hash = self.hash();
+        let metadata = self.metadata();
+        Ok(SignedRecord::new(
+            self,
+            signature,
+            keypair.into_public_key(),
+            hash,
+            metadata,
+        ))
     }
 
-    fn hash(&self) -> Vec<u8> {
+    fn sign(&self, key: &AuthKeyPair) -> Result<DigitalSignature, RecordError> {
+        let msg = bincode::serialize(self).map_err(|_| RecordError::serialization_error())?;
+        let signature = sec::sign_msg(&msg, key).map_err(|_| RecordError::default())?;
+        Ok(signature)
+    }
+
+    fn hash(&self) -> Hash {
         sec::hash(self)
     }
 
-    fn metadata(&self) -> MetaData;
+    fn metadata(&self) -> MetaData {
+        MetaData::empty()
+    }
+}
+
+#[derive(Default)]
+pub enum ErrorCode {
+    #[default]
+    CouldNotSerialize,
+}
+
+#[derive(Default)]
+pub struct RecordError {
+    code: ErrorCode,
+    src: &'static str,
+}
+
+impl RecordError {
+    const fn new(code: ErrorCode, src: &'static str) -> RecordError {
+        RecordError { code, src }
+    }
+    const fn serialization_error() -> RecordError {
+        RecordError::new(ErrorCode::CouldNotSerialize, "unknown")
+    }
 }
 
 const RECORDS: [&'static str; 3] = ["Record", "Signature", "Signer"];
 const NAME: &'static str = "Records";
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct SignedRecord<R> {
-    signer: Vec<u8>,
-    signature: Vec<u8>,
-    hash: Vec<u8>,
+    key: PublicKey,
+    signature: DigitalSignature,
+    hash: Hash,
     record: R,
-    algorithm: KeyPairAlgorithm,
     metadata: MetaData,
 }
 
 impl<R: Record> SignedRecord<R> {
     pub fn new(
         record: R,
-        signature: Vec<u8>,
-        algorithm: KeyPairAlgorithm,
-        public_key: &[u8],
-        hash: Vec<u8>,
+        signature: DigitalSignature,
+        key: PublicKey,
+        hash: Hash,
         metadata: MetaData,
     ) -> Self {
         Self {
             record,
             signature,
             hash,
-            signer: public_key.to_vec(),
-            algorithm,
+            key,
             metadata,
         }
     }
 
     pub fn signature(&self) -> &[u8] {
-        &self.signature
+        &self.signature.buffer
     }
 
     pub fn record(&self) -> &R {
         &self.record
     }
 
-    pub fn signer(&self) -> &[u8] {
-        &self.signer
+    pub fn signer(&self) -> &PublicKey {
+        &self.key
     }
 
-    pub fn algorithm(&self) -> &KeyPairAlgorithm {
-        &self.algorithm
-    }
-    
-    pub fn verify_signature(&self) -> Result<(), ring::error::Unspecified> {
-        let msg = bincode::serialize(self.record()).unwrap();
-        sec::verify_signature(&msg, &self.signature, &self.signer, &self.algorithm)
+    pub fn algorithm(&self) -> KeyPairAlgorithm {
+        self.key.algorithm()
     }
 
-    pub fn hash(&self) -> &[u8] {
+    pub fn verify_signature(&self) -> Result<(), VerificationError> {
+        let msg =
+            bincode::serialize(self.record()).map_err(|_| VerificationError::SerializationError)?;
+        sec::verify_signature(&msg, &self.signature, &self.key)
+    }
+
+    pub fn hash(&self) -> &Hash {
         &self.hash
     }
 
     pub fn metadata(&self) -> MetaData {
         self.record().metadata()
-    }
-}
-
-impl<R: Record> RecordBaseInsertable<R> for SignedRecord<R> {
-    fn name() -> &'static str {
-        &NAME
-    }
-
-    fn columns() -> &'static [&'static str] {
-        &RECORDS
-    }
-
-    fn record(&self) -> &R {
-        &self.record
     }
 }
