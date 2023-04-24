@@ -13,7 +13,7 @@ use crate::{
 ///
 /// `Provable` means that the authenticity of the data can be demonstrated or confirmed, while `verifiable` means that the occurrence of the record can be demonstrated or confirmed.
 ///
-/// # Examples
+/// # What can be a Record?
 ///
 /// Examples of `Records` include transaction data, metadata, votes, smart contract states, and any other type of information that needs to be recorded and verified on a blockchain.
 ///
@@ -31,6 +31,28 @@ use crate::{
 /// - `sign`: Signs the record with the given private key and returns a digital signature.
 /// - `hash`: Computes and returns the hash of the record.
 /// - `metadata`: Returns metadata associated with the record, if any.
+/// - `verify`: Returns `Ok()` when signature verification succeeds or a `VerificationError` if it fails.
+///
+///
+/// # Examples
+/// ```
+/// use blockify::{sec, trans::record::Record};
+/// use serde::{Serialize, Deserialize};
+/// use record_derive::Record;
+///
+/// #[derive(Clone, Serialize, Deserialize, Record)]
+/// struct Vote {
+///     session: i32,
+///     choice: i32,
+/// }
+///
+/// let keypair = sec::generate_ed25519_key_pair();
+/// let my_record = Vote { session: 0, choice: 2 };
+///
+/// let signature = my_record.sign(&keypair).unwrap();
+///
+/// assert!(my_record.verify(signature, keypair.into_public_key()).is_ok())
+/// ```
 ///
 pub trait Record: Serialize + for<'a> Deserialize<'a> {
     fn record(self, keypair: AuthKeyPair) -> Result<SignedRecord<Self>, RecordError> {
@@ -52,6 +74,11 @@ pub trait Record: Serialize + for<'a> Deserialize<'a> {
         Ok(signature)
     }
 
+    fn verify(&self, signature: DigitalSignature, key: PublicKey) -> Result<(), VerificationError> {
+        let msg = bincode::serialize(self).map_err(|_| VerificationError::SerializationError)?;
+        key.verify(&msg, &signature)
+    }
+
     fn hash(&self) -> Hash {
         sec::hash(self)
     }
@@ -61,13 +88,13 @@ pub trait Record: Serialize + for<'a> Deserialize<'a> {
     }
 }
 
-#[derive(Default)]
+#[derive(Debug, Clone, Default)]
 pub enum ErrorCode {
     #[default]
     CouldNotSerialize,
 }
 
-#[derive(Default)]
+#[derive(Debug, Clone, Default)]
 pub struct RecordError {
     code: ErrorCode,
     src: &'static str,

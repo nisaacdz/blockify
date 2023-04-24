@@ -1,4 +1,3 @@
-pub mod errs;
 pub mod io;
 pub mod net;
 pub mod axs;
@@ -7,3 +6,13 @@ pub mod trans;
 pub mod ver;
 pub mod fxns;
 pub mod refs;
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn derive_test() {
+        use serde::{Serialize, Deserialize};
+        #[derive(Serialize, Deserialize, Clone)]
+        struct Temp;
+    }
+}

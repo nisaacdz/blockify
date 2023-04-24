@@ -209,7 +209,7 @@ impl KeyPairAlgorithm {
         let algo: &dyn VerificationAlgorithm = match self {
             KeyPairAlgorithm::Ed25519 => &ring::signature::ED25519,
             KeyPairAlgorithm::RsaPKCS1256 => &ring::signature::RSA_PKCS1_2048_8192_SHA256,
-            KeyPairAlgorithm::Ecdsa256256Fixed => todo!(),
+            KeyPairAlgorithm::Ecdsa256256Fixed => &ring::signature::ECDSA_P256_SHA256_FIXED,
         };
 
         let key = UnparsedPublicKey::new(algo, signer);

@@ -20,6 +20,7 @@ sha2 = "0.10.6"
 thiserror = "1.0.39"
 tokio = "1.26.0"
 untrusted = "0.7.0"
+record_derive = { path = "src/macros/record_derive" }
 
 [package.metadata]
 # set the crate as under development
