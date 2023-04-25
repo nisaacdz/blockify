@@ -35,7 +35,7 @@ All forms of contributions are gladly welcome
 - thiserror = "1.0.39"
 - tokio = "1.26.0"
 - untrusted = "0.9.0"
-- record_derive = { path = "src/macros/record_derive" }
+- record_derive = { path = "src/macros/record_derive", version = "0.1.0" }
 
 
 # LICENSE
