@@ -1,5 +1,4 @@
 use rand::{thread_rng, Rng};
-use ring::signature::KeyPair;
 use sha2::{Digest, Sha256};
 
 use crate::{
