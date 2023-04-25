@@ -13,6 +13,8 @@
 edition = "2021"
 name = "record_derive"
 version = "0.1.0"
+description = "Derive attribute macro for Record trait of blockify crate"
+license = "MIT"
 
 [lib]
 proc-macro = true
