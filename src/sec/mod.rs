@@ -1,11 +1,6 @@
 use rand::{thread_rng, Rng};
-use sha2::{
-    digest::{
-        generic_array::GenericArray,
-        typenum::{UInt, UTerm, B0, B1},
-    },
-    Digest, Sha256,
-};
+use ring::signature::KeyPair;
+use sha2::{Digest, Sha256};
 
 use crate::{
     dat::{Range, TimeStamp},
@@ -17,8 +12,7 @@ pub mod rscs;
 
 use rscs::*;
 
-type Hxsh = GenericArray<u8, UInt<UInt<UInt<UInt<UInt<UInt<UTerm, B1>, B0>, B0>, B0>, B0>, B0>>;
-
+#[derive(Debug, Clone, Copy)]
 pub enum SigningError {
     KeyRejected,
     Unspecified,
@@ -63,9 +57,9 @@ pub fn hash_bytes(bytes: &[u8]) -> Vec<u8> {
     let mut hasher = Sha256::new();
     // Update the hash with the binary data.
     hasher.update(bytes);
-    // Finalize the hash computation and store the result in a `Hxsh` value.
-    let data: Hxsh = hasher.finalize();
-    // Convert the `Hxsh` value to a `Vec<u8>` for easier use.
+    // Finalize the hash computation and store the result as `data`.
+    let data = hasher.finalize();
+    // Convert the `data` to a `Vec<u8>` for easier use.
     data.to_vec()
 }
 
@@ -141,20 +135,16 @@ pub fn validate<T: Sized + serde::Serialize>(obj: &T, value: &Hash) -> bool {
 }
 
 pub fn generate_ed25519_key_pair() -> AuthKeyPair {
-    // Generate a new key pair
-    let mut c = rand::rngs::OsRng;
-    let keypair = ed25519_dalek::Keypair::generate(&mut c);
+    let mut rng = rand::thread_rng();
 
     // Serialize the private and public keys as byte vectors
-    let private_key = keypair.secret.to_bytes().to_vec();
-    let public_key = keypair.public.to_bytes().to_vec();
+    let keypair = ed25519_dalek::Keypair::generate(&mut rng);
+
+    let public_key = keypair.public.as_ref().to_vec();
+    let private_key = keypair.secret.as_ref().to_vec();
 
     // Returns the public and private keys as byte vectors
-    AuthKeyPair::new(
-        private_key.into(),
-        public_key.into(),
-        KeyPairAlgorithm::Ed25519,
-    )
+    AuthKeyPair::new(private_key, public_key, KeyPairAlgorithm::Ed25519)
 }
 
 pub fn sign_msg(msg: &[u8], key: &AuthKeyPair) -> Result<DigitalSignature, SigningError> {
