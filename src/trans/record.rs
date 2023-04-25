@@ -5,6 +5,9 @@ use crate::{
     sec::{self, rscs::*, SigningError, VerificationError},
 };
 
+#[cfg(feature = "derive")]
+pub use record_derive::Record;
+
 /// # Record
 ///
 /// This trait defines the structure and properties of any data or information that needs to be securely and transparently stored on the blockchain, referred to as a `Record` object.
@@ -38,7 +41,6 @@ use crate::{
 /// ```
 /// use blockify::{sec, trans::record::Record};
 /// use serde::{Serialize, Deserialize};
-/// use record_derive::Record;
 ///
 /// #[derive(Clone, Serialize, Deserialize, Record)]
 /// struct Vote {
@@ -124,7 +126,6 @@ pub trait Record: Serialize + for<'a> Deserialize<'a> {
 /// ```
 /// use blockify::{sec, trans::{record::{Record, SignedRecord}}};
 /// use serde::{Serialize, Deserialize};
-/// use record_derive::Record;
 ///
 /// #[derive(Debug, Clone, Serialize, Deserialize, Record, PartialEq)]
 /// struct Vote {

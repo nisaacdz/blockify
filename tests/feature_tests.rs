@@ -1,19 +1,7 @@
-# BLOCKIFY
+#![cfg(test)]
 
-
-A Rust blockchain library that provides the building blocks for creating a full-fledged blockchain application or platform, allowing you to focus on the higher-level features of your application without worrying about the low-level details of `block validation`, `data serialization`, and `cryptographic operations`.
-
-
-# NOT YET READY FOR DOWNLOADS
-
-
-# FEATURES
-
-# EXAMPLES
-
-- **Record Trait** 
-```
-fn main() {
+#[test]
+fn test() {
     use blockify::{sec, trans::record::Record};
     use serde::{Deserialize, Serialize};
 
@@ -60,21 +48,3 @@ fn main() {
     // Verfify the signature within the `SignedRecord` instance.
     assert!(signed_record.verify().is_ok());
 }
-
-```
-
-
-
-
-
-# CONTRIBUTING
-
-All forms of contributions are gladly welcome.
-
-
-# DEPENDENCIES
-
-
-# LICENSE
-
-**MIT**
