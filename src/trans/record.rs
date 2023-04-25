@@ -31,7 +31,7 @@ use crate::{
 /// - `sign`: Signs the record with the given private key and returns a digital signature.
 /// - `hash`: Computes and returns the hash of the record.
 /// - `metadata`: Returns metadata associated with the record, if any.
-/// - `verify`: Returns `Ok()` when signature verification succeeds or a `VerificationError` if it fails.
+/// - `verify`: Returns `Ok()` if signature verification succeeds or a `VerificationError` if it fails.
 ///
 ///
 /// # Examples
@@ -55,7 +55,7 @@ use crate::{
 /// ```
 ///
 pub trait Record: Serialize + for<'a> Deserialize<'a> {
-    /// converts self into a `SignedRecord` instance by singing it with the provided keys
+    /// converts `self` into a `SignedRecord` instance by singing it with the provided key pair
     ///
     /// # Arguments
     /// `AuthKeyPair` - The Keypair for the signing.
