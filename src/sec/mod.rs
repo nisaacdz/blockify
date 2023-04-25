@@ -129,7 +129,7 @@ pub fn sha_from_5(data: &Hash, data1: &Hash, data2: &Hash, data3: &Hash, data4: 
     hasher.finalize().to_vec().into()
 }
 
-pub fn validate<T: Sized + serde::Serialize>(obj: &T, value: &Hash) -> bool {
+pub fn verify_hash<T: Sized + serde::Serialize>(obj: &T, value: &Hash) -> bool {
     value == &hash(obj)
 }
 

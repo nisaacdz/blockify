@@ -187,7 +187,7 @@ impl<R: Record> SignedRecord<R> {
         &self.signer
     }
 
-    pub fn algorithm(&self) -> KeyPairAlgorithm {
+    pub fn keypair_algorithm(&self) -> KeyPairAlgorithm {
         self.signer.algorithm()
     }
 

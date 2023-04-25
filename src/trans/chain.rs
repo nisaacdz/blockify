@@ -8,6 +8,6 @@ pub enum ChainErrors {
 
 
 pub trait Chain {
-    fn append<'a, X: Record>(&self, data: &Block<X>) -> Result<ChainedBlock, ChainErrors>;
-    fn get<'a, X: Record>(&self, pos: usize) -> Result<ChainedBlock, ChainErrors>;
+    fn append<X: Record>(&self, data: &Block<X>) -> Result<ChainedBlock, ChainErrors>;
+    fn get<X: Record>(&self, pos: usize) -> Result<ChainedBlock, ChainErrors>;
 }
