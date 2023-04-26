@@ -66,11 +66,13 @@ pub trait Record: Serialize + for<'a> Deserialize<'a> {
     /// converts `self` into a `SignedRecord` instance by singing it with the provided key pair
     ///
     /// # Arguments
+    /// 
     /// `AuthKeyPair` - The Keypair for the signing.
     ///
     /// # Returns
-    /// - `Ok()` -> A `SignedRecord<T>` instance.
-    /// - `Err()` -> A `SigningError` instance.
+    /// 
+    /// - `Ok()` - A `SignedRecord<T>` instance.
+    /// - `Err()` - A `SigningError` instance.
     ///
     fn record(self, keypair: AuthKeyPair) -> Result<SignedRecord<Self>, SigningError> {
         let signature = self.sign(&keypair)?;
@@ -122,7 +124,7 @@ pub trait Record: Serialize + for<'a> Deserialize<'a> {
         key.verify(&msg, signature)
     }
 
-    /// Computes and returns the Hash of the record
+    /// Computes and returns the hash of the record
     fn hash(&self) -> Hash {
         sec::hash(self)
     }
