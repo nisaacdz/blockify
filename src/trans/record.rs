@@ -42,17 +42,23 @@ pub use record_derive::Record;
 /// use blockify::{sec, trans::record::Record};
 /// use serde::{Serialize, Deserialize};
 ///
+/// // To implement record you need to implement Serialize and Deserialize
 /// #[derive(Clone, Serialize, Deserialize, Record)]
 /// struct Vote {
 ///     session: i32,
 ///     choice: i32,
 /// }
 ///
+/// // Generate a key pair for digial signing and verification
 /// let keypair = sec::generate_ed25519_key_pair();
+///
+/// // Let's create a `Vote` instance
 /// let my_record = Vote { session: 0, choice: 2 };
 ///
+/// // Let's sign the vote and obtain a `DigitalSignature` instance
 /// let signature = my_record.sign(&keypair).unwrap();
 ///
+/// // Let's verify the signature with the trait method `verify`
 /// assert!(my_record.verify(&signature, &keypair.into_public_key()).is_ok())
 /// ```
 ///
@@ -78,12 +84,34 @@ pub trait Record: Serialize + for<'a> Deserialize<'a> {
             metadata,
         ))
     }
+    /// Signs the record with the given key and returns a digital signature.
+    ///
+    /// # Arguments
+    ///
+    /// * `key` - The private key to use for signing.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(signature)` - A `DigitalSignature` instance representing the signature of the record.
+    /// * `Err(error)` - A `SigningError` instance describing the error that occurred during signing.
 
     fn sign(&self, key: &AuthKeyPair) -> Result<DigitalSignature, SigningError> {
         let msg = bincode::serialize(self).map_err(|_| SigningError::SerializationError)?;
         let signature = sec::sign_msg(&msg, key)?;
         Ok(signature)
     }
+
+    /// Returns `Ok(())` if signature verification succeeds or a `VerificationError` if it fails.
+    ///
+    /// # Arguments
+    ///
+    /// * `signature` - The digital signature to verify.
+    /// * `key` - The public key to use for verification.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` - If the signature verification succeeds.
+    /// * `Err(error)` - A `VerificationError` instance describing the error that occurred during verification.
 
     fn verify(
         &self,
@@ -94,10 +122,12 @@ pub trait Record: Serialize + for<'a> Deserialize<'a> {
         key.verify(&msg, signature)
     }
 
+    /// Computes and returns the Hash of the record
     fn hash(&self) -> Hash {
         sec::hash(self)
     }
 
+    // Computes and returns any associated metadata
     fn metadata(&self) -> MetaData {
         MetaData::empty()
     }
@@ -124,30 +154,53 @@ pub trait Record: Serialize + for<'a> Deserialize<'a> {
 /// # Examples
 ///
 /// ```
-/// use blockify::{sec, trans::{record::{Record, SignedRecord}}};
-/// use serde::{Serialize, Deserialize};
+/// use blockify::{sec, trans::record::Record};
+/// use serde::{Deserialize, Serialize};
 ///
-/// #[derive(Debug, Clone, Serialize, Deserialize, Record, PartialEq)]
-/// struct Vote {
-///     session: i32,
-///     choice: i32,
-/// }
+/// fn main() {
+///   // Serialize and Deserialize are supertraits of Record
+///    #[derive(Clone, Serialize, Deserialize, Record)]
+///    struct Vote {
+///        session: i32,
+///        choice: i32,
+///    }
 ///
-/// let keypair = sec::generate_ed25519_key_pair();
-/// let original_vote = Vote { session: 0, choice: 2 };
-/// let my_vote = original_vote.clone();
+///    // Generate a new keypair
+///    let keypair = sec::generate_ed25519_key_pair();
 ///
-/// // Create a signed record from the original record and the keypair
-/// let signed_record = my_vote.record(keypair.clone()).unwrap();
+///    // Clone the public key
+///    let pub_key = keypair.clone().into_public_key();
 ///
-/// // Verify that the signed record contains the original record
-/// assert_eq!(signed_record.record(), &original_vote);
+///    // Create a new `Vote` instance
+///    let my_record = Vote {
+///        session: 0,
+///        choice: 2,
+///    };
 ///
-/// // Verify that the signed record has no metadata
-/// assert_eq!(signed_record.metadata(), &blockify::dat::MetaData::empty());
+///    // calculate the hash of my_record
+///    let my_record_hash = sec::hash(&my_record);
 ///
-/// // Verify the authenticity of the record using the public key
-/// assert!(signed_record.verify().is_ok());
+///    // sign my_record with the AuthKeyPair instance and obtain a digital signature
+///    let signature = my_record.sign(&keypair).unwrap();
+///
+///    // verify the authencity of the digital signature
+///    assert!(my_record.verify(&signature, &pub_key).is_ok());
+///
+///    // record the my_vote (convert it into a SignedRecord instance)
+///    let signed_record = my_record.record(keypair).unwrap();
+///
+///    // Compare the signature of `my_record` with that inside the `SignedRecord` instance
+///    assert_eq!(&signature, signed_record.signature());
+///
+///    // Compare the public key used to sign my_record with that inside the `SignedRecord` instance.
+///    assert_eq!(&pub_key, signed_record.signer());
+///
+///    // Compare the hash of my_record with that inside the `SignedRecord` instance.
+///    assert_eq!(&my_record_hash, signed_record.hash());
+///
+///    // Verify the validity of the signature within the `SignedRecord` instance.
+///    assert!(signed_record.verify().is_ok());
+///}
 /// ```
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
@@ -160,6 +213,7 @@ pub struct SignedRecord<R> {
 }
 
 impl<R: Record> SignedRecord<R> {
+    /// Creates and returns a new `SignedRecord` instance with the given values.
     pub fn new(
         record: R,
         signature: DigitalSignature,
@@ -176,26 +230,28 @@ impl<R: Record> SignedRecord<R> {
         }
     }
 
+    /// Returns a reference to the `DigitalSignature` on this `SignedRecord` instance
     pub fn signature(&self) -> &DigitalSignature {
         &self.signature
     }
-
+    /// Returns a reference to the `Record` inside this `SignedRecord` instance 
     pub fn record(&self) -> &R {
         &self.record
     }
-
+    /// Returns a reference to the public key used to sign this `SignedRecord` instance
     pub fn signer(&self) -> &PublicKey {
         &self.signer
     }
-
+    /// Returns a reference to the keypair algorithm used to sign this `SignedRecord` instance
     pub fn keypair_algorithm(&self) -> KeyPairAlgorithm {
         self.signer.algorithm()
     }
-
+    /// Verifies the validity of the `DigitalSignature` within this `SignedRecord` instance for the `Record` it holds. 
     pub fn verify(&self) -> Result<(), VerificationError> {
         self.record.verify(self.signature(), self.signer())
     }
 
+    // Returns a reference to the hash of `Record` stored within this `SignedRecord` instance
     pub fn hash(&self) -> &Hash {
         &self.hash
     }
