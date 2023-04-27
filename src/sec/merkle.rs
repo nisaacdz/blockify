@@ -1,7 +1,6 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 use crate::sec::rscs::*;
-
 
 #[derive(Debug, Clone, Serialize, Deserialize, Hash)]
 pub struct MerkleNode {
@@ -60,7 +59,7 @@ impl MerkleNode {
 }
 
 /// A Merkle tree.
-/// 
+///
 #[derive(Debug, Clone, Serialize, Deserialize, Hash)]
 pub struct MerkleTree {
     root: MerkleNode,
@@ -124,13 +123,8 @@ impl MerkleTree {
         } else {
             let center_hash = self.root.center().as_deref().unwrap().hash();
             let right_hash = self.root.right().as_deref().unwrap().hash();
-            let new_hash = super::sha_from_5(
-                hash,
-                left_hash,
-                center_hash,
-                right_hash,
-                self.merkle_root(),
-            );
+            let new_hash =
+                super::sha_from_5(hash, left_hash, center_hash, right_hash, self.merkle_root());
 
             let mut new_node = MerkleNode::build(new_hash, None, None, None);
 

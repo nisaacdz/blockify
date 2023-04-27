@@ -1,8 +1,9 @@
 use rand::{thread_rng, Rng};
+use serde::Serialize;
 use sha2::{Digest, Sha256};
 
 use crate::{
-    dat::{Range, TimeStamp},
+    axs::dat::{BlockRange, TimeStamp},
     trans::{blocks::Block, record::Record},
 };
 
@@ -62,10 +63,10 @@ pub fn hash_bytes(bytes: &[u8]) -> Vec<u8> {
     data.to_vec()
 }
 
-pub fn hash_block<R: Record>(
+pub fn hash_block<R: Record + Serialize>(
     block: &Block<R>,
     prev_hash: &Hash,
-    metadata: (&TimeStamp, &Range, &u64),
+    metadata: (&TimeStamp, &BlockRange, &u64),
 ) -> Hash {
     let records = bincode::serialize(block.records()).unwrap().into();
     let metabytes = bincode::serialize(&metadata).unwrap().into();
@@ -143,7 +144,11 @@ pub fn generate_ed25519_key_pair() -> AuthKeyPair {
     let private_key = keypair.secret.as_ref().to_vec();
 
     // Returns the public and private keys as byte vectors
-    AuthKeyPair::new(private_key, public_key, KeyPairAlgorithm::Ed25519)
+    AuthKeyPair::new(
+        private_key.into_boxed_slice(),
+        public_key.into_boxed_slice(),
+        KeyPairAlgorithm::Ed25519,
+    )
 }
 
 pub fn sign_msg(msg: &[u8], key: &AuthKeyPair) -> Result<DigitalSignature, SigningError> {

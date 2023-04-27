@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    dat::{Range, TimeStamp},
+    axs::dat::{BlockRange, TimeStamp},
     sec::merkle::MerkleTree,
 };
 
@@ -17,7 +17,7 @@ pub struct ChainedBlock {
     hash: Hash,
     prev_hash: Hash,
     merkle_root: Hash,
-    records_range: Range,
+    records_range: BlockRange,
 }
 
 impl ChainedBlock {
@@ -28,7 +28,7 @@ impl ChainedBlock {
         hash: Hash,
         prev_hash: Hash,
         merkle_root: Hash,
-        range: Range,
+        range: BlockRange,
     ) -> Self {
         Self {
             nonce,
@@ -65,7 +65,7 @@ impl ChainedBlock {
         self.position
     }
 
-    pub fn records_range(&self) -> Range {
+    pub fn records_range(&self) -> BlockRange {
         self.records_range
     }
 

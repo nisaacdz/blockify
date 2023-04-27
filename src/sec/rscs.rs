@@ -4,11 +4,11 @@ use super::{SigningError, VerificationError};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct PrivateKey {
-    buffer: Vec<u8>,
+    buffer: Box<[u8]>,
 }
 
 impl PrivateKey {
-    pub fn new(buffer: Vec<u8>) -> PrivateKey {
+    pub fn new(buffer: Box<[u8]>) -> PrivateKey {
         Self { buffer }
     }
 
@@ -17,26 +17,22 @@ impl PrivateKey {
     }
 }
 
-impl Into<Vec<u8>> for PrivateKey {
-    fn into(self) -> Vec<u8> {
-        self.buffer
-    }
-}
-
 impl From<Vec<u8>> for PrivateKey {
     fn from(buffer: Vec<u8>) -> Self {
-        PrivateKey { buffer }
+        PrivateKey {
+            buffer: buffer.into_boxed_slice(),
+        }
     }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct PublicKey {
-    buffer: Vec<u8>,
+    buffer: Box<[u8]>,
     algorithm: KeyPairAlgorithm,
 }
 
 impl PublicKey {
-    pub fn new(buffer: Vec<u8>, algorithm: KeyPairAlgorithm) -> PublicKey {
+    pub fn new(buffer: Box<[u8]>, algorithm: KeyPairAlgorithm) -> PublicKey {
         Self { buffer, algorithm }
     }
 
@@ -54,12 +50,6 @@ impl PublicKey {
         signature: &DigitalSignature,
     ) -> Result<(), VerificationError> {
         self.algorithm.verify(msg, signature, self.buffer())
-    }
-}
-
-impl Into<Vec<u8>> for PublicKey {
-    fn into(self) -> Vec<u8> {
-        self.buffer
     }
 }
 
@@ -85,15 +75,15 @@ impl From<AuthKeyPair> for PublicKey {
 
 #[derive(Debug, Clone)]
 pub struct AuthKeyPair {
-    private_key: Vec<u8>,
-    public_key: Vec<u8>,
+    private_key: Box<[u8]>,
+    public_key: Box<[u8]>,
     algorithm: KeyPairAlgorithm,
 }
 
 impl AuthKeyPair {
     pub fn new(
-        private_key: Vec<u8>,
-        public_key: Vec<u8>,
+        private_key: Box<[u8]>,
+        public_key: Box<[u8]>,
         algorithm: KeyPairAlgorithm,
     ) -> AuthKeyPair {
         AuthKeyPair {
@@ -125,11 +115,11 @@ impl AuthKeyPair {
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Hash {
-    buffer: Vec<u8>,
+    buffer: Box<[u8]>,
 }
 
 impl Hash {
-    pub fn new(buffer: Vec<u8>) -> Hash {
+    pub fn new(buffer: Box<[u8]>) -> Hash {
         Hash { buffer }
     }
     pub fn buffer(&self) -> &[u8] {
@@ -145,17 +135,17 @@ impl AsRef<[u8]> for Hash {
 
 impl From<Vec<u8>> for Hash {
     fn from(value: Vec<u8>) -> Hash {
-        Hash::new(value)
+        Hash::new(value.into_boxed_slice())
     }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct DigitalSignature {
-    pub(crate) buffer: Vec<u8>,
+    pub(crate) buffer: Box<[u8]>,
 }
 
 impl DigitalSignature {
-    pub fn new(buffer: Vec<u8>) -> DigitalSignature {
+    pub fn new(buffer: Box<[u8]>) -> DigitalSignature {
         Self { buffer }
     }
     pub fn buffer(&self) -> &[u8] {
@@ -165,13 +155,7 @@ impl DigitalSignature {
 
 impl From<Vec<u8>> for DigitalSignature {
     fn from(value: Vec<u8>) -> DigitalSignature {
-        DigitalSignature::new(value)
-    }
-}
-
-impl Into<Vec<u8>> for DigitalSignature {
-    fn into(self) -> Vec<u8> {
-        self.buffer
+        DigitalSignature::new(value.into_boxed_slice())
     }
 }
 

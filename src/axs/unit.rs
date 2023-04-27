@@ -1,8 +1,8 @@
 use std::ops::Sub;
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
-use crate::dat::ID;
+use super::dat::ID;
 
 pub trait UnitManager {
     fn all_units(&self);

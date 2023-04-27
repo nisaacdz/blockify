@@ -52,6 +52,7 @@ dependencies = [
  "chrono",
  "ed25519-dalek",
  "hex",
+ "optional",
  "rand",
  "record_derive",
  "ring",
@@ -60,6 +61,7 @@ dependencies = [
  "sha2 0.10.6",
  "thiserror",
  "tokio",
+ "true",
  "untrusted 0.9.0",
 ]
 
@@ -358,6 +360,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
 
 [[package]]
+name = "optional"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "978aa494585d3ca4ad74929863093e87cac9790d81fe7aba2b3dc2890643a0fc"
+
+[[package]]
 name = "pin-project-lite"
 version = "0.2.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -430,9 +438,9 @@ dependencies = [
 
 [[package]]
 name = "record_derive"
-version = "0.1.0"
+version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c7a43ea7e82dff00b332663a12c17733ef9fced60ec78c291090b07312e6aab7"
+checksum = "db0b5cb97aba5390e6dbb1852489bb4e651249220b8156bac19b2a0451c5f9ca"
 dependencies = [
  "quote",
  "syn 2.0.15",
@@ -610,6 +618,12 @@ dependencies = [
  "pin-project-lite",
  "windows-sys",
 ]
+
+[[package]]
+name = "true"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "548ec159e98411c04bee9b458df4ccd2da2a0a5e50c08cbd7e90b00b154c5a9a"
 
 [[package]]
 name = "typenum"

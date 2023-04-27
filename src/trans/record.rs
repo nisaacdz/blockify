@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    dat::MetaData,
+    axs::detail::MetaData,
     sec::{self, rscs::*, SigningError, VerificationError},
 };
 
@@ -10,46 +10,42 @@ pub use record_derive::Record;
 
 /// # Record
 ///
-/// This trait defines the structure and properties of any data or information that needs to be securely and transparently stored on the blockchain, referred to as a `Record` object.
+/// The `Record` trait defines the structure and properties of any data or information that needs to be securely and transparently stored on the blockchain.
 ///
-/// `Transparently` here means that the data should be provable and verifiable, although it may not necessarily be viewable by uninvolved parties.
+/// A `Record` is a **provable** and **verifiable** data structure that can be used to store any type of information, such as transaction data, metadata, votes, smart contract states, and so on.
 ///
-/// `Provable` means that the authenticity of the data can be demonstrated or confirmed, while `verifiable` means that the occurrence of the record can be demonstrated or confirmed.
-///
-/// # What can be a Record?
-///
-/// Examples of `Records` include transaction data, metadata, votes, smart contract states, and any other type of information that needs to be recorded and verified on a blockchain.
-///
-/// # Usage
-///
-/// To use this blockchain library, users must implement the `Record` trait on their type. This trait includes methods for serializing and deserializing the data, as well as for verifying the integrity and authenticity of the record on the blockchain.
-///
-/// By implementing the `Record` trait on their type, users can ensure that their data is securely and transparently recorded on the blockchain, with all the benefits of decentralization, transparency, and immutability that blockchain technology provides.
+/// **Provable** means that the authenticity of the data can be demonstrated or confirmed. **Verifiable** means that the occurrence of the record can be demonstrated or confirmed.
 ///
 /// # Methods
 ///
-/// This trait includes the following methods:
+/// The `Record` trait includes the following methods:
 ///
-/// - `record`: Signs the record with the given public and private keys, and generates a `SignedRecord`.
-/// - `sign`: Signs the record with the given private key and returns a digital signature.
-/// - `hash`: Computes and returns the hash of the record.
-/// - `metadata`: Returns metadata associated with the record, if any.
-/// - `verify`: Returns `Ok()` if signature verification succeeds or a `VerificationError` if it fails.
+///   * `sign()`: Signs the record with the given private key and returns a digital signature.
+///
+///   * `verify()`: Verifies the signature of the record with the given public key.
+///
+///   * `hash()`: Computes and returns the hash of the record.
+///
+///   * `metadata()`: Returns metadata associated with the record, if any.
+///
 ///
 ///
 /// # Examples
-/// ```
+///
+/// The following code shows how to use the `Record` trait to sign and verify a vote:
+///
+///
+/// ```rust
 /// use blockify::{sec, trans::record::Record};
 /// use serde::{Serialize, Deserialize};
 ///
-/// // To implement record you need to implement Serialize and Deserialize
 /// #[derive(Clone, Serialize, Deserialize, Record)]
 /// struct Vote {
 ///     session: i32,
 ///     choice: i32,
 /// }
 ///
-/// // Generate a key pair for digial signing and verification
+/// // Generate a key pair for digital signing and verification
 /// let keypair = sec::generate_ed25519_key_pair();
 ///
 /// // Let's create a `Vote` instance
@@ -61,20 +57,22 @@ pub use record_derive::Record;
 /// // Let's verify the signature with the trait method `verify`
 /// assert!(my_record.verify(&signature, &keypair.into_public_key()).is_ok())
 /// ```
-///
-pub trait Record: Serialize + for<'a> Deserialize<'a> {
+pub trait Record: Sized {
     /// converts `self` into a `SignedRecord` instance by singing it with the provided key pair
     ///
     /// # Arguments
-    /// 
+    ///
     /// `AuthKeyPair` - The Keypair for the signing.
     ///
     /// # Returns
-    /// 
+    ///
     /// - `Ok()` - A `SignedRecord<T>` instance.
     /// - `Err()` - A `SigningError` instance.
     ///
-    fn record(self, keypair: AuthKeyPair) -> Result<SignedRecord<Self>, SigningError> {
+    fn record(self, keypair: AuthKeyPair) -> Result<SignedRecord<Self>, SigningError>
+    where
+        Self: Serialize,
+    {
         let signature = self.sign(&keypair)?;
         let hash = self.hash();
         let metadata = self.metadata();
@@ -97,7 +95,10 @@ pub trait Record: Serialize + for<'a> Deserialize<'a> {
     /// * `Ok(signature)` - A `DigitalSignature` instance representing the signature of the record.
     /// * `Err(error)` - A `SigningError` instance describing the error that occurred during signing.
 
-    fn sign(&self, key: &AuthKeyPair) -> Result<DigitalSignature, SigningError> {
+    fn sign(&self, key: &AuthKeyPair) -> Result<DigitalSignature, SigningError>
+    where
+        Self: Serialize,
+    {
         let msg = bincode::serialize(self).map_err(|_| SigningError::SerializationError)?;
         let signature = sec::sign_msg(&msg, key)?;
         Ok(signature)
@@ -115,17 +116,19 @@ pub trait Record: Serialize + for<'a> Deserialize<'a> {
     /// * `Ok(())` - If the signature verification succeeds.
     /// * `Err(error)` - A `VerificationError` instance describing the error that occurred during verification.
 
-    fn verify(
-        &self,
-        signature: &DigitalSignature,
-        key: &PublicKey,
-    ) -> Result<(), VerificationError> {
+    fn verify(&self, signature: &DigitalSignature, key: &PublicKey) -> Result<(), VerificationError>
+    where
+        Self: Serialize,
+    {
         let msg = bincode::serialize(self).map_err(|_| VerificationError::SerializationError)?;
         key.verify(&msg, signature)
     }
 
     /// Computes and returns the hash of the record
-    fn hash(&self) -> Hash {
+    fn hash(&self) -> Hash
+    where
+        Self: Serialize,
+    {
         sec::hash(self)
     }
 
@@ -137,7 +140,7 @@ pub trait Record: Serialize + for<'a> Deserialize<'a> {
 
 /// # SignedRecord
 ///
-/// `SignedRecord` is a structure that represents a signed record on the blockchain. It includes the original record, its digital signature, public key, hash, and any associated metadata.
+/// A `SignedRecord` is a structure that represents a signed record on the blockchain. It includes the original record, its digital signature, public key, hash, and any associated metadata.
 ///
 /// A `SignedRecord` is used to ensure that data on the blockchain is authentic and has not been tampered with. By signing the record with a private key, it can be proven that the record was created by the holder of the private key and has not been modified since it was signed. The public key is used to verify the signature and confirm the authenticity of the record.
 ///
@@ -155,12 +158,14 @@ pub trait Record: Serialize + for<'a> Deserialize<'a> {
 ///
 /// # Examples
 ///
-/// ```
+/// The following code shows how to create a `SignedRecord` instance and verify its authenticity:
+///
+///
+/// ```rust
 /// use blockify::{sec, trans::record::Record};
 /// use serde::{Deserialize, Serialize};
 ///
 /// fn main() {
-///   // Serialize and Deserialize are supertraits of Record
 ///    #[derive(Clone, Serialize, Deserialize, Record)]
 ///    struct Vote {
 ///        session: i32,
@@ -204,7 +209,6 @@ pub trait Record: Serialize + for<'a> Deserialize<'a> {
 ///    assert!(signed_record.verify().is_ok());
 ///}
 /// ```
-
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct SignedRecord<R> {
     signer: PublicKey,
@@ -236,7 +240,7 @@ impl<R: Record> SignedRecord<R> {
     pub fn signature(&self) -> &DigitalSignature {
         &self.signature
     }
-    /// Returns a reference to the `Record` inside this `SignedRecord` instance 
+    /// Returns a reference to the `Record` inside this `SignedRecord` instance
     pub fn record(&self) -> &R {
         &self.record
     }
@@ -248,10 +252,6 @@ impl<R: Record> SignedRecord<R> {
     pub fn keypair_algorithm(&self) -> KeyPairAlgorithm {
         self.signer.algorithm()
     }
-    /// Verifies the validity of the `DigitalSignature` within this `SignedRecord` instance for the `Record` it holds. 
-    pub fn verify(&self) -> Result<(), VerificationError> {
-        self.record.verify(self.signature(), self.signer())
-    }
 
     // Returns a reference to the hash of `Record` stored within this `SignedRecord` instance
     pub fn hash(&self) -> &Hash {
@@ -260,5 +260,12 @@ impl<R: Record> SignedRecord<R> {
 
     pub fn metadata(&self) -> &MetaData {
         &self.metadata
+    }
+}
+
+impl<R: Record + Serialize> SignedRecord<R> {
+    /// Verifies the validity of the `DigitalSignature` within this `SignedRecord` instance for the `Record` it holds.
+    pub fn verify(&self) -> Result<(), VerificationError> {
+        self.record.verify(self.signature(), self.signer())
     }
 }

@@ -5,7 +5,6 @@ fn test() {
     use blockify::{sec, trans::record::Record};
     use serde::{Deserialize, Serialize};
 
-    // Serialize and Deserialize are a supertrait of Record
     #[derive(Clone, Serialize, Deserialize, Record)]
     struct Vote {
         session: i32,

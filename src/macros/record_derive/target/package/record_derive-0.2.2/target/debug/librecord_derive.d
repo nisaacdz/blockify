@@ -1,0 +1,1 @@
+/workspaces/blockify/src/macros/record_derive/target/package/record_derive-0.2.2/target/debug/librecord_derive.so: /workspaces/blockify/src/macros/record_derive/target/package/record_derive-0.2.2/src/lib.rs
