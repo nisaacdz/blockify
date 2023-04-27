@@ -37,10 +37,10 @@ pub fn record_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
 fn impl_record(input: &DeriveInput) -> proc_macro::TokenStream {
     let name = &input.ident;
     let generics = &input.generics;
-    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
+    let (impl_generics, ty_generics, _) = generics.split_for_impl();
 
     let gen = quote! {
-        impl #impl_generics Record for #name #ty_generics #where_clause {
+        impl #impl_generics Record for #name #ty_generics {
             // ...
         }
     };
