@@ -70,7 +70,7 @@ pub fn hash_block<R: Record + Serialize>(
 ) -> Hash {
     let records = bincode::serialize(block.records()).unwrap().into();
     let metabytes = bincode::serialize(&metadata).unwrap().into();
-    let buffer = sha_from_4(prev_hash, &records, block.merkle_root(), &metabytes);
+    let buffer = sha_from_x([prev_hash, &records, block.merkle_root(), &metabytes]);
     buffer.into()
 }
 
@@ -96,37 +96,17 @@ pub fn quick_id(len: usize) -> String {
     hex::encode(random_bytes(len))
 }
 
-pub fn sha_from_2(data: &[u8], data1: &[u8]) -> Hash {
+pub fn sha<H: AsRef<[u8]>>(value: &H) -> Hash {
     let mut hasher = Sha256::new();
-    hasher.update(data);
-    hasher.update(data1);
+    hasher.update(value);
     hasher.finalize().to_vec().into()
 }
 
-pub fn sha_from_3(data: &Hash, data1: &Hash, data2: &Hash) -> Hash {
+pub fn sha_from_x<H: AsRef<[u8]>, const N: usize>(values: [&H; N]) -> Hash {
     let mut hasher = Sha256::new();
-    hasher.update(data);
-    hasher.update(data1);
-    hasher.update(data2);
-    hasher.finalize().to_vec().into()
-}
-
-pub fn sha_from_4(data: &Hash, data1: &Hash, data2: &Hash, data3: &Hash) -> Hash {
-    let mut hasher = Sha256::new();
-    hasher.update(data);
-    hasher.update(data1);
-    hasher.update(data2);
-    hasher.update(data3);
-    hasher.finalize().to_vec().into()
-}
-
-pub fn sha_from_5(data: &Hash, data1: &Hash, data2: &Hash, data3: &Hash, data4: &Hash) -> Hash {
-    let mut hasher = Sha256::new();
-    hasher.update(data);
-    hasher.update(data1);
-    hasher.update(data2);
-    hasher.update(data3);
-    hasher.update(data4);
+    for value in values {
+        hasher.update(value);
+    }
     hasher.finalize().to_vec().into()
 }
 

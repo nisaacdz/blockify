@@ -96,7 +96,7 @@ impl MerkleTree {
         let left_hash = self.root.left().as_deref().unwrap().hash();
 
         if let None = &self.root.center {
-            let new_hash = super::sha_from_3(hash, left_hash, self.merkle_root());
+            let new_hash = super::sha_from_x([hash, left_hash, self.merkle_root()]);
 
             let mut new_node = MerkleNode::build(new_hash, None, None, None);
 
@@ -108,7 +108,7 @@ impl MerkleTree {
             self.root = new_node;
         } else if let None = self.root.right {
             let center_hash = self.root.center().as_deref().unwrap().hash();
-            let new_hash = super::sha_from_4(hash, left_hash, center_hash, self.merkle_root());
+            let new_hash = super::sha_from_x([hash, left_hash, center_hash, self.merkle_root()]);
 
             let mut new_node = MerkleNode::build(new_hash, None, None, None);
 
@@ -124,7 +124,7 @@ impl MerkleTree {
             let center_hash = self.root.center().as_deref().unwrap().hash();
             let right_hash = self.root.right().as_deref().unwrap().hash();
             let new_hash =
-                super::sha_from_5(hash, left_hash, center_hash, right_hash, self.merkle_root());
+                super::sha_from_x([hash, left_hash, center_hash, right_hash, self.merkle_root()]);
 
             let mut new_node = MerkleNode::build(new_hash, None, None, None);
 
