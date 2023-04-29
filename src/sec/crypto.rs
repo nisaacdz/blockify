@@ -1,17 +1,39 @@
 use serde::{Deserialize, Serialize};
 
 use super::{SigningError, VerificationError};
-
+/// A `PrivateKey` is a cryptographic key that can be used to sign data.
+///
+/// # Fields
+///
+/// * `buffer`: The raw bytes of the private key.
+///
+/// # Methods
+///
+/// * `new()`: Creates a new `PrivateKey` from a slice of bytes.
+/// * `buffer()`: Gets the raw bytes of the private key.
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct PrivateKey {
     buffer: Box<[u8]>,
 }
 
 impl PrivateKey {
+    /// Creates a new `PrivateKey` from a buffer of raw bytes.
+    ///
+    /// # Arguments
+    /// * `buffer`: The buffer of raw bytes.
+    ///
+    /// # Returns
+    /// A new `PrivateKey`.
+    ///
+    /// There is no checking of validity of the generated `PrivateKey`
     pub fn new(buffer: Box<[u8]>) -> PrivateKey {
         Self { buffer }
     }
-
+    /// Gets the raw bytes of the private key.
+    ///
+    /// # Returns
+    ///
+    /// The buffer of raw bytes.
     pub fn buffer(&self) -> &[u8] {
         &self.buffer
     }
@@ -24,6 +46,21 @@ impl From<Vec<u8>> for PrivateKey {
         }
     }
 }
+/// A `PublicKey` is a cryptographic key that can be used to verify signatures.
+///
+/// It is composed of a buffer of raw bytes and an algorithm.
+///
+/// # Fields
+///
+/// * `buffer`: The raw bytes of the public key.
+/// * `algorithm`: The algorithm used to generate the public key.
+///
+/// # Methods
+///
+/// * `new()`: Creates a new `PublicKey` from a `Box<[u8]>` and a `KeyPairAlgorithm`.
+/// * `buffer()`: Gets the raw bytes of the public key.
+/// * `algorithm()`: Gets the algorithm used to generate the public key.
+/// * `verify()`: Verifies a signature against the public key.
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct PublicKey {
@@ -73,6 +110,23 @@ impl From<AuthKeyPair> for PublicKey {
     }
 }
 
+/// An `AuthKeyPair` is a cryptographic key pair that can be used for authentication.
+///
+/// It is composed of a private key, a public key, and an algorithm.
+///
+/// # Fields
+///
+/// * `private_key`: The private key.
+/// * `public_key`: The public key.
+/// * `algorithm`: The algorithm used to generate the key pair.
+///
+/// # Methods
+///
+/// * `new()`: Creates a new `AuthKeyPair` from a private key, a public key, and an algorithm.
+/// * `private_key()`: Gets the private key.
+/// * `public_key()`: Gets the public key.
+/// * `algorithm()`: Gets the algorithm used to generate the key pair.
+
 #[derive(Debug, Clone)]
 pub struct AuthKeyPair {
     private_key: Box<[u8]>,
@@ -113,6 +167,13 @@ impl AuthKeyPair {
     }
 }
 
+/// A `Hash` is the result of hashing a value.
+///
+/// It is composed of a buffer of raw bytes.
+///
+/// # Fields
+///
+/// * `buffer`: The raw bytes of the hash.
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Hash {
     buffer: Box<[u8]>,
@@ -139,6 +200,14 @@ impl From<Vec<u8>> for Hash {
     }
 }
 
+/// A `DigitalSignature` is a cryptographic signature that can be used to verify the authenticity of a message.
+///
+/// It is composed of a buffer of raw bytes.
+///
+/// # Fields
+///
+/// * `buffer`: The raw bytes of the signature.
+
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct DigitalSignature {
     pub(crate) buffer: Box<[u8]>,
@@ -163,6 +232,14 @@ use ring::signature::{
     EcdsaKeyPair, EcdsaSigningAlgorithm, Ed25519KeyPair, RsaEncoding, RsaKeyPair,
     UnparsedPublicKey, VerificationAlgorithm,
 };
+
+/// An enum representing the different algorithms that can be used to generate key pairs.
+///
+/// The following algorithms are supported:
+///
+/// * `Ed25519`: An elliptic curve digital signature algorithm.
+/// * `Ecdsa256256Fixed`: An elliptic curve digital signature algorithm with a fixed curve.
+/// * `RsaPKCS1256`: A Rivest–Shamir–Adleman algorithm with a 256-bit modulus.
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum KeyPairAlgorithm {

@@ -1,5 +1,5 @@
 use super::{
-    blocks::{Block, ChainedBlock},
+    blocks::{Block, ChainedInstance},
     record::Record,
 };
 
@@ -10,6 +10,6 @@ pub enum ChainErrors {
 }
 
 pub trait Chain {
-    fn append<X: Record>(&self, data: &Block<X>) -> Result<ChainedBlock, ChainErrors>;
-    fn get<X: Record>(&self, pos: usize) -> Result<ChainedBlock, ChainErrors>;
+    fn append<X: Record>(&self, data: &Block<X>) -> Result<ChainedInstance, ChainErrors>;
+    fn get<X: Record>(&self, pos: usize) -> Result<ChainedInstance, ChainErrors>;
 }

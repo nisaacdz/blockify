@@ -6,11 +6,11 @@ use crate::{
 };
 
 use super::record::{Record, SignedRecord};
-use crate::sec::rscs::*;
+use crate::sec::crypto::*;
 
 pub struct BlockError {}
 
-pub struct ChainedBlock {
+pub struct ChainedInstance {
     nonce: u64,
     position: u64,
     time_stamp: TimeStamp,
@@ -20,7 +20,7 @@ pub struct ChainedBlock {
     records_range: BlockRange,
 }
 
-impl ChainedBlock {
+impl ChainedInstance {
     pub fn new(
         nonce: u64,
         position: u64,
@@ -74,29 +74,8 @@ impl ChainedBlock {
     }
 }
 
-/// Nodes may keep instances of ChainedBlock Copy in their local chains
-///
-/// copybbckdl consists of the original ChainedBlock and other metadata
-///
-
-pub struct LocalChainedBlock {
-    chained_block: ChainedBlock,
-    local_position: u64,
-}
-
-impl LocalChainedBlock {
-    pub fn original_block(&self) -> &ChainedBlock {
-        &self.chained_block
-    }
-
-    pub fn local_position(&self) -> u64 {
-        self.local_position
-    }
-}
-
 #[derive(Serialize, Debug, Deserialize, Clone, Hash)]
 pub struct Block<R> {
-    nonce: u64,
     records: Vec<SignedRecord<R>>,
     merkle: MerkleTree,
     merkle_root: Hash,

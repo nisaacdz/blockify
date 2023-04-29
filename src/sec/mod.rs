@@ -8,9 +8,9 @@ use crate::{
 };
 
 pub mod merkle;
-pub mod rscs;
+pub mod crypto;
 
-use rscs::*;
+use crypto::*;
 
 #[derive(Debug, Clone, Copy)]
 pub enum SigningError {

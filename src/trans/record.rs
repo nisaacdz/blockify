@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     axs::detail::MetaData,
-    sec::{self, rscs::*, SigningError, VerificationError},
+    sec::{self, crypto::*, SigningError, VerificationError},
 };
 
 #[cfg(feature = "derive")]
@@ -10,32 +10,24 @@ pub use record_derive::Record;
 
 /// # Record
 ///
-/// The `Record` trait defines the structure and properties of any data or information that needs to be securely and transparently stored on the blockchain.
+/// The `Record` trait provides a structure and properties
+/// for securely and transparently storing data on the blockchain.
+///  
+/// Any type that needs security provided by cryptographic operations can implement this trait.
 ///
-/// A `Record` is a **provable** and **verifiable** data structure that can be used to store any type of information, such as transaction data, metadata, votes, smart contract states, and so on.
-///
-/// **Provable** means that the authenticity of the data can be demonstrated or confirmed. **Verifiable** means that the occurrence of the record can be demonstrated or confirmed.
 ///
 /// # Methods
 ///
-/// The `Record` trait includes the following methods:
-///
-///   * `sign()`: Signs the record with the given private key and returns a digital signature.
-///
-///   * `verify()`: Verifies the signature of the record with the given public key.
-///
-///   * `hash()`: Computes and returns the hash of the record.
-///
-///   * `metadata()`: Returns metadata associated with the record, if any.
-///
+/// * `record` - converts `self` into a `SignedRecord`.
+/// * `sign` - signs the record and returns a `DigitalSignature`.
+/// * `verify` - compares a `DigitalSignature` with one from `sign`.
+/// * `hash` - computes the hash of the record `self`
+/// * `metadata` - computes and returns any associated metadata.
 ///
 ///
 /// # Examples
 ///
-/// The following code shows how to use the `Record` trait to sign and verify a vote:
-///
-///
-/// ```rust
+/// ```
 /// use blockify::{sec, trans::record::Record};
 /// use serde::{Serialize, Deserialize};
 ///
@@ -45,18 +37,19 @@ pub use record_derive::Record;
 ///     choice: i32,
 /// }
 ///
-/// // Generate a key pair for digital signing and verification
+/// // Generate an `ed25519` key pair
 /// let keypair = sec::generate_ed25519_key_pair();
 ///
-/// // Let's create a `Vote` instance
+/// // Create a `Vote` instance
 /// let my_record = Vote { session: 0, choice: 2 };
 ///
-/// // Let's sign the vote and obtain a `DigitalSignature` instance
+/// // Sign `my_record` and obtain a `DigitalSignature`
 /// let signature = my_record.sign(&keypair).unwrap();
 ///
-/// // Let's verify the signature with the trait method `verify`
+/// // Verify the signature with the trait method `verify`
 /// assert!(my_record.verify(&signature, &keypair.into_public_key()).is_ok())
 /// ```
+
 pub trait Record: Sized {
     /// converts `self` into a `SignedRecord` instance by singing it with the provided key pair
     ///
@@ -138,30 +131,28 @@ pub trait Record: Sized {
     }
 }
 
-/// # SignedRecord
+/// A `SignedRecord` is a type of `Record` that can be added to a `block` to be put on a `blockchain`
 ///
-/// A `SignedRecord` is a structure that represents a signed record on the blockchain. It includes the original record, its digital signature, public key, hash, and any associated metadata.
+/// It can be used to ensure that data in the block is authentic and has not been tampered with.
 ///
-/// A `SignedRecord` is used to ensure that data on the blockchain is authentic and has not been tampered with. By signing the record with a private key, it can be proven that the record was created by the holder of the private key and has not been modified since it was signed. The public key is used to verify the signature and confirm the authenticity of the record.
 ///
 /// # Type Parameters
 ///
 /// - `R`: The type of the original record that was signed.
 ///
+///
 /// # Fields
 ///
-/// - `signer`: The public key used to sign the record along with the key pair generation algorithm.
-/// - `signature`: The digital signature of the record.
-/// - `hash`: The hash of the record.
-/// - `record`: The original record that was signed.
-/// - `metadata`: Any associated metadata for the record.
+/// - `signer` - The public key of the signer of the record
+/// - `signature` - The digital signature of the record
+/// - `hash` - The hash of the record.
+/// - `record` - The original record that was signed.
+/// - `metadata` - Any associated metadata for the record (time, place, etc).
+///
 ///
 /// # Examples
 ///
-/// The following code shows how to create a `SignedRecord` instance and verify its authenticity:
-///
-///
-/// ```rust
+/// ```
 /// use blockify::{sec, trans::record::Record};
 /// use serde::{Deserialize, Serialize};
 ///
