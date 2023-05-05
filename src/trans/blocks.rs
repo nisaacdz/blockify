@@ -5,8 +5,20 @@ use crate::{
     sec::merkle::MerkleTree,
 };
 
-use super::record::{Record, SignedRecord};
+use super::{
+    image::BlockImage,
+    record::{Record, SignedRecord},
+};
 use crate::sec::crypto::*;
+
+pub trait Block<X> {
+    type RecordType: AsRef<SignedRecord<X>>;
+    fn records(&self) -> Result<Vec<Self::RecordType>, BlockError>;
+    fn image<T: BlockImage<X>>(&self) -> Result<T, BlockError>;
+    fn hash(&self) -> Hash;
+    fn merkle_root(&self) -> Hash;
+    fn nonce(&self) -> u64;
+}
 
 pub struct BlockError {}
 
@@ -75,13 +87,13 @@ impl ChainedInstance {
 }
 
 #[derive(Serialize, Debug, Deserialize, Clone, Hash)]
-pub struct Block<R> {
+pub struct UnchainedInstance<R> {
     records: Vec<SignedRecord<R>>,
     merkle: MerkleTree,
     merkle_root: Hash,
 }
 
-impl<R: Record> Block<R> {
+impl<R: Record> UnchainedInstance<R> {
     pub fn merkle_root(&self) -> &Hash {
         &self.merkle_root
     }

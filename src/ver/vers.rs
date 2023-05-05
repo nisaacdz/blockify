@@ -1,8 +1,8 @@
-use crate::trans::{blocks::Block, record::Record};
+use crate::trans::{blocks::UnchainedInstance, record::Record};
 
 pub trait BlockVerifier {
     type Item: Record;
-    fn verify(&self, block: &Block<Self::Item>) -> VerificationResult;
+    fn verify(&self, block: &UnchainedInstance<Self::Item>) -> VerificationResult;
 }
 
 pub struct VerificationResult;

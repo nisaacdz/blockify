@@ -1,15 +1,10 @@
 use super::{
-    blocks::{Block, ChainedInstance},
+    blocks::{UnchainedInstance, ChainedInstance},
     record::Record,
 };
 
-pub enum ChainErrors {
-    IndexExceedsSize,
-    BuilderSerializingError,
-    BuilderDeserializingError,
-}
-
 pub trait Chain {
-    fn append<X: Record>(&self, data: &Block<X>) -> Result<ChainedInstance, ChainErrors>;
-    fn get<X: Record>(&self, pos: usize) -> Result<ChainedInstance, ChainErrors>;
+    type ErrorType;
+    fn append<X: Record>(&self, data: &UnchainedInstance<X>) -> Result<ChainedInstance, Self::ErrorType>;
+    fn get<X: Record>(&self, pos: usize) -> Result<ChainedInstance, Self::ErrorType>;
 }

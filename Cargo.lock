@@ -61,7 +61,6 @@ dependencies = [
  "sha2 0.10.6",
  "thiserror",
  "tokio",
- "true",
  "untrusted 0.9.0",
 ]
 
@@ -618,12 +617,6 @@ dependencies = [
  "pin-project-lite",
  "windows-sys",
 ]
-
-[[package]]
-name = "true"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "548ec159e98411c04bee9b458df4ccd2da2a0a5e50c08cbd7e90b00b154c5a9a"
 
 [[package]]
 name = "typenum"

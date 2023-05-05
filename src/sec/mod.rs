@@ -4,11 +4,11 @@ use sha2::{Digest, Sha256};
 
 use crate::{
     axs::dat::{BlockRange, TimeStamp},
-    trans::{blocks::Block, record::Record},
+    trans::{blocks::UnchainedInstance, record::Record},
 };
 
-pub mod merkle;
 pub mod crypto;
+pub mod merkle;
 
 use crypto::*;
 
@@ -64,7 +64,7 @@ pub fn hash_bytes(bytes: &[u8]) -> Vec<u8> {
 }
 
 pub fn hash_block<R: Record + Serialize>(
-    block: &Block<R>,
+    block: &UnchainedInstance<R>,
     prev_hash: &Hash,
     metadata: (&TimeStamp, &BlockRange, &u64),
 ) -> Hash {

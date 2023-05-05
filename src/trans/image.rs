@@ -1,7 +1,16 @@
-use super::{blocks::ChainedInstance, chain::ChainErrors};
+use super::{blocks::ChainedInstance, record::SignedRecord};
 
 pub trait ChainImage {
-    fn cur(&mut self) -> Result<Option<ChainedInstance>, ChainErrors>;
-    fn next(&mut self) -> Result<Option<ChainedInstance>, ChainErrors>;
-    fn prev(&mut self) -> Result<Option<ChainedInstance>, ChainErrors>;
+    type ErrorType;
+    type BlockType: AsRef<ChainedInstance>;
+    fn cur(&mut self) -> Option<Self::BlockType>;
+    fn next(&mut self) -> Option<Self::BlockType>;
+    fn prev(&mut self) -> Option<Self::BlockType>;
+}
+
+pub trait BlockImage<X> {
+    type RecordType: AsRef<SignedRecord<X>>;
+    fn cur(&mut self) -> Option<Self::RecordType>;
+    fn next(&mut self) -> Option<Self::RecordType>;
+    fn prev(&mut self) -> Option<Self::RecordType>;
 }
