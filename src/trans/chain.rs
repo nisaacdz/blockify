@@ -1,10 +1,18 @@
 use super::{
-    blocks::{UnchainedInstance, ChainedInstance},
+    blocks::{ChainedInstance, UnchainedInstance},
     record::Record,
 };
 
+pub enum ChainError {
+    SerializationError,
+    DeserializationError,
+    CouldNotEstablishDatabaseConnection,
+    NoSuchEntityInDatabase(Option<&'static str>),
+    UknownError,
+}
+
 pub trait Chain {
-    type ErrorType;
-    fn append<X: Record>(&self, data: &UnchainedInstance<X>) -> Result<ChainedInstance, Self::ErrorType>;
-    fn get<X: Record>(&self, pos: usize) -> Result<ChainedInstance, Self::ErrorType>;
+    fn append<X: Record>(&self, data: &UnchainedInstance<X>)
+        -> Result<ChainedInstance, ChainError>;
+    fn get<X: Record>(&self, pos: usize) -> Result<ChainedInstance, ChainError>;
 }

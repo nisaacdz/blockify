@@ -1,8 +1,7 @@
-use super::{blocks::ChainedInstance, record::SignedRecord};
+use super::record::SignedRecord;
 
-pub trait ChainImage {
-    type ErrorType;
-    type BlockType: AsRef<ChainedInstance>;
+pub trait ChainImage<X> {
+    type BlockType: BlockImage<X>;
     fn cur(&mut self) -> Option<Self::BlockType>;
     fn next(&mut self) -> Option<Self::BlockType>;
     fn prev(&mut self) -> Option<Self::BlockType>;
