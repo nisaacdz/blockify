@@ -2,7 +2,7 @@
 
 #[test]
 fn test() {
-    use blockify::{sec, trans::record::Record};
+    use blockify::{crypto, trans::record::Record};
     use serde::{Deserialize, Serialize};
 
     #[derive(Clone, Serialize, Deserialize, Record)]
@@ -12,7 +12,7 @@ fn test() {
     }
 
     // Generate a new keypair
-    let keypair = sec::generate_ed25519_key_pair();
+    let keypair = crypto::generate_ed25519_key_pair();
 
     // Clone the public key
     let pub_key = keypair.clone().into_public_key();
@@ -24,7 +24,7 @@ fn test() {
     };
 
     // calculate the hash of my_record
-    let my_record_hash = sec::hash(&my_record);
+    let my_record_hash = crypto::hash(&my_record);
 
     // sign my_record with the AuthKeyPair instance and obtain a digital signature
     let signature = my_record.sign(&keypair).unwrap();

@@ -1,14 +1,14 @@
+use crate::io::{DataBaseError, SerdeError};
+
 use super::{
     blocks::{ChainedInstance, UnchainedInstance},
     record::Record,
 };
 
 pub enum ChainError {
-    SerializationError,
-    DeserializationError,
-    CouldNotEstablishDatabaseConnection,
-    NoSuchEntityInDatabase(Option<&'static str>),
-    UknownError,
+    SerdeError(SerdeError),
+    DataBaseError(DataBaseError),
+    Unspecified,
 }
 
 pub trait Chain {

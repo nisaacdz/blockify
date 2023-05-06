@@ -1,7 +1,7 @@
 pub mod axs;
 pub mod io;
 pub mod net;
-pub mod sec;
+pub mod crypto;
 pub mod trans;
 pub mod ver;
 

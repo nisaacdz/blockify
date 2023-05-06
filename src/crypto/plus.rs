@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use super::{SigningError, VerificationError};
+
 /// A `PrivateKey` is a cryptographic key that can be used to sign data.
 ///
 /// # Fields

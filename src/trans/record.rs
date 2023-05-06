@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     axs::detail::MetaData,
-    sec::{self, crypto::*, SigningError, VerificationError},
+    crypto::*,
 };
 
 #[cfg(feature = "derive")]
@@ -93,7 +93,7 @@ pub trait Record: Sized {
         Self: Serialize,
     {
         let msg = bincode::serialize(self).map_err(|_| SigningError::SerializationError)?;
-        let signature = sec::sign_msg(&msg, key)?;
+        let signature = sign_msg(&msg, key)?;
         Ok(signature)
     }
 
@@ -122,7 +122,7 @@ pub trait Record: Sized {
     where
         Self: Serialize,
     {
-        sec::hash(self)
+        hash(self)
     }
 
     // Computes and returns any associated metadata

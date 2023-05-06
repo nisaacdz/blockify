@@ -2,14 +2,13 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     axs::dat::{BlockRange, TimeStamp},
-    sec::merkle::MerkleTree,
+    crypto::*,
 };
 
 use super::{
     image::BlockImage,
     record::{Record, SignedRecord},
 };
-use crate::sec::crypto::*;
 
 pub trait Block<X> {
     type RecordType: AsRef<SignedRecord<X>>;
@@ -89,7 +88,7 @@ impl ChainedInstance {
 #[derive(Serialize, Debug, Deserialize, Clone, Hash)]
 pub struct UnchainedInstance<R> {
     records: Vec<SignedRecord<R>>,
-    merkle: MerkleTree,
+    merkle: merkle::MerkleTree,
     merkle_root: Hash,
 }
 

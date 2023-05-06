@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::sec::crypto::*;
+use super::Hash;
 
 #[derive(Debug, Clone, Serialize, Deserialize, Hash)]
 pub struct MerkleNode {

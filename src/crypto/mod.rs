@@ -7,10 +7,10 @@ use crate::{
     trans::{blocks::UnchainedInstance, record::Record},
 };
 
-pub mod crypto;
 pub mod merkle;
+mod plus;
 
-use crypto::*;
+pub use plus::*;
 
 #[derive(Debug, Clone, Copy)]
 pub enum SigningError {

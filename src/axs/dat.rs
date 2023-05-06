@@ -88,7 +88,7 @@ pub struct ID {
 impl ID {
     pub fn random() -> Self {
         Self {
-            value: crate::sec::quick_id(10),
+            value: crate::crypto::quick_id(10),
         }
     }
 }
