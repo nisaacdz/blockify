@@ -3,7 +3,7 @@ pub mod nodeserver;
 
 pub trait Peer {
     fn public_key(&self) -> &[u8];
-    fn units(&self) -> &crate::axs::unit::Units;
+    fn units(&self) -> &crate::data::Units;
 }
 
 pub trait Miner {

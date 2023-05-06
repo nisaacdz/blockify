@@ -1,8 +1,8 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    axs::dat::{BlockRange, TimeStamp},
     crypto::*,
+    data::{BlockRange, TimeStamp},
 };
 
 use super::{

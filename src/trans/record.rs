@@ -1,9 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    axs::detail::MetaData,
-    crypto::*,
-};
+use crate::{data::MetaData, crypto::*};
 
 #[cfg(feature = "derive")]
 pub use record_derive::Record;

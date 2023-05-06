@@ -3,7 +3,7 @@ use serde::Serialize;
 use sha2::{Digest, Sha256};
 
 use crate::{
-    axs::dat::{BlockRange, TimeStamp},
+    data::{BlockRange, TimeStamp},
     trans::{blocks::UnchainedInstance, record::Record},
 };
 
