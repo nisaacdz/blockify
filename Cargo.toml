@@ -16,14 +16,19 @@ optional = "0.5.0"
 rand = "0.7.3"
 record_derive = { version = "0.2.2", optional = true }
 ring = "0.16.20"
-serde = { version = "1.0.158", features = ["derive"] }
-serde_json = "1.0.93"
+serde = { version = "1.0.160", features = ["derive"] }
+serde_json = "1.0.96"
 sha2 = "0.10.6"
 thiserror = "1.0.39"
-tokio = "1.26.0"
+tokio = "1.28.0"
 untrusted = "0.9.0"
+
+[dev-dependencies]
+blockify = {path = ".", features = ["full"]}
 
 [features]
 default = ["crypto"]
 record = ["record_derive"]
-crypto  = []
+crypto = []
+blockchain = ["record", "crypto"]
+full = ["crypto", "record", "blockchain"]

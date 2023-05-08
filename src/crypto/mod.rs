@@ -1,11 +1,14 @@
 use rand::{thread_rng, Rng};
+#[cfg(feature = "blockchain")]
 use serde::Serialize;
+
 use sha2::{Digest, Sha256};
 
-use crate::{
-    data::{BlockRange, TimeStamp},
-    trans::{blocks::UnchainedInstance, record::Record},
-};
+#[cfg(feature = "blockchain")]
+use crate::data::{BlockRange, TimeStamp};
+
+#[cfg(feature = "blockchain")]
+use crate::trans::{blocks::UnchainedInstance, record::Record};
 
 pub mod merkle;
 mod plus;
@@ -63,6 +66,7 @@ pub fn hash_bytes(bytes: &[u8]) -> Vec<u8> {
     data.to_vec()
 }
 
+#[cfg(feature = "blockchain")]
 pub fn hash_block<R: Record + Serialize>(
     block: &UnchainedInstance<R>,
     prev_hash: &Hash,

@@ -1,5 +1,6 @@
 #![cfg(test)]
 
+#[cfg(feature = "full")]
 #[test]
 fn test() {
     use blockify::{crypto, data::MetaData, trans::record::Record};

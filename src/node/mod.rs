@@ -1,5 +1,8 @@
-pub mod node;
-pub mod nodeserver;
+mod nodestuff;
+
+#[cfg(feature = "blockchain")]
+pub use nodestuff::*;
+
 
 pub trait Peer {
     fn public_key(&self) -> &[u8];

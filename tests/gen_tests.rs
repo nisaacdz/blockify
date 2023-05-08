@@ -1,5 +1,7 @@
 #![cfg(test)]
 
+#![cfg(feature = "full")]
+
 #[test]
 fn test_derive() {
     use blockify::trans::record::Record;

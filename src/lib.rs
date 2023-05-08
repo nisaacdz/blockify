@@ -1,6 +1,6 @@
 pub mod data;
 pub mod io;
-pub mod net;
+pub mod node;
 
 #[cfg(feature = "crypto")]
 pub mod crypto;

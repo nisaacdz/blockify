@@ -49,6 +49,7 @@ name = "blockify"
 version = "0.0.4"
 dependencies = [
  "bincode",
+ "blockify",
  "chrono",
  "ed25519-dalek",
  "hex",

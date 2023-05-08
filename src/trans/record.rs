@@ -2,7 +2,6 @@ use serde::{Deserialize, Serialize};
 
 use crate::{data::MetaData, crypto::*};
 
-#[cfg(feature = "derive")]
 pub use record_derive::Record;
 
 /// # Record
