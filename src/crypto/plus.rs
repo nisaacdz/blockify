@@ -186,6 +186,12 @@ impl Hash {
     }
 }
 
+impl From<Hash> for String {
+    fn from(data: Hash) -> Self {
+        hex::encode(data)
+    }
+}
+
 impl AsRef<[u8]> for Hash {
     fn as_ref(&self) -> &[u8] {
         self.buffer()
@@ -223,6 +229,18 @@ impl DigitalSignature {
 impl From<Vec<u8>> for DigitalSignature {
     fn from(value: Vec<u8>) -> DigitalSignature {
         DigitalSignature::new(value.into_boxed_slice())
+    }
+}
+
+impl AsRef<[u8]> for DigitalSignature {
+    fn as_ref(&self) -> &[u8] {
+        self.buffer()
+    }
+}
+
+impl From<DigitalSignature> for String {
+    fn from(data: DigitalSignature) -> Self {
+        hex::encode(data)
     }
 }
 

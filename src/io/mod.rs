@@ -1,7 +1,8 @@
 pub enum DataBaseError {
     NoSuchTable,
     NoSuchKey,
-    ConnectionFailure,
+    NoSuchFile,
+    ConnectionFailed,
     ConnectionCannotEstablish,
 }
 

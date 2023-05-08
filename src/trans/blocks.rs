@@ -3,23 +3,38 @@ use serde::{Deserialize, Serialize};
 use crate::{
     crypto::*,
     data::{BlockRange, TimeStamp},
+    io::{DataBaseError, SerdeError},
 };
 
 use super::{
+    chain::ChainError,
     image::BlockImage,
     record::{Record, SignedRecord},
 };
 
 pub trait Block<X> {
-    type RecordType: AsRef<SignedRecord<X>>;
-    fn records(&self) -> Result<Vec<Self::RecordType>, BlockError>;
+    fn records<Z: FromIterator<SignedRecord<X>>>(&self) -> Result<Z, BlockError>;
     fn image<T: BlockImage<X>>(&self) -> Result<T, BlockError>;
-    fn hash(&self) -> Hash;
-    fn merkle_root(&self) -> Hash;
-    fn nonce(&self) -> u64;
+    fn hash(&self) -> Result<Hash, BlockError>;
+    fn merkle_root(&self) -> Result<Hash, BlockError>;
+    fn nonce(&self) -> Result<u64, BlockError>;
 }
 
-pub struct BlockError {}
+pub enum BlockError {
+    SerdeError(SerdeError),
+    DataBaseError(DataBaseError),
+    Unspecified,
+}
+
+impl From<ChainError> for BlockError {
+    fn from(value: ChainError) -> Self {
+        match value {
+            ChainError::SerdeError(v) => BlockError::SerdeError(v),
+            ChainError::DataBaseError(u) => BlockError::DataBaseError(u),
+            ChainError::Unspecified => BlockError::Unspecified,
+        }
+    }
+}
 
 pub struct ChainedInstance {
     nonce: u64,
@@ -80,8 +95,12 @@ impl ChainedInstance {
         self.records_range
     }
 
-    pub fn records<R: Record>(&self) -> Result<Vec<SignedRecord<R>>, BlockError> {
-        unimplemented!()
+    pub fn records<R: Record, B: Block<R>>(
+        &self,
+        block: &B,
+    ) -> Result<Vec<SignedRecord<R>>, BlockError> {
+        let res = block.records()?;
+        Ok(res)
     }
 }
 
