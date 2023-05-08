@@ -7,8 +7,7 @@ pub use record_derive::Record;
 
 /// # Record
 ///
-/// The `Record` trait provides a structure and properties
-/// for securely and transparently storing data on the blockchain.
+/// The `Record` trait provides a structure and functions for securely and transparently storing data on the blockchain.
 ///  
 /// Any type that needs security provided by cryptographic operations can implement this trait.
 ///
@@ -19,13 +18,11 @@ pub use record_derive::Record;
 /// * `sign` - signs the record and returns a `DigitalSignature`.
 /// * `verify` - compares a `DigitalSignature` with one from `sign`.
 /// * `hash` - computes the hash of the record `self`
-/// * `metadata` - computes and returns any associated metadata.
-///
 ///
 /// # Examples
 ///
 /// ```
-/// use blockify::{sec, trans::record::Record};
+/// use blockify::{crypto, trans::record::Record};
 /// use serde::{Serialize, Deserialize};
 ///
 /// #[derive(Clone, Serialize, Deserialize, Record)]
@@ -35,7 +32,7 @@ pub use record_derive::Record;
 /// }
 ///
 /// // Generate an `ed25519` key pair
-/// let keypair = sec::generate_ed25519_key_pair();
+/// let keypair = crypto::generate_ed25519_key_pair();
 ///
 /// // Create a `Vote` instance
 /// let my_record = Vote { session: 0, choice: 2 };
@@ -59,13 +56,12 @@ pub trait Record: Sized {
     /// - `Ok()` - A `SignedRecord<T>` instance.
     /// - `Err()` - A `SigningError` instance.
     ///
-    fn record(self, keypair: AuthKeyPair) -> Result<SignedRecord<Self>, SigningError>
+    fn record(self, keypair: AuthKeyPair, metadata: MetaData) -> Result<SignedRecord<Self>, SigningError>
     where
         Self: Serialize,
     {
         let signature = self.sign(&keypair)?;
         let hash = self.hash();
-        let metadata = self.metadata();
         Ok(SignedRecord::new(
             self,
             signature,
@@ -121,11 +117,6 @@ pub trait Record: Sized {
     {
         hash(self)
     }
-
-    // Computes and returns any associated metadata
-    fn metadata(&self) -> MetaData {
-        MetaData::empty()
-    }
 }
 
 /// A `SignedRecord` is a type of `Record` that can be added to a `block` to be put on a `blockchain`
@@ -150,7 +141,7 @@ pub trait Record: Sized {
 /// # Examples
 ///
 /// ```
-/// use blockify::{sec, trans::record::Record};
+/// use blockify::{crypto, data::MetaData, trans::record::Record};
 /// use serde::{Deserialize, Serialize};
 ///
 /// fn main() {
@@ -161,7 +152,7 @@ pub trait Record: Sized {
 ///    }
 ///
 ///    // Generate a new keypair
-///    let keypair = sec::generate_ed25519_key_pair();
+///    let keypair = crypto::generate_ed25519_key_pair();
 ///
 ///    // Clone the public key
 ///    let pub_key = keypair.clone().into_public_key();
@@ -173,7 +164,7 @@ pub trait Record: Sized {
 ///    };
 ///
 ///    // calculate the hash of my_record
-///    let my_record_hash = sec::hash(&my_record);
+///    let my_record_hash = crypto::hash(&my_record);
 ///
 ///    // sign my_record with the AuthKeyPair instance and obtain a digital signature
 ///    let signature = my_record.sign(&keypair).unwrap();
@@ -182,7 +173,7 @@ pub trait Record: Sized {
 ///    assert!(my_record.verify(&signature, &pub_key).is_ok());
 ///
 ///    // record the my_vote (convert it into a SignedRecord instance)
-///    let signed_record = my_record.record(keypair).unwrap();
+///    let signed_record = my_record.record(keypair, MetaData::empty()).unwrap();
 ///
 ///    // Compare the signature of `my_record` with that inside the `SignedRecord` instance
 ///    assert_eq!(&signature, signed_record.signature());

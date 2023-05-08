@@ -8,13 +8,11 @@ use crate::{
 
 use super::{
     chain::ChainError,
-    image::BlockImage,
     record::{Record, SignedRecord},
 };
 
 pub trait Block<X> {
-    fn records<Z: FromIterator<SignedRecord<X>>>(&self) -> Result<Z, BlockError>;
-    fn image<T: BlockImage<X>>(&self) -> Result<T, BlockError>;
+    fn records(&self) -> Result<Vec<SignedRecord<X>>, BlockError>;
     fn hash(&self) -> Result<Hash, BlockError>;
     fn merkle_root(&self) -> Result<Hash, BlockError>;
     fn nonce(&self) -> Result<u64, BlockError>;
@@ -99,7 +97,7 @@ impl ChainedInstance {
         &self,
         block: &B,
     ) -> Result<Vec<SignedRecord<R>>, BlockError> {
-        let res = block.records()?;
+        let res = block.records()?.into_iter().collect();
         Ok(res)
     }
 }
