@@ -7,7 +7,9 @@ A Rust blockchain library that provides the building blocks for creating a full-
 # FEATURES
 - **crypto**: 
 - **record**:
-- **blockchain**: 
+- **blockchain**:
+- **block**:
+- **chain**:
 
 
 # EXAMPLES
