@@ -1,3 +1,5 @@
+use std::error::Error;
+
 use rand::{thread_rng, Rng};
 #[cfg(feature = "blockchain")]
 use serde::Serialize;
@@ -22,6 +24,14 @@ pub enum SigningError {
     SerializationError,
 }
 
+impl std::fmt::Display for SigningError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        std::fmt::Debug::fmt(self, f)
+    }
+}
+
+impl Error for SigningError {}
+
 impl From<ring::error::KeyRejected> for SigningError {
     fn from(_: ring::error::KeyRejected) -> Self {
         SigningError::KeyRejected
@@ -34,12 +44,21 @@ impl From<ring::error::Unspecified> for SigningError {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
 pub enum VerificationError {
     InvalidSignature,
     NoMatch,
     BadKeyPair,
     Unspecified,
     SerializationError,
+}
+
+impl Error for VerificationError {}
+
+impl std::fmt::Display for VerificationError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        std::fmt::Debug::fmt(self, f)
+    }
 }
 
 impl From<ring::error::Unspecified> for VerificationError {
@@ -60,7 +79,7 @@ pub fn hash_bytes(bytes: &[u8]) -> Vec<u8> {
     let mut hasher = Sha256::new();
     // Update the hash with the binary data.
     hasher.update(bytes);
-    // Finalize the hash computation and store the result as `data`.
+    // Finalize the hash computation and store the result in `data`.
     let data = hasher.finalize();
     // Convert the `data` to a `Vec<u8>` for easier use.
     data.to_vec()
