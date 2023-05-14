@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     crypto::*,
-    data::{BlockRange, TimeStamp},
+    data::{BlockRange, TimeStamp, MetaData},
     io::{DataBaseError, SerdeError},
 };
 
@@ -108,12 +108,12 @@ impl ChainedInstance {
 pub struct UnchainedInstance<R> {
     records: Vec<SignedRecord<R>>,
     merkle: merkle::MerkleTree,
-    merkle_root: Hash,
+    metadata: MetaData,
 }
 
 impl<R: Record> UnchainedInstance<R> {
     pub fn merkle_root(&self) -> &Hash {
-        &self.merkle_root
+        &self.merkle.merkle_root()
     }
 
     pub fn push(&mut self, item: SignedRecord<R>) -> Result<(), BlockError> {

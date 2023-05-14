@@ -18,15 +18,7 @@ pub struct PrivateKey {
 }
 
 impl PrivateKey {
-    /// Creates a new `PrivateKey` from a buffer of raw bytes.
-    ///
-    /// # Arguments
-    /// * `buffer`: The buffer of raw bytes.
-    ///
-    /// # Returns
-    /// A new `PrivateKey`.
-    ///
-    /// There is no checking of validity of the generated `PrivateKey`
+    /// Creates a new `PrivateKey` from a boxed slice
     pub fn new(buffer: Box<[u8]>) -> PrivateKey {
         Self { buffer }
     }
@@ -43,22 +35,7 @@ impl From<Vec<u8>> for PrivateKey {
         }
     }
 }
-/// A `PublicKey` is a cryptographic key that can be used to verify signatures.
-///
-/// It is composed of a buffer of raw bytes and an algorithm.
-///
-/// # Fields
-///
-/// * `buffer`: The raw bytes of the public key.
-/// * `algorithm`: The algorithm used to generate the public key.
-///
-/// # Methods
-///
-/// * `new()`: Creates a new `PublicKey` from a `Box<[u8]>` and a `KeyPairAlgorithm`.
-/// * `buffer()`: Returns a slice of the public key bytes.
-/// * `algorithm()`: Returns the algorithm used to generate the public key.
-/// * `verify()`: Verifies a signature against the public key.
-
+/// A `PublicKey` is a cryptographic key that can be used to verify digital signatures that are signed with the equivalent `AuthKeyPair` or `PrivateKey`.
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct PublicKey {
     buffer: Box<[u8]>,
@@ -107,23 +84,8 @@ impl From<AuthKeyPair> for PublicKey {
     }
 }
 
-/// An `AuthKeyPair` is a cryptographic key pair that can be used for authentication.
+/// An `AuthKeyPair` is a cryptographic key pair that can be used for digital signing and verification.
 ///
-/// It is composed of a private key, a public key, and an algorithm.
-///
-/// # Fields
-///
-/// * `private_key`: The private key.
-/// * `public_key`: The public key.
-/// * `algorithm`: The algorithm used to generate the key pair.
-///
-/// # Methods
-///
-/// * `new()`: Creates a new `AuthKeyPair` from a private key, a public key, and an algorithm.
-/// * `private_key()`: Gets the private key.
-/// * `public_key()`: Gets the public key.
-/// * `algorithm()`: Gets the algorithm used to generate the key pair.
-
 #[derive(Debug, Clone)]
 pub struct AuthKeyPair {
     private_key: Box<[u8]>,
@@ -132,11 +94,7 @@ pub struct AuthKeyPair {
 }
 
 impl AuthKeyPair {
-    pub fn new(
-        private_key: Box<[u8]>,
-        public_key: Box<[u8]>,
-        algorithm: KeyPairAlgorithm,
-    ) -> AuthKeyPair {
+    pub fn new(private_key: Box<[u8]>, public_key: Box<[u8]>, algorithm: KeyPairAlgorithm) -> AuthKeyPair {
         AuthKeyPair {
             private_key,
             public_key,
@@ -159,7 +117,7 @@ impl AuthKeyPair {
         self.algorithm
     }
 
-    /// Uses this `AuthKeyPair` to sign the given bytes producing a returning a digital signature
+    /// Uses this `AuthKeyPair` to sign the given bytes returning a digital signature
     pub fn sign(&self, msg: &[u8]) -> Result<DigitalSignature, SigningError> {
         self.algorithm.sign(msg, self)
     }
@@ -167,11 +125,14 @@ impl AuthKeyPair {
 
 /// A `Hash` is the result of hashing a value.
 ///
-/// It is composed of a buffer of raw bytes.
+/// A typical hash produces bytes as the output.
+/// Since the exact size of the buffer varies depending on the hashing algorithm used,
+/// the underlying buffer stored is a slice of bytes instead of `[u8; 32]` or `[u8; 48]` or any other.
 ///
-/// # Fields
+/// This means that the slice of bytes itself will be stored on the heap.
 ///
-/// * `buffer`: The raw bytes of the hash.
+/// This can lead to `very little runtime overhead` in some cases but it provides a robust structure for handling any kind of Hashes.
+///
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Hash {
     buffer: Box<[u8]>,
@@ -183,6 +144,10 @@ impl Hash {
     }
     pub fn buffer(&self) -> &[u8] {
         &self.buffer
+    }
+
+    pub fn to_hex(&self) -> String {
+        hex::encode(&self.buffer)
     }
 }
 
@@ -230,7 +195,9 @@ impl From<Vec<u8>> for Hash {
 
 impl From<[u8; 32]> for Hash {
     fn from(value: [u8; 32]) -> Self {
-        Hash { buffer: value.into() }
+        Hash {
+            buffer: value.into(),
+        }
     }
 }
 
@@ -360,4 +327,44 @@ fn sign_rsa(
     private_key.sign(padding, &rng, &msg, &mut signature_vec)?;
 
     Ok(signature_vec.into())
+}
+
+#[cfg(test)]
+mod tests {
+    use serde::Serialize;
+
+    #[test]
+    fn hash_test() {
+        #[derive(Serialize)]
+        struct DMS {
+            audio: Option<String>,
+            moving_pictures: Option<String>,
+            metadata: String,
+        }
+
+        impl DMS {
+            fn new(audio: Option<String>, mp: Option<String>, d: String) -> DMS {
+                DMS {
+                    audio,
+                    moving_pictures: mp,
+                    metadata: d,
+                }
+            }
+        }
+
+        impl Default for DMS {
+            fn default() -> Self {
+                DMS::new(None, None, String::new())
+            }
+        }
+
+        let dms = DMS::default();
+        let my_dms = DMS::new(None, Some("Harry Potter".into()), "".into());
+
+        let dms_hash = blockify::hash(&dms);
+        let my_dms_hash = blockify::hash(&my_dms);
+
+        println!("{}", dms_hash.to_hex());
+        println!("{}", my_dms_hash.to_hex());
+    }
 }

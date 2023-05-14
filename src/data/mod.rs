@@ -51,10 +51,16 @@ impl Sub<Micron> for Units {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
+pub struct Image {
+    img: image::DynamicImage,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
 pub enum Detail {
     Text(String),
-    Int(usize),
+    Integer(isize),
     Bytes(Box<[u8]>),
+    TimeStamp(TimeStamp),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
