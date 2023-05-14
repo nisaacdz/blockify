@@ -60,10 +60,16 @@ impl MerkleNode {
 
 /// A Merkle tree.
 ///
-#[derive(Debug, Clone, Serialize, Deserialize, Hash)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MerkleTree {
     root: MerkleNode,
     size: usize,
+}
+
+impl std::hash::Hash for MerkleTree {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        state.write(self.merkle_root());
+    }
 }
 
 impl MerkleTree {

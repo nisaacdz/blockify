@@ -21,7 +21,7 @@ pub use record_derive::Record;
 /// # Examples
 ///
 /// ```
-/// use blockify::{crypto, trans::record::Record};
+/// use blockify::trans::record::Record;
 /// use serde::{Serialize, Deserialize};
 ///
 /// #[derive(Clone, Serialize, Deserialize, Record)]
@@ -31,7 +31,7 @@ pub use record_derive::Record;
 /// }
 ///
 /// // Generate an `ed25519` key pair
-/// let keypair = crypto::generate_ed25519_key_pair();
+/// let keypair = blockify::generate_ed25519_key_pair();
 ///
 /// // Create a `Vote` instance
 /// let my_record = Vote { session: 0, choice: 2 };
@@ -42,7 +42,6 @@ pub use record_derive::Record;
 /// // Verify the signature with the trait method `verify`
 /// assert!(my_record.verify(&signature, &keypair.into_public_key()).is_ok())
 /// ```
-
 pub trait Record: Sized {
     /// converts `self` into a `SignedRecord` instance by singing it with the provided key pair
     ///
@@ -128,19 +127,10 @@ pub trait Record: Sized {
 /// - `R`: The type of the original record that was signed.
 ///
 ///
-/// # Fields
-///
-/// - `signer` - The public key of the signer of the record
-/// - `signature` - The digital signature of the record
-/// - `hash` - The hash of the record.
-/// - `record` - The original record that was signed.
-/// - `metadata` - Any associated metadata for the record (time, place, etc).
-///
-///
 /// # Examples
 ///
 /// ```
-/// use blockify::{crypto, data::MetaData, trans::record::Record};
+/// use blockify::{data::MetaData, trans::record::Record};
 /// use serde::{Deserialize, Serialize};
 ///
 /// fn main() {
@@ -151,7 +141,7 @@ pub trait Record: Sized {
 ///    }
 ///
 ///    // Generate a new keypair
-///    let keypair = crypto::generate_ed25519_key_pair();
+///    let keypair = blockify::generate_ed25519_key_pair();
 ///
 ///    // Clone the public key
 ///    let pub_key = keypair.clone().into_public_key();
@@ -163,7 +153,7 @@ pub trait Record: Sized {
 ///    };
 ///
 ///    // calculate the hash of my_record
-///    let my_record_hash = crypto::hash(&my_record);
+///    let my_record_hash = blockify::hash(&my_record);
 ///
 ///    // sign my_record with the AuthKeyPair instance and obtain a digital signature
 ///    let signature = my_record.sign(&keypair).unwrap();

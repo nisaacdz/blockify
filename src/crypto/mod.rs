@@ -14,6 +14,7 @@ use crate::trans::{blocks::UnchainedInstance, record::Record};
 
 pub mod merkle;
 mod plus;
+mod temp;
 
 pub use plus::*;
 

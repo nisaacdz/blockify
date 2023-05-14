@@ -57,6 +57,7 @@ dependencies = [
  "rand",
  "record_derive",
  "ring",
+ "rs_merkle",
  "serde",
  "serde_json",
  "sha2 0.10.6",
@@ -459,6 +460,15 @@ dependencies = [
  "untrusted 0.7.1",
  "web-sys",
  "winapi",
+]
+
+[[package]]
+name = "rs_merkle"
+version = "1.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1e251a1802ec7d5619a1313d11b1bf5a271e9624939c3dcc438e4befdd0e89a6"
+dependencies = [
+ "sha2 0.10.6",
 ]
 
 [[package]]

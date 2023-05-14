@@ -3,7 +3,10 @@ pub mod io;
 pub mod node;
 
 #[cfg(feature = "crypto")]
-pub mod crypto;
+mod crypto;
+
+#[cfg(feature = "crypto")]
+pub use crypto::*;
 
 pub mod trans;
 pub mod ver;

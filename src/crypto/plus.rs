@@ -186,9 +186,33 @@ impl Hash {
     }
 }
 
+impl Default for Hash {
+    fn default() -> Self {
+        let buffer = vec![0; 32];
+        Hash::new(buffer.into_boxed_slice())
+    }
+}
+
+impl Into<[u8; 32]> for Hash {
+    fn into(self) -> [u8; 32] {
+        let mut buffer = [0; 32];
+        for i in 0..usize::min(32, self.buffer.len()) {
+            buffer[i] = self.buffer[i];
+        }
+        buffer
+    }
+}
+
 impl From<Hash> for String {
     fn from(data: Hash) -> Self {
         hex::encode(data)
+    }
+}
+
+impl std::ops::Deref for Hash {
+    type Target = [u8];
+    fn deref(&self) -> &Self::Target {
+        self.buffer()
     }
 }
 
@@ -201,6 +225,12 @@ impl AsRef<[u8]> for Hash {
 impl From<Vec<u8>> for Hash {
     fn from(value: Vec<u8>) -> Hash {
         Hash::new(value.into_boxed_slice())
+    }
+}
+
+impl From<[u8; 32]> for Hash {
+    fn from(value: [u8; 32]) -> Self {
+        Hash { buffer: value.into() }
     }
 }
 
