@@ -1,3 +1,4 @@
+use diesel::Queryable;
 use serde::{Deserialize, Serialize};
 
 use crate::{data::MetaData, crypto::*};
@@ -176,7 +177,7 @@ pub trait Record: Sized {
 ///    assert!(signed_record.verify().is_ok());
 ///}
 /// ```
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash, Queryable)]
 pub struct SignedRecord<R> {
     signer: PublicKey,
     signature: DigitalSignature,

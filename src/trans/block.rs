@@ -132,3 +132,7 @@ impl<R: Record> UnchainedInstance<R> {
         &self.records
     }
 }
+
+pub struct SqLiteBlock {
+    
+}
