@@ -10,11 +10,11 @@ use sha2::{Digest, Sha256};
 use crate::data::{BlockRange, TimeStamp};
 
 #[cfg(feature = "blockchain")]
-use crate::trans::{blocks::UnchainedInstance, record::Record};
+use crate::trans::{block::UnchainedInstance, record::Record};
 
 pub mod merkle;
 mod plus;
-
+mod temp;
 pub use plus::*;
 
 #[derive(Debug, Clone, Copy)]

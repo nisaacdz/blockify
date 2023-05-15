@@ -1,4 +1,4 @@
-use crate::trans::{blocks::UnchainedInstance, record::Record};
+use crate::trans::{block::UnchainedInstance, record::Record};
 
 pub trait BlockVerifier {
     type Item: Record;

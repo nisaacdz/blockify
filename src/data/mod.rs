@@ -1,5 +1,6 @@
 use std::ops::Sub;
 
+use image::DynamicImage;
 use serde::{Deserialize, Serialize};
 
 pub trait UnitManager {
@@ -50,9 +51,43 @@ impl Sub<Micron> for Units {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone)]
 pub struct Image {
-    img: image::DynamicImage,
+    img: DynamicImage,
+}
+
+impl From<DynamicImage> for Image {
+    fn from(img: DynamicImage) -> Self {
+        Image { img }
+    }
+}
+
+impl Eq for Image {}
+
+impl std::hash::Hash for Image {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        state.write(self.img.as_bytes())
+    }
+}
+
+impl PartialEq for Image {
+    fn eq(&self, other: &Self) -> bool {
+        self.img.as_bytes() == other.img.as_bytes()
+    }
+}
+
+impl<'de> Deserialize<'de> for Image {
+    fn deserialize<D: serde::Deserializer<'de>>(dz: D) -> Result<Self, D::Error> {
+        let buffer = <&[u8]>::deserialize(dz)?;
+        let img = image::load_from_memory(buffer).map_err(serde::de::Error::custom)?;
+        Ok(Image::from(img))
+    }
+}
+
+impl Serialize for Image {
+    fn serialize<S: serde::Serializer>(&self, sz: S) -> Result<S::Ok, S::Error> {
+        sz.serialize_bytes(self.img.as_bytes())
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
@@ -61,6 +96,7 @@ pub enum Detail {
     Integer(isize),
     Bytes(Box<[u8]>),
     TimeStamp(TimeStamp),
+    Image(Image),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]

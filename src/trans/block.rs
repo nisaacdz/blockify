@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     crypto::*,
-    data::{BlockRange, TimeStamp, MetaData},
+    data::{BlockRange, MetaData, TimeStamp},
     io::{DataBaseError, SerdeError},
 };
 
@@ -12,9 +12,14 @@ use super::{
 };
 
 pub trait Block<X> {
-    fn records(&self) -> Result<Vec<SignedRecord<X>>, BlockError>;
+    fn records(&self) -> Result<Box<[SignedRecord<X>]>, BlockError>;
     fn hash(&self) -> Result<Hash, BlockError>;
     fn merkle_root(&self) -> Result<Hash, BlockError>;
+    fn validate(&self, chained: &ChainedInstance) -> Result<bool, BlockError> {
+        let res = (self.nonce()?, &self.hash()?, &self.merkle_root()?)
+            == (chained.nonce(), chained.hash(), chained.merkle_root());
+        Ok(res)
+    }
     fn nonce(&self) -> Result<u64, BlockError>;
 }
 
@@ -96,8 +101,8 @@ impl ChainedInstance {
     pub fn records<R: Record, B: Block<R>>(
         &self,
         block: &B,
-    ) -> Result<Vec<SignedRecord<R>>, BlockError> {
-        let res = block.records()?.into_iter().collect();
+    ) -> Result<Box<[SignedRecord<R>]>, BlockError> {
+        let res = block.records()?;
         Ok(res)
     }
 }

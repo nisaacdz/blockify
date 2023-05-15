@@ -1,8 +1,7 @@
 use crate::io::{DataBaseError, SerdeError};
 
 use super::{
-    blocks::{BlockError, ChainedInstance, UnchainedInstance, Block},
-    image::{BlockImage, ChainImage},
+    block::{BlockError, ChainedInstance, UnchainedInstance, Block},
     record::Record,
 };
 
@@ -25,10 +24,10 @@ impl From<BlockError> for ChainError {
 pub trait Chain {
     fn append<X: Record>(&self, data: &UnchainedInstance<X>)
         -> Result<ChainedInstance, ChainError>;
-    fn get<X: Record, B: Block<X>>(&self, pos: usize) -> Result<B, ChainError>;
-    fn chain_image<X: Record, Y: ChainImage<X>>(&self) -> Result<Y, ChainError>;
-    fn block_image<X: Record, Y: BlockImage<X>>(
-        &self,
-        pos: &ChainedInstance,
-    ) -> Result<Y, ChainError>;
+    fn block_at<X: Record, B: Block<X>>(&self, pos: u64) -> Result<B, ChainError>;
+    fn get<X: Record, B: Block<X>>(&self, b: &ChainedInstance) -> Result<B, ChainError> {
+        let pos = b.position();
+        let block = self.block_at(pos)?;
+        Ok(block)
+    }
 }

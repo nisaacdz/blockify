@@ -1,5 +1,5 @@
 #[cfg(feature = "blockchain")]
-pub mod blocks;
+pub mod block;
 
 #[cfg(feature = "blockchain")]
 pub mod chain;
