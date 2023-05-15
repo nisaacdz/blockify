@@ -3,7 +3,7 @@
 
 #[test]
 fn test_derive() {
-    use blockify::trans::record::Record;
+    use blockify::record::Record;
     use serde::{Deserialize, Serialize};
 
     #[derive(Serialize, Deserialize, Record)]
@@ -14,7 +14,7 @@ fn test_derive() {
 
 #[test]
 fn test_record() {
-    use blockify::{data::MetaData, trans::record::Record};
+    use blockify::{data::MetaData, record::Record};
     use serde::{Deserialize, Serialize};
 
     #[derive(Serialize, Deserialize, Record)]

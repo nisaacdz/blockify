@@ -21,7 +21,7 @@ pub use record_derive::Record;
 /// # Examples
 ///
 /// ```
-/// use blockify::trans::record::Record;
+/// use blockify::record::Record;
 /// use serde::{Serialize, Deserialize};
 ///
 /// #[derive(Clone, Serialize, Deserialize, Record)]
@@ -47,7 +47,8 @@ pub trait Record: Sized {
     ///
     /// # Arguments
     ///
-    /// `AuthKeyPair` - The Keypair for the signing.
+    /// - `AuthKeyPair` - The Keypair for the signing.
+    /// - `MetaData` - Any associated metadata or `MetaData::empty()` if there is none.
     ///
     /// # Returns
     ///
@@ -68,17 +69,16 @@ pub trait Record: Sized {
             metadata,
         ))
     }
-    /// Signs the record with the given key and returns a digital signature.
+    /// Signs the record with the given key and returns the signature, if the signing succeeds
     ///
     /// # Arguments
     ///
-    /// * `key` - The private key to use for signing.
+    /// * `AuthKeyPair` - The private key to use for signing.
     ///
     /// # Returns
     ///
-    /// * `Ok(signature)` - A `DigitalSignature` instance representing the signature of the record.
-    /// * `Err(error)` - A `SigningError` instance describing the error that occurred during signing.
-
+    /// * `Ok(DigitalSignature)`
+    /// * `Err(SigningError)`
     fn sign(&self, key: &AuthKeyPair) -> Result<DigitalSignature, SigningError>
     where
         Self: Serialize,
@@ -88,18 +88,17 @@ pub trait Record: Sized {
         Ok(signature)
     }
 
-    /// Returns `Ok(())` if signature verification succeeds or a `VerificationError` if it fails.
+    /// Attempts to verify the `DigitalSignature` for `self` with the given `PublicKey`
     ///
     /// # Arguments
     ///
-    /// * `signature` - The digital signature to verify.
-    /// * `key` - The public key to use for verification.
+    /// * `DigitalSignature`
+    /// * `PublicKey`
     ///
     /// # Returns
     ///
-    /// * `Ok(())` - If the signature verification succeeds.
-    /// * `Err(error)` - A `VerificationError` instance describing the error that occurred during verification.
-
+    /// * `Ok(())`
+    /// * `Err(VerificationError)`
     fn verify(&self, signature: &DigitalSignature, key: &PublicKey) -> Result<(), VerificationError>
     where
         Self: Serialize,
@@ -117,7 +116,7 @@ pub trait Record: Sized {
     }
 }
 
-/// A `SignedRecord` is a type of `Record` that can be added to a `block` to be put on a `blockchain`
+/// A `SignedRecord` is a type of data that can be added to a `block` to be put on a `blockchain`
 ///
 /// It can be used to ensure that data in the block is authentic and has not been tampered with.
 ///
@@ -130,7 +129,7 @@ pub trait Record: Sized {
 /// # Examples
 ///
 /// ```
-/// use blockify::{data::MetaData, trans::record::Record};
+/// use blockify::{data::MetaData, record::Record};
 /// use serde::{Deserialize, Serialize};
 ///
 /// fn main() {

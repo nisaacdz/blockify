@@ -3,7 +3,7 @@
 #[cfg(feature = "full")]
 #[test]
 fn test() {
-    use blockify::{data::MetaData, trans::record::Record};
+    use blockify::{data::MetaData, record::Record};
     use serde::{Deserialize, Serialize};
 
     #[derive(Clone, Serialize, Deserialize, Record)]

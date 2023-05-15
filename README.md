@@ -10,6 +10,12 @@ A Rust blockchain library that provides the building blocks for creating a full-
 - **blockchain**:
 - **block**:
 - **chain**:
+- **unit**:
+
+##  DEFAULT FEATURES
+- **crypto**
+- **record**
+
 
 
 # EXAMPLES
@@ -17,7 +23,7 @@ A Rust blockchain library that provides the building blocks for creating a full-
 - **Record Trait** 
 ```
 fn main() {
-    use blockify::{data::MetaData, trans::record::Record};
+    use blockify::{data::MetaData, record::Record};
     use serde::{Deserialize, Serialize};
 
     #[derive(Clone, Serialize, Deserialize, Record)]
