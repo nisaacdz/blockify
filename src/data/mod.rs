@@ -152,7 +152,7 @@ impl TimeStamp {
     }
 }
 pub trait ToTimeStamp {
-    fn to_local_timestamp(&self) -> TimeStamp;
+    fn to_timestamp(&self) -> TimeStamp;
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Hash)]
@@ -168,7 +168,7 @@ impl BlockRange {
 }
 
 impl ToTimeStamp for chrono::NaiveDateTime {
-    fn to_local_timestamp(&self) -> TimeStamp {
+    fn to_timestamp(&self) -> TimeStamp {
         TimeStamp {
             millis: 0,
             second: self.second() as u8,
