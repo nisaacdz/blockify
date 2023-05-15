@@ -45,6 +45,6 @@ fn test() {
     // Compare the hash of my_record with that inside the `SignedRecord` instance.
     assert_eq!(&my_record_hash, signed_record.hash());
 
-    // Verfify the signature within the `SignedRecord` instance.
+    // Verify the signature within the `SignedRecord` instance.
     assert!(signed_record.verify().is_ok());
 }

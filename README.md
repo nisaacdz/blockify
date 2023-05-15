@@ -17,7 +17,7 @@ A Rust blockchain library that provides the building blocks for creating a full-
 - **Record Trait** 
 ```
 fn main() {
-    use blockify::{sec, trans::record::Record};
+    use blockify::{data::MetaData, trans::record::Record};
     use serde::{Deserialize, Serialize};
 
     #[derive(Clone, Serialize, Deserialize, Record)]
@@ -27,7 +27,7 @@ fn main() {
     }
 
     // Generate a new keypair
-    let keypair = sec::generate_ed25519_key_pair();
+    let keypair = blockify::generate_ed25519_key_pair();
 
     // Clone the public key
     let pub_key = keypair.clone().into_public_key();
@@ -39,7 +39,7 @@ fn main() {
     };
 
     // calculate the hash of my_record
-    let my_record_hash = sec::hash(&my_record);
+    let my_record_hash = blockify::hash(&my_record);
 
     // sign my_record with the AuthKeyPair instance and obtain a digital signature
     let signature = my_record.sign(&keypair).unwrap();
@@ -48,7 +48,7 @@ fn main() {
     assert!(my_record.verify(&signature, &pub_key).is_ok());
 
     // record the my_vote (convert it into a SignedRecord instance)
-    let signed_record = my_record.record(keypair).unwrap();
+    let signed_record = my_record.record(keypair, MetaData::empty()).unwrap();
 
     // Compare the signature of `my_record` with that inside the `SignedRecord` instance
     assert_eq!(&signature, signed_record.signature());
@@ -59,14 +59,19 @@ fn main() {
     // Compare the hash of my_record with that inside the `SignedRecord` instance.
     assert_eq!(&my_record_hash, signed_record.hash());
 
-    // Verfify the signature within the `SignedRecord` instance.
+    // Verify the signature within the `SignedRecord` instance.
     assert!(signed_record.verify().is_ok());
 }
+
 
 ```
 
 
+# DOWNLOADING
 
+```
+cargo add blockify
+```
 
 
 # CONTRIBUTING
