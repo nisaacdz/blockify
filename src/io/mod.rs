@@ -1,3 +1,4 @@
+#[derive(Debug, Clone, Copy)]
 pub enum DataBaseError {
     NoSuchTable,
     NoSuchKey,
@@ -6,6 +7,7 @@ pub enum DataBaseError {
     ConnectionCannotEstablish,
 }
 
+#[derive(Debug, Clone, Copy)]
 pub enum SerdeError {
     SerializationError,
     DeserializationError,

@@ -1,13 +1,15 @@
 use crate::io::{DataBaseError, SerdeError};
 
 use super::{
-    block::{BlockError, ChainedInstance, UnchainedInstance, Block},
+    block::{Block, BlockError, ChainedInstance, UnchainedInstance},
     record::Record,
 };
 
+#[derive(Debug, Clone, Copy)]
 pub enum ChainError {
     SerdeError(SerdeError),
     DataBaseError(DataBaseError),
+    AbsentPosition,
     Unspecified,
 }
 
@@ -22,12 +24,16 @@ impl From<BlockError> for ChainError {
 }
 
 pub trait Chain {
-    fn append<X: Record>(&self, data: &UnchainedInstance<X>)
-        -> Result<ChainedInstance, ChainError>;
-    fn block_at<X: Record, B: Block<X>>(&self, pos: u64) -> Result<B, ChainError>;
-    fn get<X: Record, B: Block<X>>(&self, b: &ChainedInstance) -> Result<B, ChainError> {
+    type RecordType: Record;
+    type BlockType: Block<RecordType = Self::RecordType>;
+    fn append(
+        &self,
+        data: &UnchainedInstance<Self::RecordType>,
+    ) -> Result<ChainedInstance, ChainError>;
+    fn block_at(&self, pos: u64) -> Result<Option<Self::BlockType>, ChainError>;
+    fn get(&self, b: &ChainedInstance) -> Result<Self::BlockType, ChainError> {
         let pos = b.position();
-        let block = self.block_at(pos)?;
+        let block = self.block_at(pos)?.ok_or(ChainError::AbsentPosition)?;
         Ok(block)
     }
 }

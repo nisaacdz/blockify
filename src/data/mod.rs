@@ -123,6 +123,20 @@ impl BlockRange {
     }
 }
 
+impl<T: chrono::TimeZone> ToTimeStamp for chrono::DateTime<T> {
+    fn to_timestamp(&self) -> TimeStamp {
+        TimeStamp {
+            millis: 0,
+            second: self.second() as u8,
+            minute: self.minute() as u8,
+            hour: self.hour() as u8,
+            day: self.day() as u8,
+            month: self.month() as u8,
+            year: self.year() as u16,
+        }
+    }
+}
+
 impl ToTimeStamp for chrono::NaiveDateTime {
     fn to_timestamp(&self) -> TimeStamp {
         TimeStamp {
@@ -171,5 +185,39 @@ impl ID {
         Self {
             value: crate::crypto::quick_id(10),
         }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
+pub struct Nonce {
+    pub nonce: u64,
+}
+
+impl Nonce {
+    pub fn new(nonce: u64) -> Self {
+        Nonce { nonce }
+    }
+}
+
+impl From<u64> for Nonce {
+    fn from(value: u64) -> Self {
+        Nonce::new(value)
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
+pub struct Position {
+    pub pos: u64,
+}
+
+impl Position {
+    pub fn new(pos: u64) -> Self {
+        Position { pos }
+    }
+}
+
+impl From<u64> for Position {
+    fn from(value: u64) -> Self {
+        Position::new(value)
     }
 }

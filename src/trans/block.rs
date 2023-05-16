@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     crypto::*,
-    data::{BlockRange, MetaData, TimeStamp},
+    data::{MetaData, Nonce, Position, TimeStamp},
     io::{DataBaseError, SerdeError},
 };
 
@@ -11,8 +11,9 @@ use super::{
     record::{Record, SignedRecord},
 };
 
-pub trait Block<X> {
-    fn records(&self) -> Result<Box<[SignedRecord<X>]>, BlockError>;
+pub trait Block {
+    type RecordType: Record;
+    fn records(&self) -> Result<Box<[SignedRecord<Self::RecordType>]>, BlockError>;
     fn hash(&self) -> Result<Hash, BlockError>;
     fn merkle_root(&self) -> Result<Hash, BlockError>;
     fn validate(&self, chained: &ChainedInstance) -> Result<bool, BlockError> {
@@ -23,6 +24,7 @@ pub trait Block<X> {
     fn nonce(&self) -> Result<u64, BlockError>;
 }
 
+#[derive(Debug, Clone)]
 pub enum BlockError {
     SerdeError(SerdeError),
     DataBaseError(DataBaseError),
@@ -35,38 +37,36 @@ impl From<ChainError> for BlockError {
             ChainError::SerdeError(v) => BlockError::SerdeError(v),
             ChainError::DataBaseError(u) => BlockError::DataBaseError(u),
             ChainError::Unspecified => BlockError::Unspecified,
+            ChainError::AbsentPosition => unimplemented!(),
         }
     }
 }
 
 pub struct ChainedInstance {
-    nonce: u64,
-    position: u64,
-    time_stamp: TimeStamp,
+    nonce: Nonce,
+    position: Position,
+    timestamp: TimeStamp,
     hash: Hash,
     prev_hash: Hash,
     merkle_root: Hash,
-    records_range: BlockRange,
 }
 
 impl ChainedInstance {
     pub fn new(
-        nonce: u64,
-        position: u64,
-        time_stamp: TimeStamp,
+        nonce: Nonce,
+        position: Position,
+        timestamp: TimeStamp,
         hash: Hash,
         prev_hash: Hash,
         merkle_root: Hash,
-        range: BlockRange,
     ) -> Self {
         Self {
             nonce,
             position,
-            time_stamp,
+            timestamp,
             hash,
             prev_hash,
             merkle_root,
-            records_range: range,
         }
     }
 
@@ -82,23 +82,19 @@ impl ChainedInstance {
         &self.merkle_root
     }
 
-    pub fn time_stamp(&self) -> TimeStamp {
-        self.time_stamp
+    pub fn timestamp(&self) -> TimeStamp {
+        self.timestamp
     }
 
     pub fn nonce(&self) -> u64 {
-        self.nonce
+        self.nonce.nonce
     }
 
     pub fn position(&self) -> u64 {
-        self.position
+        self.position.pos
     }
 
-    pub fn records_range(&self) -> BlockRange {
-        self.records_range
-    }
-
-    pub fn records<R: Record, B: Block<R>>(
+    pub fn records<R: Record, B: Block<RecordType = R>>(
         &self,
         block: &B,
     ) -> Result<Box<[SignedRecord<R>]>, BlockError> {
@@ -114,6 +110,7 @@ pub struct UnchainedInstance<R> {
     records: Vec<SignedRecord<R>>,
     merkle: merkle::MerkleTree,
     metadata: MetaData,
+    nonce: Nonce,
 }
 
 impl<R: Record> UnchainedInstance<R> {
@@ -131,8 +128,8 @@ impl<R: Record> UnchainedInstance<R> {
     pub fn records(&self) -> &Vec<SignedRecord<R>> {
         &self.records
     }
-}
 
-pub struct SqLiteBlock {
-    
+    pub fn nonce(&self) -> u64 {
+        self.nonce.nonce
+    }
 }

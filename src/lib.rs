@@ -33,8 +33,7 @@ pub use crypto::*;
 
 mod trans;
 pub use trans::*;
-
-pub mod ver;
+pub mod verification;
 
 mod fxns;
 pub use fxns::*;
