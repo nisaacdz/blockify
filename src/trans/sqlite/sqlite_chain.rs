@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::marker::PhantomData;
 
 use crate::{
-    block::{ChainedInstance, UnchainedInstance, Block},
+    block::{Block, ChainedInstance, UnchainedInstance},
     chain::{Chain, ChainError},
     io::DataBaseError,
     record::Record,
@@ -19,7 +19,6 @@ table! {
     }
 }
 
-
 pub struct SqliteChain<X> {
     con: SqliteConnection,
     url: String,
@@ -29,6 +28,7 @@ pub struct SqliteChain<X> {
 #[derive(Debug)]
 pub enum SqliteChainError {
     ConnectionError(ConnectionError),
+    ConnectionFailed,
 }
 
 impl From<ConnectionError> for SqliteChainError {
@@ -39,7 +39,7 @@ impl From<ConnectionError> for SqliteChainError {
 
 impl<X> SqliteChain<X> {
     fn gen_url(url: &str, feed: usize) -> String {
-        format!("{}/blocks/block{}", url, feed)
+        format!("{}block{}.db", url, feed)
     }
 }
 
@@ -47,8 +47,11 @@ impl<X> SqliteChain<X> {
     pub fn new(url: &str) -> Result<Self, SqliteChainError> {
         assert!(url.ends_with('/'));
         let basic = format! {"{url}chain.db"};
-        let con = SqliteConnection::establish(&basic)
+        let mut con = SqliteConnection::establish(&basic)
             .map_err(|e| SqliteChainError::ConnectionError(e))?;
+
+        Self::create_table(&mut con)?;
+
         let value = Self {
             url: url.to_owned(),
             con,
@@ -56,6 +59,22 @@ impl<X> SqliteChain<X> {
         };
 
         Ok(value)
+    }
+
+    fn create_table(con: &mut SqliteConnection) -> Result<(), SqliteChainError> {
+        diesel::sql_query(
+            "
+        CREATE TABLE IF NOT EXISTS blocks (
+            id INTEGER PRIMARY KEY,
+            url TEXT,
+            prevhash TEXT
+        )
+        ",
+        )
+        .execute(con)
+        .map_err(|_| SqliteChainError::ConnectionFailed)?;
+
+        Ok(())
     }
 
     pub fn size(con: &mut SqliteConnection) -> usize {

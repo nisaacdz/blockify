@@ -32,12 +32,14 @@ pub struct SqliteBlock<X> {
 #[derive(Debug)]
 pub enum SqliteBlockError {
     ConnectionError(ConnectionError),
+    ConnectionFailed,
 }
 
 impl Into<SqliteChainError> for SqliteBlockError {
     fn into(self) -> SqliteChainError {
         match self {
             SqliteBlockError::ConnectionError(ce) => SqliteChainError::ConnectionError(ce),
+            Self::ConnectionFailed => SqliteChainError::ConnectionFailed,
         }
     }
 }
@@ -56,6 +58,7 @@ impl From<ConnectionError> for SqliteBlockError {
 
 impl<X: Record + Serialize> SqliteBlock<X> {
     pub fn new(url: &str) -> Result<Self, SqliteBlockError> {
+        println!("url = {}", url);
         let con = SqliteConnection::establish(url)?;
         let val = Self {
             con,
@@ -64,8 +67,39 @@ impl<X: Record + Serialize> SqliteBlock<X> {
         Ok(val)
     }
 
-    pub fn build(url: &str, instance: &UnchainedInstance<X>) -> Result<(TimeStamp, Hash), ()> {
-        let mut val = Self::new(url).unwrap();
+    fn create_tables(con: &mut SqliteConnection) -> Result<(), SqliteBlockError> {
+        diesel::sql_query(
+            "
+        CREATE TABLE IF NOT EXISTS records (
+            id INTEGER PRIMARY KEY,
+            values TEXT
+        )",
+        )
+        .execute(con)
+        .map_err(|_| SqliteBlockError::ConnectionFailed)?;
+
+        diesel::sql_query(
+            "
+        CREATE TABLE IF NOT EXISTS metadata (
+            id INTEGER PRIMARY KEY,
+            timestamp TEXT,
+            hash TEXT,
+            merkle TEXT,
+            nonce TEXT
+        )",
+        )
+        .execute(con)
+        .map_err(|_| SqliteBlockError::ConnectionFailed)?;
+
+        Ok(())
+    }
+
+    pub fn build(
+        url: &str,
+        instance: &UnchainedInstance<X>,
+    ) -> Result<(TimeStamp, Hash), SqliteBlockError> {
+        let mut val = Self::new(url)?;
+        Self::create_tables(&mut val.con)?;
         use crate::data::ToTimeStamp;
         let current_time = chrono::Utc::now().to_timestamp();
         let timestamp = { serde_json::to_string(&current_time).unwrap() };
