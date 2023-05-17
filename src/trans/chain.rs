@@ -9,7 +9,7 @@ use super::{
 pub enum ChainError {
     SerdeError(SerdeError),
     DataBaseError(DataBaseError),
-    AbsentPosition,
+    AbsentValue,
     Unspecified,
 }
 
@@ -27,13 +27,13 @@ pub trait Chain {
     type RecordType: Record;
     type BlockType: Block<RecordType = Self::RecordType>;
     fn append(
-        &self,
+        &mut self,
         data: &UnchainedInstance<Self::RecordType>,
     ) -> Result<ChainedInstance, ChainError>;
-    fn block_at(&self, pos: u64) -> Result<Option<Self::BlockType>, ChainError>;
-    fn get(&self, b: &ChainedInstance) -> Result<Self::BlockType, ChainError> {
+    fn block_at(&mut self, pos: u64) -> Result<Self::BlockType, ChainError>;
+    fn get(&mut self, b: &ChainedInstance) -> Result<Self::BlockType, ChainError> {
         let pos = b.position();
-        let block = self.block_at(pos)?.ok_or(ChainError::AbsentPosition)?;
+        let block = self.block_at(pos)?;
         Ok(block)
     }
 }

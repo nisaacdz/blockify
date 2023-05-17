@@ -111,18 +111,6 @@ pub trait ToTimeStamp {
     fn to_timestamp(&self) -> TimeStamp;
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Hash)]
-pub struct BlockRange {
-    begin: u64,
-    end: u64,
-}
-
-impl BlockRange {
-    pub fn new(begin: u64, end: u64) -> Self {
-        Self { begin, end }
-    }
-}
-
 impl<T: chrono::TimeZone> ToTimeStamp for chrono::DateTime<T> {
     fn to_timestamp(&self) -> TimeStamp {
         TimeStamp {
@@ -134,6 +122,12 @@ impl<T: chrono::TimeZone> ToTimeStamp for chrono::DateTime<T> {
             month: self.month() as u8,
             year: self.year() as u16,
         }
+    }
+}
+
+impl<F: ToTimeStamp> From<F> for TimeStamp {
+    fn from(value: F) -> Self {
+        value.to_timestamp()
     }
 }
 

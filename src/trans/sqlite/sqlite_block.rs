@@ -2,12 +2,11 @@ use diesel::sql_types::Text;
 use diesel::sqlite::Sqlite;
 use diesel::{insert_into, prelude::*};
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
-use std::{marker::PhantomData, sync::Mutex};
+use std::marker::PhantomData;
 
 use crate::data::TimeStamp;
-use crate::Hash;
 use crate::{block::Block, record::Record};
+use crate::{Hash, SqliteChainError};
 
 table! {
     records {
@@ -28,13 +27,21 @@ table! {
 
 #[cfg(feature = "block")]
 pub struct SqliteBlock<X> {
-    con: Arc<Mutex<SqliteConnection>>,
+    con: SqliteConnection,
     _data: PhantomData<X>,
 }
 
 #[derive(Debug)]
 pub enum SqliteBlockError {
     ConnectionError(ConnectionError),
+}
+
+impl Into<SqliteChainError> for SqliteBlockError {
+    fn into(self) -> SqliteChainError {
+        match self {
+            SqliteBlockError::ConnectionError(ce) => SqliteChainError::ConnectionError(ce),
+        }
+    }
 }
 
 impl std::fmt::Display for SqliteBlockError {
@@ -53,15 +60,14 @@ impl<X: Record + Serialize> SqliteBlock<X> {
     pub fn new(url: &str) -> Result<Self, SqliteBlockError> {
         let con = SqliteConnection::establish(url)?;
         let val = Self {
-            con: Arc::new(Mutex::new(con)),
+            con,
             _data: PhantomData,
         };
         Ok(val)
     }
 
     pub fn build(url: &str, instance: &UnchainedInstance<X>) -> Result<(TimeStamp, Hash), ()> {
-        let val = Self::new(url).unwrap();
-        let mut mut_ref = val.con.lock().unwrap();
+        let mut val = Self::new(url).unwrap();
         use crate::data::ToTimeStamp;
         let current_time = chrono::Utc::now().to_timestamp();
         let timestamp = { serde_json::to_string(&current_time).unwrap() };
@@ -84,10 +90,10 @@ impl<X: Record + Serialize> SqliteBlock<X> {
         for record in instance.records() {
             let smt = insert_into(records::table)
                 .values(records::values.eq(serde_json::to_string(record).unwrap()));
-            smt.execute(&mut *mut_ref).unwrap();
+            smt.execute(&mut val.con).unwrap();
         }
 
-        smt.execute(&mut *mut_ref).unwrap();
+        smt.execute(&mut val.con).unwrap();
 
         Ok((current_time, hash))
     }
@@ -118,11 +124,10 @@ impl<X> From<RecordValue<X>> for SignedRecord<X> {
 
 impl<X: Record + for<'a> Deserialize<'a> + 'static> Block for SqliteBlock<X> {
     type RecordType = X;
-    fn records(&self) -> Result<Box<[SignedRecord<X>]>, BlockError> {
-        let mut mut_ref = self.con.lock().unwrap();
+    fn records(&mut self) -> Result<Box<[SignedRecord<X>]>, BlockError> {
         let res = rq
             .select(values)
-            .load::<RecordValue<X>>(&mut *mut_ref)
+            .load::<RecordValue<X>>(&mut self.con)
             .unwrap();
         let res = res
             .into_iter()
@@ -131,31 +136,28 @@ impl<X: Record + for<'a> Deserialize<'a> + 'static> Block for SqliteBlock<X> {
         Ok(res.into_boxed_slice())
     }
 
-    fn hash(&self) -> Result<Hash, crate::block::BlockError> {
-        let mut mut_ref = self.con.lock().unwrap();
+    fn hash(&mut self) -> Result<Hash, crate::block::BlockError> {
         let res = metadata::table
             .select(metadata::hash)
-            .first::<String>(&mut *mut_ref)
+            .first::<String>(&mut self.con)
             .unwrap();
         let res = serde_json::from_str::<Hash>(&res).unwrap();
         Ok(res)
     }
 
-    fn merkle_root(&self) -> Result<crate::Hash, crate::block::BlockError> {
-        let mut mut_ref = self.con.lock().unwrap();
+    fn merkle_root(&mut self) -> Result<crate::Hash, crate::block::BlockError> {
         let res = metadata::table
             .select(metadata::merkle)
-            .first::<String>(&mut *mut_ref)
+            .first::<String>(&mut self.con)
             .unwrap();
         let res = serde_json::from_str::<Hash>(&res).unwrap();
         Ok(res)
     }
 
-    fn nonce(&self) -> Result<u64, crate::block::BlockError> {
-        let mut mut_ref = self.con.lock().unwrap();
+    fn nonce(&mut self) -> Result<u64, crate::block::BlockError> {
         let res = metadata::table
             .select(metadata::nonce)
-            .first::<String>(&mut *mut_ref)
+            .first::<String>(&mut self.con)
             .unwrap();
 
         Ok(res.parse::<u64>().unwrap())

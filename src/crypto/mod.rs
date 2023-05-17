@@ -7,7 +7,7 @@ use serde::Serialize;
 use sha2::{Digest, Sha256};
 
 #[cfg(feature = "blockchain")]
-use crate::data::{BlockRange, TimeStamp};
+use crate::data::*;
 
 #[cfg(feature = "blockchain")]
 use crate::trans::{block::UnchainedInstance, record::Record};
@@ -42,6 +42,7 @@ impl From<ring::error::Unspecified> for SigningError {
     fn from(_: ring::error::Unspecified) -> Self {
         SigningError::Unspecified
     }
+
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -89,7 +90,7 @@ pub fn hash_bytes(bytes: &[u8]) -> Vec<u8> {
 pub fn hash_block<R: Record + Serialize>(
     block: &UnchainedInstance<R>,
     prev_hash: &Hash,
-    metadata: (&TimeStamp, &BlockRange, &u64),
+    metadata: (&TimeStamp, &Position),
 ) -> Hash {
     let records = bincode::serialize(block.records()).unwrap().into();
     let metabytes = bincode::serialize(&metadata).unwrap().into();

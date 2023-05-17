@@ -1,23 +1,15 @@
 use diesel::Queryable;
 use serde::{Deserialize, Serialize};
 
-use crate::{data::MetaData, crypto::*};
+use crate::{crypto::*, data::MetaData};
 
 pub use record_derive::Record;
 
-/// # Record
-///
 /// The `Record` trait provides a structure and functions for securely and transparently storing data on the blockchain.
 ///  
 /// Any type that needs security provided by cryptographic operations can implement this trait.
 ///
-///
-/// # Methods
-///
-/// * `record` - converts `self` into a `SignedRecord`.
-/// * `sign` - signs the record and returns a `DigitalSignature`.
-/// * `verify` - compares a `DigitalSignature` with one from `sign`.
-/// * `hash` - computes the hash of the record `self`
+/// `Record` contains methods for `signing`, `hashing`, `signature verification` and `recording` of records.
 ///
 /// # Examples
 ///
@@ -44,19 +36,20 @@ pub use record_derive::Record;
 /// assert!(my_record.verify(&signature, &keypair.into_public_key()).is_ok())
 /// ```
 pub trait Record: Sized {
-    /// converts `self` into a `SignedRecord` instance by singing it with the provided key pair
-    ///
-    /// # Arguments
-    ///
-    /// - `AuthKeyPair` - The Keypair for the signing.
-    /// - `MetaData` - Any associated metadata or `MetaData::empty()` if there is none.
+    /// Attempts to convert `self` into a `SignedRecord` instance by singing it with the provided `AuthKeyPair`.
+    /// 
+    /// This function accepts a `MetaData` type which may be empty (i.e `MetaData::empty()`).
     ///
     /// # Returns
     ///
-    /// - `Ok()` - A `SignedRecord<T>` instance.
-    /// - `Err()` - A `SigningError` instance.
+    /// - `Ok(SignedRecord<T>)`
+    /// - `Err(SigningError)`
     ///
-    fn record(self, keypair: AuthKeyPair, metadata: MetaData) -> Result<SignedRecord<Self>, SigningError>
+    fn record(
+        self,
+        keypair: AuthKeyPair,
+        metadata: MetaData,
+    ) -> Result<SignedRecord<Self>, SigningError>
     where
         Self: Serialize,
     {

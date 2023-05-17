@@ -4,6 +4,7 @@ use crate::{
     crypto::*,
     data::{MetaData, Nonce, Position, TimeStamp},
     io::{DataBaseError, SerdeError},
+    merkle::MerkleTree,
 };
 
 use super::{
@@ -13,15 +14,15 @@ use super::{
 
 pub trait Block {
     type RecordType: Record;
-    fn records(&self) -> Result<Box<[SignedRecord<Self::RecordType>]>, BlockError>;
-    fn hash(&self) -> Result<Hash, BlockError>;
-    fn merkle_root(&self) -> Result<Hash, BlockError>;
-    fn validate(&self, chained: &ChainedInstance) -> Result<bool, BlockError> {
+    fn records(&mut self) -> Result<Box<[SignedRecord<Self::RecordType>]>, BlockError>;
+    fn hash(&mut self) -> Result<Hash, BlockError>;
+    fn merkle_root(&mut self) -> Result<Hash, BlockError>;
+    fn validate(&mut self, chained: &ChainedInstance) -> Result<bool, BlockError> {
         let res = (self.nonce()?, &self.hash()?, &self.merkle_root()?)
             == (chained.nonce(), chained.hash(), chained.merkle_root());
         Ok(res)
     }
-    fn nonce(&self) -> Result<u64, BlockError>;
+    fn nonce(&mut self) -> Result<u64, BlockError>;
 }
 
 #[derive(Debug, Clone)]
@@ -37,7 +38,7 @@ impl From<ChainError> for BlockError {
             ChainError::SerdeError(v) => BlockError::SerdeError(v),
             ChainError::DataBaseError(u) => BlockError::DataBaseError(u),
             ChainError::Unspecified => BlockError::Unspecified,
-            ChainError::AbsentPosition => unimplemented!(),
+            ChainError::AbsentValue => unimplemented!(),
         }
     }
 }
@@ -96,7 +97,7 @@ impl ChainedInstance {
 
     pub fn records<R: Record, B: Block<RecordType = R>>(
         &self,
-        block: &B,
+        block: &mut B,
     ) -> Result<Box<[SignedRecord<R>]>, BlockError> {
         let res = block.records()?;
         Ok(res)
@@ -114,15 +115,22 @@ pub struct UnchainedInstance<R> {
 }
 
 impl<R: Record> UnchainedInstance<R> {
+    pub fn new(metadata: MetaData) -> Self {
+        Self {
+            records: vec![],
+            merkle: MerkleTree::new(),
+            metadata,
+            nonce: Nonce::new(20),
+        }
+    }
     pub fn merkle_root(&self) -> &Hash {
         &self.merkle.merkle_root()
     }
 
-    pub fn push(&mut self, item: SignedRecord<R>) -> Result<(), BlockError> {
+    pub fn push(&mut self, item: SignedRecord<R>) {
         let hash = item.hash();
         self.merkle.push(hash);
         self.records.push(item);
-        Ok(())
     }
 
     pub fn records(&self) -> &Vec<SignedRecord<R>> {
