@@ -24,8 +24,6 @@ table! {
         nonce -> Text,
     }
 }
-
-#[cfg(feature = "block")]
 pub struct SqliteBlock<X> {
     con: SqliteConnection,
     _data: PhantomData<X>,

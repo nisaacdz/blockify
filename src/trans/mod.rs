@@ -1,14 +1,14 @@
-#[cfg(feature = "blockchain")]
 pub mod block;
 
-#[cfg(feature = "blockchain")]
 pub mod chain;
 
-#[cfg(feature = "blockchain")]
 pub mod image;
 
 #[cfg(feature = "record")]
 pub mod record;
 
+#[cfg(feature = "sqlite")]
 mod sqlite;
+
+#[cfg(feature = "sqlite")]
 pub use sqlite::*;

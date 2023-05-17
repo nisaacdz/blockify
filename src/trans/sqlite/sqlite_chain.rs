@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::marker::PhantomData;
 
 use crate::{
-    block::{Block, ChainedInstance, UnchainedInstance},
+    block::{ChainedInstance, UnchainedInstance, Block},
     chain::{Chain, ChainError},
     io::DataBaseError,
     record::Record,
@@ -19,7 +19,6 @@ table! {
     }
 }
 
-#[cfg(feature = "chain")]
 
 pub struct SqliteChain<X> {
     con: SqliteConnection,
@@ -149,7 +148,7 @@ mod tests {
 
     #[test]
     fn test_block() {
-        let chain_url = "src/trans/sqlite/sqlite.db";
+        let chain_url = "src/trans/sqlite/";
         let datas1 = vec!["abcd", "efgh", "ijkl"];
         let datas2 = vec!["mnop", "qrst", "uvwx"];
         let keypair = crate::generate_ed25519_key_pair();
@@ -178,7 +177,7 @@ mod tests {
         }
 
         let mut chain =
-            SqliteChain::new(chain_url).expect("sqliteconnection cannot be established");
+            SqliteChain::new(chain_url).expect("sqlite connection cannot be established");
         chain.append(&block1).expect("block1 append erred");
         chain.append(&block2).expect("block2 append erred");
     }
