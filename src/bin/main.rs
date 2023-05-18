@@ -2,7 +2,7 @@ use blockify::{
     block::{Block, UnchainedInstance},
     chain::Chain,
     data::MetaData,
-    record::{Record, SignedRecord},
+    record::Record,
     SqliteChain,
 };
 use serde::{Deserialize, Serialize};
@@ -29,13 +29,13 @@ fn main() {
         .map(|w| Vote::new(w).record(keypair.clone(), MetaData::empty()))
         .filter(|r| r.is_ok())
         .map(|v| v.unwrap())
-        .collect::<Vec<SignedRecord<Vote>>>();
+        .collect::<Vec<_>>();
     let records2 = datas2
         .into_iter()
         .map(|w| Vote::new(w).record(keypair.clone(), MetaData::empty()))
         .filter(|r| r.is_ok())
         .map(|v| v.unwrap())
-        .collect::<Vec<SignedRecord<Vote>>>();
+        .collect::<Vec<_>>();
 
     let mut builder1 = UnchainedInstance::new(MetaData::empty(), 0);
     let mut builder2 = UnchainedInstance::new(MetaData::empty(), 1);
