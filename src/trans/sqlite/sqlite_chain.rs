@@ -1,6 +1,6 @@
 use diesel::{insert_into, prelude::*};
 use serde::{Deserialize, Serialize};
-use std::marker::PhantomData;
+use std::{marker::PhantomData, fmt::Debug};
 
 use crate::{
     block::{Block, ChainedInstance, UnchainedInstance},
@@ -15,7 +15,6 @@ table! {
         id -> Integer,
         url -> Text,
         prevhash -> Text,
-
     }
 }
 
@@ -38,7 +37,7 @@ impl From<ConnectionError> for SqliteChainError {
 }
 
 impl<X> SqliteChain<X> {
-    fn gen_url(url: &str, feed: usize) -> String {
+    fn gen_url(url: &str, feed: i64) -> String {
         format!("{}block{}.db", url, feed)
     }
 }
@@ -77,15 +76,11 @@ impl<X> SqliteChain<X> {
         Ok(())
     }
 
-    pub fn size(con: &mut SqliteConnection) -> usize {
-        let r = blcks.select(id).count();
-
-        let r = r.execute(&mut *con).unwrap();
-        r as _
+    pub fn size(con: &mut SqliteConnection) -> i64 {
+        let c: i64 = blocks::table.count().get_result(con).unwrap();
+        c
     }
 }
-
-use blocks::{dsl::blocks as blcks, id, url as paths};
 
 impl<X: Record + Serialize + for<'a> Deserialize<'a> + 'static> Chain for SqliteChain<X> {
     type RecordType = X;
@@ -116,7 +111,10 @@ impl<X: Record + Serialize + for<'a> Deserialize<'a> + 'static> Chain for Sqlite
         smt.execute(&mut self.con).unwrap();
         let nonce = data.nonce();
 
-        let (timestamp, hash) = SqliteBlock::build(&gen_url, data).unwrap();
+        let (timestamp, hash) = match SqliteBlock::build(&gen_url, data) {
+            Ok(v) => v,
+            Err(v) => panic!("block could not be built: Reason = {v}"),
+        };
 
         let new_instance = ChainedInstance::new(
             nonce.into(),
@@ -131,15 +129,13 @@ impl<X: Record + Serialize + for<'a> Deserialize<'a> + 'static> Chain for Sqlite
     }
 
     fn block_at(&mut self, pos: u64) -> Result<Self::BlockType, ChainError> {
-        let smt = blcks
-            .select(paths)
-            .find(pos as i32)
-            .first::<String>(&mut self.con)
-            .unwrap();
+        let url: String = blocks::table.select(blocks::url)
+        .filter(blocks::id.eq(pos as i32))
+        .first(&mut self.con).map_err(|_| ChainError::AbsentValue)?;
 
-        let res = SqliteBlock::new(&smt)
-            .map_err(|_| ChainError::DataBaseError(DataBaseError::ConnectionCannotEstablish))?;
-        Ok(res)
+        let block = SqliteBlock::new(&url).map_err(|_| ChainError::DataBaseError(DataBaseError::ConnectionCannotEstablish))?;
+        
+        Ok(block)
     }
 }
 

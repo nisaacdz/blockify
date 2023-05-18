@@ -11,7 +11,7 @@ use crate::{Hash, SqliteChainError};
 table! {
     records {
         id -> Integer,
-        values -> Text,
+        jsonvalues -> Text,
     }
 }
 
@@ -58,7 +58,6 @@ impl From<ConnectionError> for SqliteBlockError {
 
 impl<X: Record + Serialize> SqliteBlock<X> {
     pub fn new(url: &str) -> Result<Self, SqliteBlockError> {
-        println!("url = {}", url);
         let con = SqliteConnection::establish(url)?;
         let val = Self {
             con,
@@ -72,8 +71,9 @@ impl<X: Record + Serialize> SqliteBlock<X> {
             "
         CREATE TABLE IF NOT EXISTS records (
             id INTEGER PRIMARY KEY,
-            values TEXT
-        )",
+            jsonvalues TEXT
+        )
+        ",
         )
         .execute(con)
         .map_err(|_| SqliteBlockError::ConnectionFailed)?;
@@ -121,7 +121,7 @@ impl<X: Record + Serialize> SqliteBlock<X> {
 
         for record in instance.records() {
             let smt = insert_into(records::table)
-                .values(records::values.eq(serde_json::to_string(record).unwrap()));
+                .values(records::jsonvalues.eq(serde_json::to_string(record).unwrap()));
             smt.execute(&mut val.con).unwrap();
         }
 
@@ -133,7 +133,7 @@ impl<X: Record + Serialize> SqliteBlock<X> {
 
 use crate::block::{BlockError, UnchainedInstance};
 use crate::record::SignedRecord;
-use records::{dsl::records as rq, values};
+use records::dsl::records as rq;
 
 #[derive(Deserialize)]
 struct RecordValue<X> {
@@ -158,12 +158,12 @@ impl<X: Record + for<'a> Deserialize<'a> + 'static> Block for SqliteBlock<X> {
     type RecordType = X;
     fn records(&mut self) -> Result<Box<[SignedRecord<X>]>, BlockError> {
         let res = rq
-            .select(values)
+            .select(records::jsonvalues)
             .load::<RecordValue<X>>(&mut self.con)
             .unwrap();
         let res = res
             .into_iter()
-            .map(|record_json| record_json.into())
+            .map(|record_val| record_val.into())
             .collect::<Vec<SignedRecord<X>>>();
         Ok(res.into_boxed_slice())
     }
