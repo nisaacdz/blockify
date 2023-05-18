@@ -1,4 +1,3 @@
-use diesel::Queryable;
 use serde::{Deserialize, Serialize};
 
 use crate::{crypto::*, data::MetaData};
@@ -110,6 +109,7 @@ pub trait Record: Sized {
     }
 }
 
+
 /// A `SignedRecord` is a type of data that can be added to a `block` to be put on a `blockchain`
 ///
 /// It can be used to ensure that data in the block is authentic and has not been tampered with.
@@ -170,7 +170,7 @@ pub trait Record: Sized {
 ///    assert!(signed_record.verify().is_ok());
 ///}
 /// ```
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash, Queryable)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct SignedRecord<R> {
     signer: PublicKey,
     signature: DigitalSignature,

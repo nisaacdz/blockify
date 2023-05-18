@@ -1,4 +1,4 @@
-use crate::io::{DataBaseError, SerdeError};
+use crate::{io::{DataBaseError, SerdeError}, data::Position};
 
 use super::{
     block::{Block, BlockError, ChainedInstance, UnchainedInstance},
@@ -30,7 +30,7 @@ pub trait Chain {
         &mut self,
         data: &UnchainedInstance<Self::RecordType>,
     ) -> Result<ChainedInstance, ChainError>;
-    fn block_at(&mut self, pos: u64) -> Result<Self::BlockType, ChainError>;
+    fn block_at(&mut self, pos: Position) -> Result<Self::BlockType, ChainError>;
     fn get(&mut self, b: &ChainedInstance) -> Result<Self::BlockType, ChainError> {
         let pos = b.position();
         let block = self.block_at(pos)?;

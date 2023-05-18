@@ -4,7 +4,7 @@ use diesel::{insert_into, prelude::*};
 use serde::{Deserialize, Serialize};
 use std::marker::PhantomData;
 
-use crate::data::TimeStamp;
+use crate::data::{Nonce, TimeStamp};
 use crate::{block::Block, record::Record};
 use crate::{Hash, SqliteChainError};
 
@@ -110,7 +110,7 @@ impl<X: Record + Serialize> SqliteBlock<X> {
         };
 
         let merkle = { serde_json::to_string(instance.merkle_root()).unwrap() };
-        let nonce = instance.nonce().to_string();
+        let nonce = { serde_json::to_string(&instance.nonce()).unwrap() };
 
         let smt = insert_into(metadata::table).values((
             metadata::timestamp.eq(timestamp),
@@ -140,11 +140,17 @@ struct RecordValue<X> {
     s: SignedRecord<X>,
 }
 
+impl<X> RecordValue<X> {
+    fn new(s: SignedRecord<X>) -> Self {
+        Self { s }
+    }
+}
+
 impl<X: for<'a> Deserialize<'a>> Queryable<Text, Sqlite> for RecordValue<X> {
     type Row = String;
     fn build(row: Self::Row) -> diesel::deserialize::Result<Self> {
         let value = serde_json::from_str(&row)?;
-        Ok(value)
+        Ok(RecordValue::new(value))
     }
 }
 
@@ -186,12 +192,12 @@ impl<X: Record + for<'a> Deserialize<'a> + 'static> Block for SqliteBlock<X> {
         Ok(res)
     }
 
-    fn nonce(&mut self) -> Result<u64, crate::block::BlockError> {
+    fn nonce(&mut self) -> Result<Nonce, crate::block::BlockError> {
         let res = metadata::table
             .select(metadata::nonce)
             .first::<String>(&mut self.con)
             .unwrap();
-
-        Ok(res.parse::<u64>().unwrap())
+        let res = serde_json::from_str::<Nonce>(&res).unwrap();
+        Ok(res)
     }
 }

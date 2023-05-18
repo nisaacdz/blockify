@@ -1,10 +1,11 @@
 use diesel::{insert_into, prelude::*};
 use serde::{Deserialize, Serialize};
-use std::{marker::PhantomData, fmt::Debug};
+use std::{fmt::Debug, marker::PhantomData};
 
 use crate::{
     block::{Block, ChainedInstance, UnchainedInstance},
     chain::{Chain, ChainError},
+    data::Position,
     io::DataBaseError,
     record::Record,
     Hash, SqliteBlock,
@@ -76,9 +77,9 @@ impl<X> SqliteChain<X> {
         Ok(())
     }
 
-    pub fn size(con: &mut SqliteConnection) -> i64 {
+    pub fn size(con: &mut SqliteConnection) -> u64 {
         let c: i64 = blocks::table.count().get_result(con).unwrap();
-        c
+        c as _
     }
 }
 
@@ -92,19 +93,19 @@ impl<X: Record + Serialize + for<'a> Deserialize<'a> + 'static> Chain for Sqlite
         data: &UnchainedInstance<Self::RecordType>,
     ) -> Result<ChainedInstance, crate::chain::ChainError> {
         let size = Self::size(&mut self.con);
-        let prev_hash = {
-            if size == 0 {
-                Hash::default()
-            } else {
-                let mut block = self.block_at((size - 1) as _)?;
-                block.hash()?
+        let prev_hash = match self.block_at(size.into()) {
+            Err(ChainError::AbsentValue) => Hash::default(),
+            other => {
+                let mut other = other?;
+                other.hash()?
             }
         };
+
         let prev_hash_val = {
             let str = serde_json::to_string(&prev_hash);
             str.unwrap()
         };
-        let gen_url = Self::gen_url(&self.url, size);
+        let gen_url = Self::gen_url(&self.url, size as _);
 
         let smt = insert_into(blocks::table)
             .values((blocks::url.eq(&gen_url), blocks::prevhash.eq(prev_hash_val)));
@@ -118,7 +119,7 @@ impl<X: Record + Serialize + for<'a> Deserialize<'a> + 'static> Chain for Sqlite
 
         let new_instance = ChainedInstance::new(
             nonce.into(),
-            (size as u64).into(),
+            (size + 1).into(),
             timestamp,
             hash,
             prev_hash,
@@ -128,21 +129,30 @@ impl<X: Record + Serialize + for<'a> Deserialize<'a> + 'static> Chain for Sqlite
         Ok(new_instance)
     }
 
-    fn block_at(&mut self, pos: u64) -> Result<Self::BlockType, ChainError> {
-        let url: String = blocks::table.select(blocks::url)
-        .filter(blocks::id.eq(pos as i32))
-        .first(&mut self.con).map_err(|_| ChainError::AbsentValue)?;
+    fn block_at(&mut self, pos: Position) -> Result<Self::BlockType, ChainError> {
+        if pos.pos == 0 {
+            return Err(ChainError::AbsentValue);
+        }
 
-        let block = SqliteBlock::new(&url).map_err(|_| ChainError::DataBaseError(DataBaseError::ConnectionCannotEstablish))?;
-        
+        let url: String = blocks::table
+            .select(blocks::url)
+            .filter(blocks::id.eq(pos.pos as i32))
+            .first(&mut self.con)
+            .map_err(|_| ChainError::AbsentValue)?;
+
+        let block = SqliteBlock::new(&url)
+            .map_err(|_| ChainError::DataBaseError(DataBaseError::ConnectionCannotEstablish))?;
+
         Ok(block)
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use std::path::Path;
+
     use crate::{
-        block::UnchainedInstance,
+        block::{UnchainedInstance, Block},
         chain::Chain,
         data::MetaData,
         record::{Record, SignedRecord},
@@ -150,7 +160,7 @@ mod tests {
     };
     use serde::{Deserialize, Serialize};
 
-    #[derive(Record, Clone, Serialize, Deserialize)]
+    #[derive(Debug, Record, Clone, Serialize, Deserialize, PartialEq)]
     struct Vote {
         data: String,
     }
@@ -161,9 +171,29 @@ mod tests {
         }
     }
 
+    fn empty_directory(path: &Path) -> Result<(), std::io::Error> {
+        let entries = std::fs::read_dir(path)?;
+
+        for entry in entries {
+            let entry = entry?;
+            let entry_path = entry.path();
+
+            if entry_path.is_dir() {
+                empty_directory(&entry_path)?;
+                std::fs::remove_dir(entry_path)?;
+            } else {
+                std::fs::remove_file(entry_path)?;
+            }
+        }
+
+        Ok(())
+    }
+
     #[test]
     fn test_block() {
-        let chain_url = "src/trans/sqlite/";
+        let chain_url = "target2/doc_tests/trans/sqlite/sqlite_chain/tests/test_block/";
+        std::fs::create_dir_all(chain_url).expect("could not create chain_url");
+        empty_directory(Path::new(chain_url)).expect("couldn't clear the directory");
         let datas1 = vec!["abcd", "efgh", "ijkl"];
         let datas2 = vec!["mnop", "qrst", "uvwx"];
         let keypair = crate::generate_ed25519_key_pair();
@@ -180,20 +210,44 @@ mod tests {
             .map(|v| v.unwrap())
             .collect::<Vec<SignedRecord<Vote>>>();
 
-        let mut block1 = UnchainedInstance::new(MetaData::empty());
-        let mut block2 = UnchainedInstance::new(MetaData::empty());
+        let mut builder1 = UnchainedInstance::new(MetaData::empty(), 0);
+        let mut builder2 = UnchainedInstance::new(MetaData::empty(), 1);
 
         for record in records1 {
-            block1.push(record);
+            builder1.push(record);
         }
 
         for record in records2 {
-            block2.push(record);
+            builder2.push(record);
         }
 
         let mut chain =
             SqliteChain::new(chain_url).expect("sqlite connection cannot be established");
-        chain.append(&block1).expect("block1 append erred");
-        chain.append(&block2).expect("block2 append erred");
+        let instance1 = chain.append(&builder1).expect("builder1 append erred");
+        let instance2 = chain.append(&builder2).expect("builder2 append erred");
+
+        let mut block1 = chain
+            .block_at(instance1.position())
+            .expect("couldn't retrieve block1");
+        let mut block2 = chain
+            .block_at(instance2.position())
+            .expect("couldn't retrieve block2");
+
+        assert!(block1
+            .validate(&instance1)
+            .expect("couldn't finish validating block1"));
+        assert!(block2
+            .validate(&instance2)
+            .expect("couldn't finish validating block2"));
+
+        let records_from_block1 = block1
+            .records()
+            .expect("couldn't retrieve records from block1");
+        assert_eq!(builder1.records().as_slice(), &*records_from_block1);
+
+        let records_from_block2 = block2
+            .records()
+            .expect("couldn't retrieve records from block2");
+        assert_eq!(builder2.records().as_slice(), &*records_from_block2);
     }
 }

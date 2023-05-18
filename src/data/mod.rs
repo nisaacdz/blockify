@@ -182,7 +182,7 @@ impl ID {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub struct Nonce {
     pub nonce: u64,
 }
@@ -199,7 +199,7 @@ impl From<u64> for Nonce {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub struct Position {
     pub pos: u64,
 }
@@ -207,6 +207,10 @@ pub struct Position {
 impl Position {
     pub fn new(pos: u64) -> Self {
         Position { pos }
+    }
+
+    pub fn pos(&self) -> u64 {
+        self.pos
     }
 }
 

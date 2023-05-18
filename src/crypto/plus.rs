@@ -94,7 +94,11 @@ pub struct AuthKeyPair {
 }
 
 impl AuthKeyPair {
-    pub fn new(private_key: Box<[u8]>, public_key: Box<[u8]>, algorithm: KeyPairAlgorithm) -> AuthKeyPair {
+    pub fn new(
+        private_key: Box<[u8]>,
+        public_key: Box<[u8]>,
+        algorithm: KeyPairAlgorithm,
+    ) -> AuthKeyPair {
         AuthKeyPair {
             private_key,
             public_key,
@@ -361,8 +365,8 @@ mod tests {
         let dms = DMS::default();
         let my_dms = DMS::new(None, Some("Harry Potter".into()), "".into());
 
-        let dms_hash = blockify::hash(&dms);
-        let my_dms_hash = blockify::hash(&my_dms);
+        let dms_hash = crate::hash(&dms);
+        let my_dms_hash = crate::hash(&my_dms);
 
         println!("{}", dms_hash.to_hex());
         println!("{}", my_dms_hash.to_hex());

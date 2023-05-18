@@ -22,7 +22,7 @@ pub trait Block {
             == (chained.nonce(), chained.hash(), chained.merkle_root());
         Ok(res)
     }
-    fn nonce(&mut self) -> Result<u64, BlockError>;
+    fn nonce(&mut self) -> Result<Nonce, BlockError>;
 }
 
 #[derive(Debug, Clone)]
@@ -87,12 +87,12 @@ impl ChainedInstance {
         self.timestamp
     }
 
-    pub fn nonce(&self) -> u64 {
-        self.nonce.nonce
+    pub fn nonce(&self) -> Nonce {
+        self.nonce
     }
 
-    pub fn position(&self) -> u64 {
-        self.position.pos
+    pub fn position(&self) -> Position {
+        self.position
     }
 
     pub fn records<R: Record, B: Block<RecordType = R>>(
@@ -114,30 +114,32 @@ pub struct UnchainedInstance<R> {
     nonce: Nonce,
 }
 
-impl<R: Record> UnchainedInstance<R> {
-    pub fn new(metadata: MetaData) -> Self {
+impl<R> UnchainedInstance<R> {
+    pub fn new(metadata: MetaData, nonce: u64) -> Self {
         Self {
             records: vec![],
             merkle: MerkleTree::new(),
             metadata,
-            nonce: Nonce::new(20),
+            nonce: nonce.into(),
         }
     }
     pub fn merkle_root(&self) -> &Hash {
         &self.merkle.merkle_root()
     }
 
-    pub fn push(&mut self, item: SignedRecord<R>) {
-        let hash = item.hash();
-        self.merkle.push(hash);
-        self.records.push(item);
-    }
-
     pub fn records(&self) -> &Vec<SignedRecord<R>> {
         &self.records
     }
 
-    pub fn nonce(&self) -> u64 {
-        self.nonce.nonce
+    pub fn nonce(&self) -> Nonce {
+        self.nonce
+    }
+}
+
+impl<R: Record> UnchainedInstance<R> {
+    pub fn push(&mut self, item: SignedRecord<R>) {
+        let hash = item.hash();
+        self.merkle.push(hash);
+        self.records.push(item);
     }
 }
