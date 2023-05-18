@@ -1,6 +1,9 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{crypto::*, data::MetaData};
+use crate::{
+    data::MetaData, AuthKeyPair, DigitalSignature, Hash, KeyPairAlgorithm, PublicKey, SigningError,
+    VerificationError,
+};
 
 pub use record_derive::Record;
 
@@ -36,7 +39,7 @@ pub use record_derive::Record;
 /// ```
 pub trait Record: Sized {
     /// Attempts to convert `self` into a `SignedRecord` instance by singing it with the provided `AuthKeyPair`.
-    /// 
+    ///
     /// This function accepts a `MetaData` type which may be empty (i.e `MetaData::empty()`).
     ///
     /// # Returns
@@ -77,7 +80,7 @@ pub trait Record: Sized {
         Self: Serialize,
     {
         let msg = bincode::serialize(self).map_err(|_| SigningError::SerializationError)?;
-        let signature = sign_msg(&msg, key)?;
+        let signature = crate::sign_msg(&msg, key)?;
         Ok(signature)
     }
 
@@ -105,10 +108,9 @@ pub trait Record: Sized {
     where
         Self: Serialize,
     {
-        hash(self)
+        crate::hash(self)
     }
 }
-
 
 /// A `SignedRecord` is a type of data that can be added to a `block` to be put on a `blockchain`
 ///

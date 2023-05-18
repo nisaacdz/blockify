@@ -1,16 +1,8 @@
 use std::error::Error;
 
 use rand::{thread_rng, Rng};
-#[cfg(feature = "blockchain")]
-use serde::Serialize;
 
 use sha2::{Digest, Sha256};
-
-#[cfg(feature = "blockchain")]
-use crate::data::*;
-
-#[cfg(feature = "blockchain")]
-use crate::trans::{block::UnchainedInstance, record::Record};
 
 pub mod merkle;
 mod plus;
@@ -86,7 +78,9 @@ pub fn hash_bytes(bytes: &[u8]) -> Vec<u8> {
     data.to_vec()
 }
 
-#[cfg(feature = "blockchain")]
+use serde::Serialize;
+use crate::{record::Record, block::UnchainedInstance, data::{TimeStamp, Position}};
+
 pub fn hash_block<R: Record + Serialize>(
     block: &UnchainedInstance<R>,
     prev_hash: &Hash,
@@ -104,20 +98,16 @@ pub fn random_sha256() -> Hash {
     bytes.into()
 }
 
-pub fn random_bytes5() -> [u8; 5] {
-    let mut bytes = [0; 5];
-    thread_rng().fill(&mut bytes);
-    bytes
-}
-
-pub fn random_bytes(len: usize) -> Vec<u8> {
-    let mut bytes = vec![0; len];
+pub fn random_bytes<const N: usize>() -> [u8; N] {
+    let mut bytes = [0; N];
     thread_rng().fill(&mut bytes[..]);
     bytes
 }
 
-pub fn quick_id(len: usize) -> String {
-    hex::encode(random_bytes(len))
+pub fn random_bytes_vec(len: usize) -> Vec<u8> {
+    let mut bytes = vec![0; len];
+    thread_rng().fill(&mut bytes[..]);
+    bytes
 }
 
 pub fn sha<H: AsRef<[u8]>>(value: &H) -> Hash {

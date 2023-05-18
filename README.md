@@ -68,7 +68,7 @@ fn main() {
 
 ```
 
-**Block and Chain** using the **sqlite** feature
+- **Block and Chain using the sqlite feature**
 ```
 use blockify::{
     block::{Block, UnchainedInstance},

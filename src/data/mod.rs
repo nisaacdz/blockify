@@ -170,15 +170,21 @@ impl TimeStamp {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
-pub struct ID {
-    value: String,
+pub struct BufID {
+    value: [u8; 16],
 }
 
-impl ID {
+impl BufID {
     pub fn random() -> Self {
-        Self {
-            value: crate::crypto::quick_id(10),
-        }
+        Self::new(crate::random_bytes())
+    }
+
+    pub fn new(value: [u8; 16]) -> Self {
+        Self { value }
+    }
+
+    pub fn to_string(&self) -> String {
+        hex::encode(&self.value)
     }
 }
 

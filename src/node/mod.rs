@@ -1,13 +1,15 @@
-#[cfg(feature = "blockchain")]
+use crate::data::Units;
+
 mod nodestuff;
 
-#[cfg(feature = "blockchain")]
 pub use nodestuff::*;
 
-#[cfg(feature = "unit")]
+use crate::PublicKey;
+
 pub trait Peer {
-    fn public_key(&self) -> &[u8];
-    fn units(&self) -> &crate::data::Units;
+    fn public_key(&self) -> &PublicKey;
+    #[cfg(feature = "unit")]
+    fn units(&self) -> &Units;
 }
 
 pub trait Miner {
