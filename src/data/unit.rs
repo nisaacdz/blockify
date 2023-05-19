@@ -97,8 +97,9 @@ impl<'d, const N: usize> Deserialize<'d> for Units<N> {
     
 }
 
-#[cfg(test)]
+#[cfg(debug_assertions)]
 mod test_units {
+    #[allow(unused)]
     use super::{Units, MicQuan};
 
     #[test]
