@@ -1,6 +1,6 @@
 [package]
 name = "blockify"
-version = "0.0.5"
+version = "0.0.6"
 description = "A general purpose blockchain library"
 edition = "2021"
 license = "MIT"
