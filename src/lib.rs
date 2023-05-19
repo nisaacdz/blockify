@@ -20,7 +20,6 @@
 //! - Dealing with `Records`, `Blocks`, and `Chains`.
 //! 
 
-
 pub mod data;
 pub mod io;
 pub mod node;
