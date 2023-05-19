@@ -18,7 +18,6 @@
 //! - Creating and deploying smart contracts
 //! - Creating and managing consensus mechanisms
 //! - Dealing with `Records`, `Blocks`, and `Chains`.
-//! 
 
 pub mod data;
 pub mod io;
@@ -30,7 +29,10 @@ mod crypto;
 #[cfg(feature = "crypto")]
 pub use crypto::*;
 
+#[cfg(feature = "record")]
 mod trans;
+
+#[cfg(feature = "record")]
 pub use trans::*;
 
 pub mod verification;
