@@ -9,7 +9,7 @@ license = "MIT"
 
 [dependencies]
 bincode = "1.3.3"
-chrono = "0.4.23"
+chrono = "0.4.24"
 diesel = { version = "2.0.4", optional = true, features = ["sqlite"] }
 ed25519-dalek = "1.0.1"
 hex = "0.4.3"
