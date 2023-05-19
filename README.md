@@ -91,7 +91,7 @@ impl Vote {
 }
 
 fn main() {
-    let chain_url = "target2/bin/main/sqlite/";
+    let chain_url = "target2/tmp/bin/main/";
     std::fs::create_dir_all(chain_url).expect("could not create chain_url");
     let datas1 = vec!["abcd", "efgh", "ijkl"];
     let datas2 = vec!["mnop", "qrst", "uvwx"];
