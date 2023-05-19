@@ -1,4 +1,7 @@
-use crate::{io::{DataBaseError, SerdeError}, data::Position};
+use crate::{
+    data::Position,
+    io::{DataBaseError, SerdeError},
+};
 
 use super::{
     block::{Block, BlockError, ChainedInstance, UnchainedInstance},
@@ -19,6 +22,7 @@ impl From<BlockError> for ChainError {
             BlockError::SerdeError(v) => ChainError::SerdeError(v),
             BlockError::DataBaseError(u) => ChainError::DataBaseError(u),
             BlockError::Unspecified => ChainError::Unspecified,
+            BlockError::NotValid => unimplemented!(),
         }
     }
 }

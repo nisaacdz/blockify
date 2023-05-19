@@ -59,7 +59,7 @@ fn main() {
     // To build an SqliteChain (BlockChain that stores data in sqlite database),
     // pass the url to `new()`
     let mut chain = SqliteChain::new(chain_url).expect("sqlite connection cannot be established");
-    
+
     // append the two UnchainedInstance's into the blockchain and obtain an a ChainedInstance
     let instance1 = chain.append(&builder1).expect("builder1 append erred");
     let instance2 = chain.append(&builder2).expect("builder2 append erred");
@@ -75,14 +75,10 @@ fn main() {
         .expect("couldn't retrieve block2");
 
     // compare the hash, merkle_root, prev_hash, etc of block1 and instance1
-    assert!(block1
-        .validate(&instance1)
-        .expect("couldn't finish validating block1"));
+    assert!(block1.validate(&instance1).is_ok());
 
     // compare the hash, merkle_root, prev_hash, etc of block2 and instance2
-    assert!(block2
-        .validate(&instance2)
-        .expect("couldn't finish validating block2"));
+    assert!(block2.validate(&instance2).is_ok());
 
     // retrieve the original records from the blocks
     let records_from_block1 = block1

@@ -152,7 +152,7 @@ mod tests {
     use std::path::Path;
 
     use crate::{
-        block::{UnchainedInstance, Block},
+        block::{Block, UnchainedInstance},
         chain::Chain,
         data::MetaData,
         record::{Record, SignedRecord},
@@ -233,12 +233,8 @@ mod tests {
             .block_at(instance2.position())
             .expect("couldn't retrieve block2");
 
-        assert!(block1
-            .validate(&instance1)
-            .expect("couldn't finish validating block1"));
-        assert!(block2
-            .validate(&instance2)
-            .expect("couldn't finish validating block2"));
+        assert!(block1.validate(&instance1).is_ok());
+        assert!(block2.validate(&instance2).is_ok());
 
         let records_from_block1 = block1
             .records()

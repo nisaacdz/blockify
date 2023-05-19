@@ -17,10 +17,14 @@ pub trait Block {
     fn records(&mut self) -> Result<Box<[SignedRecord<Self::RecordType>]>, BlockError>;
     fn hash(&mut self) -> Result<Hash, BlockError>;
     fn merkle_root(&mut self) -> Result<Hash, BlockError>;
-    fn validate(&mut self, chained: &ChainedInstance) -> Result<bool, BlockError> {
+    fn validate(&mut self, chained: &ChainedInstance) -> Result<(), BlockError> {
         let res = (self.nonce()?, &self.hash()?, &self.merkle_root()?)
             == (chained.nonce(), chained.hash(), chained.merkle_root());
-        Ok(res)
+        if !res {
+            Err(BlockError::NotValid)
+        } else {
+            Ok(())
+        }
     }
     fn nonce(&mut self) -> Result<Nonce, BlockError>;
 }
@@ -29,6 +33,7 @@ pub trait Block {
 pub enum BlockError {
     SerdeError(SerdeError),
     DataBaseError(DataBaseError),
+    NotValid,
     Unspecified,
 }
 

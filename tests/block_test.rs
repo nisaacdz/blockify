@@ -81,14 +81,10 @@ fn test_blocks() {
             .expect("couldn't retrieve block2");
 
         // compare the hash, merkle_root, prev_hash, etc of block1 and instance1
-        assert!(block1
-            .validate(&instance1)
-            .expect("couldn't finish validating block1"));
+        assert!(block1.validate(&instance1).is_ok());
 
         // compare the hash, merkle_root, prev_hash, etc of block2 and instance2
-        assert!(block2
-            .validate(&instance2)
-            .expect("couldn't finish validating block2"));
+        assert!(block2.validate(&instance2).is_ok());
 
         // retrieve the original records from the blocks
         let records_from_block1 = block1
