@@ -39,17 +39,44 @@ impl Micron {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Units<const N: usize> {
-    value: [(Micron, Quantity); N],
+    value: [MicQuan; N],
 }
 
-impl<const N: usize> From<[(Micron, Quantity); N]> for Units<N> {
-    fn from(value: [(Micron, Quantity); N]) -> Self {
-        Units { value }
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub struct MicQuan {
+    micron: Micron,
+    quantity: Quantity,
+}
+
+impl<const N: usize> Serialize for Units<N> {
+    fn serialize<S: serde::Serializer>(&self, sz: S) -> Result<S::Ok, S::Error> {
+        self.value.into_iter().collect::<Vec<_>>().serialize(sz)
+    }
+}
+
+impl<'d, const N: usize> Deserialize<'d> for Units<N> {
+    fn deserialize<D: serde::Deserializer<'d>>(dz: D) -> Result<Self, D::Error> {
+        let val = <Vec<(Micron, Quantity)>>::deserialize(dz)?;
+
+        let mut real = [(Micron::default(), Quantity::default()); N];
+
+        for i in 0..N {
+            real[i] = val[i];
+        }
+
+        Ok(real.into())
+    }
+    
+}
+
+impl<const N: usize> From<[MicQuan; N]> for Units<N> {
+    fn from(value: [MicQuan; N]) -> Self {
+        Units::new(value)
     }
 }
 
 impl<const N: usize> Units<N> {
-    pub fn new(value: [(Micron, Quantity); N]) -> Self {
+    pub fn new(value: [MicQuan; N]) -> Self {
         Self { value }
     }
     pub fn get_value(&self) -> f64 {
