@@ -22,7 +22,7 @@ impl From<BlockError> for ChainError {
             BlockError::SerdeError(v) => ChainError::SerdeError(v),
             BlockError::DataBaseError(u) => ChainError::DataBaseError(u),
             BlockError::Unspecified => ChainError::Unspecified,
-            BlockError::NotValid => unimplemented!(),
+            BlockError::NotValid(_) => unimplemented!(),
         }
     }
 }
@@ -34,8 +34,8 @@ pub trait Chain {
         &mut self,
         data: &UnchainedInstance<Self::RecordType>,
     ) -> Result<ChainedInstance, ChainError>;
-    fn block_at(&mut self, pos: Position) -> Result<Self::BlockType, ChainError>;
-    fn get(&mut self, b: &ChainedInstance) -> Result<Self::BlockType, ChainError> {
+    fn block_at(&self, pos: Position) -> Result<Self::BlockType, ChainError>;
+    fn get(&self, b: &ChainedInstance) -> Result<Self::BlockType, ChainError> {
         let pos = b.position();
         let block = self.block_at(pos)?;
         Ok(block)

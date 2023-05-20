@@ -34,7 +34,6 @@ impl From<ring::error::Unspecified> for SigningError {
     fn from(_: ring::error::Unspecified) -> Self {
         SigningError::Unspecified
     }
-
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -78,17 +77,29 @@ pub fn hash_bytes(bytes: &[u8]) -> Vec<u8> {
     data.to_vec()
 }
 
+use crate::{
+    block::UnchainedInstance,
+    data::{Position, Timestamp},
+    record::Record,
+};
 use serde::Serialize;
-use crate::{record::Record, block::UnchainedInstance, data::{TimeStamp, Position}};
 
 pub fn hash_block<R: Record + Serialize>(
     block: &UnchainedInstance<R>,
     prev_hash: &Hash,
-    metadata: (&TimeStamp, &Position),
+    timestamp: &Timestamp,
+    position: &Position,
 ) -> Hash {
     let records = bincode::serialize(block.records()).unwrap().into();
-    let metabytes = bincode::serialize(&metadata).unwrap().into();
-    let buffer = sha_from_x([prev_hash, &records, block.merkle_root(), &metabytes]);
+    let timestamp = bincode::serialize(timestamp).unwrap().into();
+    let position = bincode::serialize(position).unwrap().into();
+    let buffer = sha_from_x([
+        prev_hash,
+        &records,
+        block.merkle_root(),
+        &timestamp,
+        &position,
+    ]);
     buffer.into()
 }
 

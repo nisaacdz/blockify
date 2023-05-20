@@ -71,12 +71,12 @@ fn test_blocks() {
         let instance2 = chain.append(&builder2).expect("builder2 append erred");
 
         // Deserialize first block from the blockchain
-        let mut block1 = chain
+        let block1 = chain
             .block_at(instance1.position())
             .expect("couldn't retrieve block1");
 
         // Deserialize second block from the blockchain
-        let mut block2 = chain
+        let block2 = chain
             .block_at(instance2.position())
             .expect("couldn't retrieve block2");
 

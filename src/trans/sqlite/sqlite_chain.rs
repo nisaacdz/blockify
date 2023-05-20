@@ -5,22 +5,21 @@ use std::{fmt::Debug, marker::PhantomData};
 use crate::{
     block::{Block, ChainedInstance, UnchainedInstance},
     chain::{Chain, ChainError},
-    data::Position,
-    io::DataBaseError,
+    data::{Position, ToTimestamp},
+    io::{DataBaseError, SerdeError},
     record::Record,
-    Hash, SqliteBlock,
+    Hash, SqliteBlock, WrapperMut,
 };
 
 table! {
     blocks {
         id -> Integer,
-        url -> Text,
-        prevhash -> Text,
+        block -> Text,
     }
 }
 
 pub struct SqliteChain<X> {
-    con: SqliteConnection,
+    con: WrapperMut<SqliteConnection>,
     url: String,
     _data: PhantomData<X>,
 }
@@ -28,6 +27,7 @@ pub struct SqliteChain<X> {
 #[derive(Debug)]
 pub enum SqliteChainError {
     ConnectionError(ConnectionError),
+    SerdeError(SerdeError),
     ConnectionFailed,
 }
 
@@ -39,7 +39,7 @@ impl From<ConnectionError> for SqliteChainError {
 
 impl<X> SqliteChain<X> {
     fn gen_url(url: &str, feed: i64) -> String {
-        format!("{}block{}.db", url, feed)
+        format!("{}block{}.db", url, feed + 1)
     }
 }
 
@@ -54,7 +54,7 @@ impl<X> SqliteChain<X> {
 
         let value = Self {
             url: url.to_owned(),
-            con,
+            con: WrapperMut::new(con),
             _data: PhantomData,
         };
 
@@ -66,8 +66,7 @@ impl<X> SqliteChain<X> {
             "
         CREATE TABLE IF NOT EXISTS blocks (
             id INTEGER PRIMARY KEY,
-            url TEXT,
-            prevhash TEXT
+            block TEXT
         )
         ",
         )
@@ -90,54 +89,50 @@ impl<X: Record + Serialize + for<'a> Deserialize<'a> + 'static> Chain for Sqlite
 
     fn append(
         &mut self,
-        data: &UnchainedInstance<Self::RecordType>,
-    ) -> Result<ChainedInstance, crate::chain::ChainError> {
-        let size = Self::size(&mut self.con);
+        block: &UnchainedInstance<Self::RecordType>,
+    ) -> Result<ChainedInstance, ChainError> {
+        let size = Self::size(self.con.get_mut());
+
+        let nonce = block.nonce();
+
+        let position = (size + 1).into();
+
+        let timestamp = chrono::Utc::now().to_timestamp();
+
+        let merkle_root = block.merkle_root().clone();
+
         let prev_hash = match self.block_at(size.into()) {
             Err(ChainError::AbsentValue) => Hash::default(),
             other => {
-                let mut other = other?;
+                let other = other?;
                 other.hash()?
             }
         };
 
-        let prev_hash_val = {
-            let str = serde_json::to_string(&prev_hash);
-            str.unwrap()
-        };
+        let hash = crate::hash_block(&block, &prev_hash, &timestamp, &position);
+
+        let chained =
+            ChainedInstance::new(nonce, position, timestamp, hash, prev_hash, merkle_root);
+
         let gen_url = Self::gen_url(&self.url, size as _);
 
-        let smt = insert_into(blocks::table)
-            .values((blocks::url.eq(&gen_url), blocks::prevhash.eq(prev_hash_val)));
-        smt.execute(&mut self.con).unwrap();
-        let nonce = data.nonce();
+        let smt = insert_into(blocks::table).values(blocks::block.eq(&gen_url));
+        smt.execute(self.con.get_mut()).unwrap();
 
-        let (timestamp, hash) = match SqliteBlock::build(&gen_url, data) {
-            Ok(v) => v,
-            Err(v) => panic!("block could not be built: Reason = {v}"),
-        };
+        SqliteBlock::build(&gen_url, &*block.records(), &chained).unwrap();
 
-        let new_instance = ChainedInstance::new(
-            nonce.into(),
-            (size + 1).into(),
-            timestamp,
-            hash,
-            prev_hash,
-            data.merkle_root().clone(),
-        );
-
-        Ok(new_instance)
+        Ok(chained)
     }
 
-    fn block_at(&mut self, pos: Position) -> Result<Self::BlockType, ChainError> {
+    fn block_at(&self, pos: Position) -> Result<Self::BlockType, ChainError> {
         if pos.pos == 0 {
             return Err(ChainError::AbsentValue);
         }
 
         let url: String = blocks::table
-            .select(blocks::url)
+            .select(blocks::block)
             .filter(blocks::id.eq(pos.pos as i32))
-            .first(&mut self.con)
+            .first(self.con.get_mut())
             .map_err(|_| ChainError::AbsentValue)?;
 
         let block = SqliteBlock::new(&url)
@@ -191,7 +186,7 @@ mod tests {
 
     #[test]
     fn test_block() {
-        let chain_url = "target/tmp/doc_tests/trans/sqlite/sqlite_chain/tests/test_block/";
+        let chain_url = "target2/doc_tests/sqlite/sqlite_chain/test_block/";
         std::fs::create_dir_all(chain_url).expect("could not create chain_url");
         empty_directory(Path::new(chain_url)).expect("couldn't clear the directory");
         let datas1 = vec!["abcd", "efgh", "ijkl"];
@@ -226,10 +221,13 @@ mod tests {
         let instance1 = chain.append(&builder1).expect("builder1 append erred");
         let instance2 = chain.append(&builder2).expect("builder2 append erred");
 
-        let mut block1 = chain
+        assert_eq!(instance1.position(), crate::data::Position::new(1));
+        assert_eq!(instance2.position(), crate::data::Position::new(2));
+
+        let block1 = chain
             .block_at(instance1.position())
             .expect("couldn't retrieve block1");
-        let mut block2 = chain
+        let block2 = chain
             .block_at(instance2.position())
             .expect("couldn't retrieve block2");
 

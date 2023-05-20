@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     crypto::*,
-    data::{MetaData, Nonce, Position, TimeStamp},
+    data::{MetaData, Nonce, Position, Timestamp},
     io::{DataBaseError, SerdeError},
     merkle::MerkleTree,
 };
@@ -14,27 +14,74 @@ use super::{
 
 pub trait Block {
     type RecordType: Record;
-    fn records(&mut self) -> Result<Box<[SignedRecord<Self::RecordType>]>, BlockError>;
-    fn hash(&mut self) -> Result<Hash, BlockError>;
-    fn merkle_root(&mut self) -> Result<Hash, BlockError>;
-    fn validate(&mut self, chained: &ChainedInstance) -> Result<(), BlockError> {
-        let res = (self.nonce()?, &self.hash()?, &self.merkle_root()?)
-            == (chained.nonce(), chained.hash(), chained.merkle_root());
-        if !res {
-            Err(BlockError::NotValid)
-        } else {
-            Ok(())
+    fn records(&self) -> Result<Box<[SignedRecord<Self::RecordType>]>, BlockError>;
+    fn prev_hash(&self) -> Result<Hash, BlockError>;
+    fn position(&self) -> Result<Position, BlockError>;
+    fn hash(&self) -> Result<Hash, BlockError>;
+    fn merkle_root(&self) -> Result<Hash, BlockError>;
+    fn validate(&self, chained: &ChainedInstance) -> Result<(), BlockError> {
+        let ChainedInstance {
+            nonce,
+            position,
+            timestamp,
+            hash,
+            prev_hash,
+            merkle_root,
+        } = chained;
+
+        if self.nonce()? != *nonce {
+            return Err(BlockError::NotValid(BlockData::Nonce));
         }
+        if self.position()? != *position {
+            return Err(BlockError::NotValid(BlockData::Position));
+        }
+
+        if self.timestamp()? != *timestamp {
+            return Err(BlockError::NotValid(BlockData::Timestamp));
+        }
+
+        if &self.hash()? != hash {
+            return Err(BlockError::NotValid(BlockData::Hash));
+        }
+
+        if &self.prev_hash()? != prev_hash {
+            return Err(BlockError::NotValid(BlockData::PrevHash));
+        }
+
+        if &self.merkle_root()? != merkle_root {
+            return Err(BlockError::NotValid(BlockData::MerkleRoot));
+        }
+
+        Ok(())
     }
-    fn nonce(&mut self) -> Result<Nonce, BlockError>;
+    fn timestamp(&self) -> Result<Timestamp, BlockError>;
+    fn nonce(&self) -> Result<Nonce, BlockError>;
 }
 
 #[derive(Debug, Clone)]
 pub enum BlockError {
     SerdeError(SerdeError),
     DataBaseError(DataBaseError),
-    NotValid,
+    NotValid(BlockData),
     Unspecified,
+}
+
+#[derive(Debug, Clone)]
+pub enum BlockData {
+    Hash,
+    PrevHash,
+    MerkleRoot,
+    Timestamp,
+    Nonce,
+    Position,
+}
+
+impl std::error::Error for BlockError {}
+
+impl std::fmt::Display for BlockError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        std::fmt::Debug::fmt(self, f)
+    }
 }
 
 impl From<ChainError> for BlockError {
@@ -51,7 +98,7 @@ impl From<ChainError> for BlockError {
 pub struct ChainedInstance {
     nonce: Nonce,
     position: Position,
-    timestamp: TimeStamp,
+    timestamp: Timestamp,
     hash: Hash,
     prev_hash: Hash,
     merkle_root: Hash,
@@ -61,7 +108,7 @@ impl ChainedInstance {
     pub fn new(
         nonce: Nonce,
         position: Position,
-        timestamp: TimeStamp,
+        timestamp: Timestamp,
         hash: Hash,
         prev_hash: Hash,
         merkle_root: Hash,
@@ -88,7 +135,7 @@ impl ChainedInstance {
         &self.merkle_root
     }
 
-    pub fn timestamp(&self) -> TimeStamp {
+    pub fn timestamp(&self) -> Timestamp {
         self.timestamp
     }
 

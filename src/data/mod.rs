@@ -51,7 +51,7 @@ pub enum Detail {
     Text(String),
     Integer(isize),
     Bytes(Box<[u8]>),
-    TimeStamp(TimeStamp),
+    Timestamp(Timestamp),
     Image(Image),
 }
 
@@ -84,7 +84,7 @@ impl MetaData {
 use chrono::{Datelike, Timelike};
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Hash)]
-pub struct TimeStamp {
+pub struct Timestamp {
     millis: u8,
     second: u8,
     minute: u8,
@@ -94,7 +94,7 @@ pub struct TimeStamp {
     year: u16,
 }
 
-impl Default for TimeStamp {
+impl Default for Timestamp {
     fn default() -> Self {
         Self {
             millis: 0,
@@ -107,13 +107,13 @@ impl Default for TimeStamp {
         }
     }
 }
-pub trait ToTimeStamp {
-    fn to_timestamp(&self) -> TimeStamp;
+pub trait ToTimestamp {
+    fn to_timestamp(&self) -> Timestamp;
 }
 
-impl<T: chrono::TimeZone> ToTimeStamp for chrono::DateTime<T> {
-    fn to_timestamp(&self) -> TimeStamp {
-        TimeStamp {
+impl<T: chrono::TimeZone> ToTimestamp for chrono::DateTime<T> {
+    fn to_timestamp(&self) -> Timestamp {
+        Timestamp {
             millis: 0,
             second: self.second() as u8,
             minute: self.minute() as u8,
@@ -125,15 +125,15 @@ impl<T: chrono::TimeZone> ToTimeStamp for chrono::DateTime<T> {
     }
 }
 
-impl<F: ToTimeStamp> From<F> for TimeStamp {
+impl<F: ToTimestamp> From<F> for Timestamp {
     fn from(value: F) -> Self {
         value.to_timestamp()
     }
 }
 
-impl ToTimeStamp for chrono::NaiveDateTime {
-    fn to_timestamp(&self) -> TimeStamp {
-        TimeStamp {
+impl ToTimestamp for chrono::NaiveDateTime {
+    fn to_timestamp(&self) -> Timestamp {
+        Timestamp {
             millis: 0,
             second: self.second() as u8,
             minute: self.minute() as u8,
@@ -145,7 +145,7 @@ impl ToTimeStamp for chrono::NaiveDateTime {
     }
 }
 
-impl TimeStamp {
+impl Timestamp {
     pub fn year(&self) -> u16 {
         self.year
     }

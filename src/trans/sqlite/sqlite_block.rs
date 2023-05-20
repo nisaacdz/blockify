@@ -1,12 +1,13 @@
+use diesel::prelude::*;
 use diesel::sql_types::Text;
 use diesel::sqlite::Sqlite;
-use diesel::{insert_into, prelude::*};
 use serde::{Deserialize, Serialize};
 use std::marker::PhantomData;
 
-use crate::data::{Nonce, TimeStamp};
+use crate::data::{Nonce, Position, Timestamp};
+use crate::io::SerdeError;
 use crate::{block::Block, record::Record};
-use crate::{Hash, SqliteChainError};
+use crate::{Hash, SqliteChainError, WrapperMut};
 
 table! {
     records {
@@ -20,18 +21,22 @@ table! {
         id -> Integer,
         timestamp -> Text,
         hash -> Text,
-        merkle -> Text,
+        merkle_root -> Text,
         nonce -> Text,
+        prev_hash -> Text,
+        position -> Text,
     }
 }
+
 pub struct SqliteBlock<X> {
-    con: SqliteConnection,
+    con: WrapperMut<SqliteConnection>,
     _data: PhantomData<X>,
 }
 
 #[derive(Debug)]
 pub enum SqliteBlockError {
     ConnectionError(ConnectionError),
+    SerdeError(SerdeError),
     ConnectionFailed,
 }
 
@@ -40,6 +45,7 @@ impl Into<SqliteChainError> for SqliteBlockError {
         match self {
             SqliteBlockError::ConnectionError(ce) => SqliteChainError::ConnectionError(ce),
             Self::ConnectionFailed => SqliteChainError::ConnectionFailed,
+            Self::SerdeError(sd) => SqliteChainError::SerdeError(sd),
         }
     }
 }
@@ -60,7 +66,7 @@ impl<X: Record + Serialize> SqliteBlock<X> {
     pub fn new(url: &str) -> Result<Self, SqliteBlockError> {
         let con = SqliteConnection::establish(url)?;
         let val = Self {
-            con,
+            con: WrapperMut::new(con),
             _data: PhantomData,
         };
         Ok(val)
@@ -84,8 +90,10 @@ impl<X: Record + Serialize> SqliteBlock<X> {
             id INTEGER PRIMARY KEY,
             timestamp TEXT,
             hash TEXT,
-            merkle TEXT,
-            nonce TEXT
+            merkle_root TEXT,
+            nonce TEXT,
+            prev_hash TEXT,
+            position TEXT
         )",
         )
         .execute(con)
@@ -96,42 +104,46 @@ impl<X: Record + Serialize> SqliteBlock<X> {
 
     pub fn build(
         url: &str,
-        instance: &UnchainedInstance<X>,
-    ) -> Result<(TimeStamp, Hash), SqliteBlockError> {
-        let mut val = Self::new(url)?;
-        Self::create_tables(&mut val.con)?;
-        use crate::data::ToTimeStamp;
-        let current_time = chrono::Utc::now().to_timestamp();
-        let timestamp = { serde_json::to_string(&current_time).unwrap() };
-        let hash = crate::hash(&instance);
-        let hash_str = {
-            let hash = serde_json::to_string(&hash).unwrap();
-            hash
-        };
+        records: &[SignedRecord<X>],
+        cc: &ChainedInstance,
+    ) -> Result<Self, SqliteBlockError> {
+        let val = Self::new(url)?;
+        Self::create_tables(val.con.get_mut())?;
 
-        let merkle = { serde_json::to_string(instance.merkle_root()).unwrap() };
-        let nonce = { serde_json::to_string(&instance.nonce()).unwrap() };
+        let timestamp = serde_json::to_string(&cc.timestamp()).unwrap();
 
-        let smt = insert_into(metadata::table).values((
+        let hash = serde_json::to_string(&cc.hash()).unwrap();
+
+        let prev_hash = serde_json::to_string(&cc.prev_hash()).unwrap();
+
+        let merkle_root = { serde_json::to_string(cc.merkle_root()).unwrap() };
+
+        let nonce = { serde_json::to_string(&cc.nonce()).unwrap() };
+
+        let position = serde_json::to_string(&cc.position()).unwrap();
+
+        let smt = diesel::insert_into(metadata::table).values((
             metadata::timestamp.eq(timestamp),
-            metadata::hash.eq(hash_str),
-            metadata::merkle.eq(merkle),
+            metadata::hash.eq(hash),
+            metadata::merkle_root.eq(merkle_root),
             metadata::nonce.eq(nonce),
+            metadata::prev_hash.eq(prev_hash),
+            metadata::position.eq(position),
         ));
 
-        for record in instance.records() {
-            let smt = insert_into(records::table)
+        for record in records {
+            let smt = diesel::insert_into(records::table)
                 .values(records::jsonvalues.eq(serde_json::to_string(record).unwrap()));
-            smt.execute(&mut val.con).unwrap();
+            smt.execute(val.con.get_mut()).unwrap();
         }
 
-        smt.execute(&mut val.con).unwrap();
+        smt.execute(val.con.get_mut()).unwrap();
 
-        Ok((current_time, hash))
+        Ok(val)
     }
 }
 
-use crate::block::{BlockError, UnchainedInstance};
+use crate::block::{BlockError, ChainedInstance};
 use crate::record::SignedRecord;
 use records::dsl::records as rq;
 
@@ -162,10 +174,10 @@ impl<X> From<RecordValue<X>> for SignedRecord<X> {
 
 impl<X: Record + for<'a> Deserialize<'a> + 'static> Block for SqliteBlock<X> {
     type RecordType = X;
-    fn records(&mut self) -> Result<Box<[SignedRecord<X>]>, BlockError> {
+    fn records(&self) -> Result<Box<[SignedRecord<X>]>, BlockError> {
         let res = rq
             .select(records::jsonvalues)
-            .load::<RecordValue<X>>(&mut self.con)
+            .load::<RecordValue<X>>(self.con.get_mut())
             .unwrap();
         let res = res
             .into_iter()
@@ -174,30 +186,57 @@ impl<X: Record + for<'a> Deserialize<'a> + 'static> Block for SqliteBlock<X> {
         Ok(res.into_boxed_slice())
     }
 
-    fn hash(&mut self) -> Result<Hash, crate::block::BlockError> {
+    fn hash(&self) -> Result<Hash, crate::block::BlockError> {
         let res = metadata::table
             .select(metadata::hash)
-            .first::<String>(&mut self.con)
+            .first::<String>(self.con.get_mut())
             .unwrap();
         let res = serde_json::from_str::<Hash>(&res).unwrap();
         Ok(res)
     }
 
-    fn merkle_root(&mut self) -> Result<crate::Hash, crate::block::BlockError> {
+    fn merkle_root(&self) -> Result<crate::Hash, crate::block::BlockError> {
         let res = metadata::table
-            .select(metadata::merkle)
-            .first::<String>(&mut self.con)
+            .select(metadata::merkle_root)
+            .first::<String>(self.con.get_mut())
             .unwrap();
         let res = serde_json::from_str::<Hash>(&res).unwrap();
         Ok(res)
     }
 
-    fn nonce(&mut self) -> Result<Nonce, crate::block::BlockError> {
+    fn nonce(&self) -> Result<Nonce, crate::block::BlockError> {
         let res = metadata::table
             .select(metadata::nonce)
-            .first::<String>(&mut self.con)
+            .first::<String>(self.con.get_mut())
             .unwrap();
         let res = serde_json::from_str::<Nonce>(&res).unwrap();
+        Ok(res)
+    }
+
+    fn prev_hash(&self) -> Result<Hash, BlockError> {
+        let res = metadata::table
+            .select(metadata::prev_hash)
+            .first::<String>(self.con.get_mut())
+            .unwrap();
+        let res = serde_json::from_str::<Hash>(&res).unwrap();
+        Ok(res)
+    }
+
+    fn position(&self) -> Result<Position, BlockError> {
+        let res = metadata::table
+            .select(metadata::position)
+            .first::<String>(self.con.get_mut())
+            .unwrap();
+        let res = serde_json::from_str::<Position>(&res).unwrap();
+        Ok(res)
+    }
+
+    fn timestamp(&self) -> Result<Timestamp, BlockError> {
+        let res = metadata::table
+            .select(metadata::timestamp)
+            .first::<String>(self.con.get_mut())
+            .unwrap();
+        let res = serde_json::from_str::<Timestamp>(&res).unwrap();
         Ok(res)
     }
 }
