@@ -62,11 +62,27 @@ impl PublicKey {
     ) -> Result<(), VerificationError> {
         self.algorithm.verify(msg, signature, self.buffer())
     }
+
+    pub fn to_hex(&self) -> String {
+        hex::encode(&self.buffer)
+    }
 }
 
 impl AsRef<[u8]> for PublicKey {
     fn as_ref(&self) -> &[u8] {
         self.buffer()
+    }
+}
+
+impl From<PublicKey> for String {
+    fn from(value: PublicKey) -> Self {
+        value.to_hex()
+    }
+}
+
+impl std::fmt::Display for PublicKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.to_hex())
     }
 }
 
@@ -178,6 +194,12 @@ impl From<Hash> for String {
     }
 }
 
+impl std::fmt::Display for Hash {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.to_hex())
+    }
+}
+
 impl std::ops::Deref for Hash {
     type Target = [u8];
     fn deref(&self) -> &Self::Target {
@@ -225,11 +247,26 @@ impl DigitalSignature {
     pub fn buffer(&self) -> &[u8] {
         &self.buffer
     }
+    pub fn to_hex(&self) -> String {
+        hex::encode(&self.buffer)
+    }
 }
 
 impl From<Vec<u8>> for DigitalSignature {
     fn from(value: Vec<u8>) -> DigitalSignature {
         DigitalSignature::new(value.into_boxed_slice())
+    }
+}
+
+impl From<DigitalSignature> for String {
+    fn from(value: DigitalSignature) -> Self {
+        value.to_hex()
+    }
+}
+
+impl std::fmt::Display for DigitalSignature {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.to_hex())
     }
 }
 
@@ -239,18 +276,14 @@ impl AsRef<[u8]> for DigitalSignature {
     }
 }
 
-impl From<DigitalSignature> for String {
-    fn from(data: DigitalSignature) -> Self {
-        hex::encode(data)
-    }
-}
-
 use ring::signature::{
     EcdsaKeyPair, EcdsaSigningAlgorithm, Ed25519KeyPair, RsaEncoding, RsaKeyPair,
     UnparsedPublicKey, VerificationAlgorithm,
 };
 
 /// An enum representing the different algorithms that can be used to generate key pairs.
+///
+/// Each variant of this enum represents the algorithm used for `signing` and `verifying` data
 ///
 /// The following algorithms are supported:
 ///
@@ -263,6 +296,12 @@ pub enum KeyPairAlgorithm {
     Ed25519,
     Ecdsa256256Fixed,
     RsaPKCS1256,
+}
+
+impl std::fmt::Display for KeyPairAlgorithm {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        std::fmt::Debug::fmt(self, f)
+    }
 }
 
 impl KeyPairAlgorithm {
