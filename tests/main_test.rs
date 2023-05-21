@@ -14,12 +14,13 @@ struct Vote {
 }
 
 impl Vote {
-    pub fn new(data: &str) -> Self {
+    fn new(data: &str) -> Self {
         Vote { data: data.into() }
     }
 }
 
-fn main() {
+#[test]
+fn test_main() {
     let chain_url = "target2/main/sqlite/";
     std::fs::create_dir_all(chain_url).expect("could not create chain_url");
     let datas1 = vec!["abcd", "efgh", "ijkl"];
@@ -49,8 +50,7 @@ fn main() {
         builder2.push(record);
     }
 
-    let mut chain =
-        SqliteChain::new(chain_url).expect("sqlite connection cannot be established");
+    let mut chain = SqliteChain::new(chain_url).expect("sqlite connection cannot be established");
     let instance1 = chain.append(&builder1).expect("builder1 append erred");
     let instance2 = chain.append(&builder2).expect("builder2 append erred");
 
