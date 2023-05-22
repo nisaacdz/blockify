@@ -12,13 +12,32 @@ use super::{
     record::{Record, SignedRecord},
 };
 
+/// A block is a unit of data in a blockchain. It contains a number of records, a
+/// previous hash, a position, a hash, a merkle root, a timestamp, and a nonce.
+///
+/// This `Block` trait provides methods for accessing these properties.
 pub trait Block {
+    /// The type of record that is stored in this block.
     type RecordType: Record;
+
+    /// Returns a reference to the records in this block.
     fn records(&self) -> Result<Box<[SignedRecord<Self::RecordType>]>, BlockError>;
+
+    /// Returns the previous hash of this block.
     fn prev_hash(&self) -> Result<Hash, BlockError>;
+
+    /// Returns the position of this block in the blockchain.
     fn position(&self) -> Result<Position, BlockError>;
+
+    /// Returns the hash of this block.
     fn hash(&self) -> Result<Hash, BlockError>;
+
+    /// Returns the merkle root of this block.
     fn merkle_root(&self) -> Result<Hash, BlockError>;
+
+    /// Validates this block against the provided chained instance.
+    ///
+    /// Returns an error if the block is not valid.
     fn validate(&self, chained: &ChainedInstance) -> Result<(), BlockError> {
         let ChainedInstance {
             nonce,
@@ -54,25 +73,49 @@ pub trait Block {
 
         Ok(())
     }
+
+    /// Returns the timestamp of this block.
     fn timestamp(&self) -> Result<Timestamp, BlockError>;
+
+    /// Returns the nonce of this block.
     fn nonce(&self) -> Result<Nonce, BlockError>;
 }
 
+/// An error that can occur when working with blocks.
 #[derive(Debug, Clone)]
 pub enum BlockError {
+    /// An error that occurred while serializing or deserializing a block.
     SerdeError(SerdeError),
+
+    /// An error that occurred while accessing the database.
     DataBaseError(DataBaseError),
+
+    /// The block is not valid.
     NotValid(BlockData),
+
+    /// An unspecified error occurred.
     Unspecified,
 }
 
+/// The data that is stored in a block.
 #[derive(Debug, Clone)]
 pub enum BlockData {
+    /// The hash of the block.
     Hash,
+
+    /// The previous hash of the block.
     PrevHash,
+
+    /// The merkle root of the block.
     MerkleRoot,
+
+    /// The timestamp of the block.
     Timestamp,
+
+    /// The nonce of the block.
     Nonce,
+
+    /// The position of the block in the blockchain.
     Position,
 }
 
