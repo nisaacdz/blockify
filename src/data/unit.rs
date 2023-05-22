@@ -85,17 +85,24 @@ impl<const N: usize> Serialize for Units<N> {
 impl<'d, const N: usize> Deserialize<'d> for Units<N> {
     fn deserialize<D: serde::Deserializer<'d>>(dz: D) -> Result<Self, D::Error> {
         let vec = <Vec<MicQuan>>::deserialize(dz)?;
-
         let mut real = [MicQuan::default(); N];
+
+        if vec.len() != N {
+            return Err(serde::de::Error::custom(format!(
+                "Expected array of length {}, found length {}",
+                N,
+                vec.len()
+            )));
+        }
 
         for i in 0..N {
             real[i] = vec[i];
         }
-
+        
         Ok(real.into())
     }
-    
 }
+
 
 #[cfg(debug_assertions)]
 mod test_units {
