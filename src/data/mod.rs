@@ -7,42 +7,46 @@ mod unit;
 #[cfg(feature = "unit")]
 pub use unit::*;
 
-#[derive(Debug, Clone)]
-pub struct Image {
-    img: DynamicImage,
-}
-
-impl From<DynamicImage> for Image {
-    fn from(img: DynamicImage) -> Self {
-        Image { img }
+#[deprecated(note = "Not yet ready")]
+mod under_dev {
+    use super::{Deserialize, DynamicImage, Serialize};
+    #[derive(Debug, Clone)]
+    pub struct Image {
+        img: DynamicImage,
     }
-}
 
-impl Eq for Image {}
-
-impl std::hash::Hash for Image {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        state.write(self.img.as_bytes())
+    impl From<DynamicImage> for Image {
+        fn from(img: DynamicImage) -> Self {
+            Image { img }
+        }
     }
-}
 
-impl PartialEq for Image {
-    fn eq(&self, other: &Self) -> bool {
-        self.img.as_bytes() == other.img.as_bytes()
+    impl Eq for Image {}
+
+    impl std::hash::Hash for Image {
+        fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+            state.write(self.img.as_bytes())
+        }
     }
-}
 
-impl<'de> Deserialize<'de> for Image {
-    fn deserialize<D: serde::Deserializer<'de>>(dz: D) -> Result<Self, D::Error> {
-        let buffer = <&[u8]>::deserialize(dz)?;
-        let img = image::load_from_memory(buffer).map_err(serde::de::Error::custom)?;
-        Ok(Image::from(img))
+    impl PartialEq for Image {
+        fn eq(&self, other: &Self) -> bool {
+            self.img.as_bytes() == other.img.as_bytes()
+        }
     }
-}
 
-impl Serialize for Image {
-    fn serialize<S: serde::Serializer>(&self, sz: S) -> Result<S::Ok, S::Error> {
-        sz.serialize_bytes(self.img.as_bytes())
+    impl<'de> Deserialize<'de> for Image {
+        fn deserialize<D: serde::Deserializer<'de>>(dz: D) -> Result<Self, D::Error> {
+            let buffer = <&[u8]>::deserialize(dz)?;
+            let img = image::load_from_memory(buffer).map_err(serde::de::Error::custom)?;
+            Ok(Image::from(img))
+        }
+    }
+
+    impl Serialize for Image {
+        fn serialize<S: serde::Serializer>(&self, sz: S) -> Result<S::Ok, S::Error> {
+            sz.serialize_bytes(self.img.as_bytes())
+        }
     }
 }
 
@@ -52,7 +56,7 @@ pub enum Detail {
     Integer(isize),
     Bytes(Box<[u8]>),
     Timestamp(Timestamp),
-    Image(Image),
+    //Image(Image),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
