@@ -14,7 +14,7 @@ fn test_derive() {
 
 #[test]
 fn test_record() {
-    use blockify::{data::MetaData, record::Record};
+    use blockify::{data::Metadata, record::Record};
     use serde::{Deserialize, Serialize};
 
     #[derive(Serialize, Deserialize, Record)]
@@ -27,10 +27,10 @@ fn test_record() {
     };
     let hash = value.hash();
     let signature = value.sign(&keypair).unwrap();
-    let record = value.record(keypair, MetaData::empty()).unwrap();
+    let record = value.record(keypair, Metadata::empty()).unwrap();
 
     assert_eq!(&hash, record.hash());
     assert_eq!(&signature, record.signature());
-    assert_eq!(&MetaData::empty(), record.metadata());
+    assert_eq!(&Metadata::empty(), record.metadata());
     assert!(record.verify().is_ok());
 }

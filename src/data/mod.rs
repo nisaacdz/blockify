@@ -60,11 +60,11 @@ pub enum Detail {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
-pub struct MetaData {
+pub struct Metadata {
     details: Box<[Detail]>,
 }
 
-impl MetaData {
+impl Metadata {
     pub fn new() -> Self {
         Self {
             details: Vec::with_capacity(0).into_boxed_slice(),

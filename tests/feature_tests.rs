@@ -3,7 +3,7 @@
 #[cfg(feature = "full")]
 #[test]
 fn test() {
-    use blockify::{data::MetaData, record::Record};
+    use blockify::{data::Metadata, record::Record};
     use serde::{Deserialize, Serialize};
 
     #[derive(Clone, Serialize, Deserialize, Record)]
@@ -34,7 +34,7 @@ fn test() {
     assert!(my_record.verify(&signature, &pub_key).is_ok());
 
     // record the my_vote (convert it into a SignedRecord instance)
-    let signed_record = my_record.record(keypair, MetaData::empty()).unwrap();
+    let signed_record = my_record.record(keypair, Metadata::empty()).unwrap();
 
     // Compare the signature of `my_record` with that inside the `SignedRecord` instance
     assert_eq!(&signature, signed_record.signature());

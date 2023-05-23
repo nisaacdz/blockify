@@ -8,6 +8,7 @@ use super::{
     record::Record,
 };
 
+/// The types of error that can occur in operations associated with the `Chain` trait
 #[derive(Debug, Clone, Copy)]
 pub enum ChainError {
     SerdeError(SerdeError),
@@ -37,12 +38,19 @@ pub trait Chain {
     /// The type of block that is stored in this chain.
     type BlockType: Block<RecordType = Self::RecordType>;
 
-    /// Appends a block to the chain.
+    /// Appends an `UnchainedInstance` block to the chain.
     ///
-    /// Returns an error if the block is not valid.
+    /// # Arguments
+    ///
+    /// * `block` - The `UnchainedInstance` to append to the block.
+    ///
+    /// # Returns
+    ///
+    /// - `Ok(ChainedInstance)` If the operation succeeds
+    /// - `Err(ChainError)` if the operation fails
     fn append(
         &mut self,
-        data: &UnchainedInstance<Self::RecordType>,
+        block: &UnchainedInstance<Self::RecordType>,
     ) -> Result<ChainedInstance, ChainError>;
 
     /// Gets a block from the chain by its position.
@@ -59,4 +67,3 @@ pub trait Chain {
         Ok(block)
     }
 }
-

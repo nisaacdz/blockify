@@ -1,7 +1,7 @@
 use blockify::{
     block::{Block, UnchainedInstance},
     chain::Chain,
-    data::MetaData,
+    data::Metadata,
     record::{Record, SignedRecord},
     SqliteChain,
 };
@@ -28,19 +28,19 @@ fn test_main() {
     let keypair = blockify::generate_ed25519_key_pair();
     let records1 = datas1
         .into_iter()
-        .map(|w| Vote::new(w).record(keypair.clone(), MetaData::empty()))
+        .map(|w| Vote::new(w).record(keypair.clone(), Metadata::empty()))
         .filter(|r| r.is_ok())
         .map(|v| v.unwrap())
         .collect::<Vec<SignedRecord<Vote>>>();
     let records2 = datas2
         .into_iter()
-        .map(|w| Vote::new(w).record(keypair.clone(), MetaData::empty()))
+        .map(|w| Vote::new(w).record(keypair.clone(), Metadata::empty()))
         .filter(|r| r.is_ok())
         .map(|v| v.unwrap())
         .collect::<Vec<SignedRecord<Vote>>>();
 
-    let mut builder1 = UnchainedInstance::new(MetaData::empty(), 0);
-    let mut builder2 = UnchainedInstance::new(MetaData::empty(), 1);
+    let mut builder1 = UnchainedInstance::new(Metadata::empty(), 0);
+    let mut builder2 = UnchainedInstance::new(Metadata::empty(), 1);
 
     for record in records1 {
         builder1.push(record);
