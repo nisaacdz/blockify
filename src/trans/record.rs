@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    data::MetaData, AuthKeyPair, DigitalSignature, Hash, KeyPairAlgorithm, PublicKey, SigningError,
+    data::Metadata, AuthKeyPair, DigitalSignature, Hash, KeyPairAlgorithm, PublicKey, SigningError,
     VerificationError,
 };
 
@@ -50,7 +50,7 @@ pub trait Record: Sized {
     fn record(
         self,
         keypair: AuthKeyPair,
-        metadata: MetaData,
+        metadata: Metadata,
     ) -> Result<SignedRecord<Self>, SigningError>
     where
         Self: Serialize,
@@ -178,7 +178,7 @@ pub struct SignedRecord<R> {
     signature: DigitalSignature,
     hash: Hash,
     record: R,
-    metadata: MetaData,
+    metadata: Metadata,
 }
 
 impl<R: Record> SignedRecord<R> {
@@ -188,7 +188,7 @@ impl<R: Record> SignedRecord<R> {
         signature: DigitalSignature,
         signer: PublicKey,
         hash: Hash,
-        metadata: MetaData,
+        metadata: Metadata,
     ) -> Self {
         Self {
             record,
@@ -221,7 +221,8 @@ impl<R: Record> SignedRecord<R> {
         &self.hash
     }
 
-    pub fn metadata(&self) -> &MetaData {
+    // Returns a reference to the `Metadata` associated with this `SignedRecord` instance
+    pub fn metadata(&self) -> &Metadata {
         &self.metadata
     }
 }

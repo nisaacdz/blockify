@@ -6,7 +6,7 @@ fn test_blocks() {
     use blockify::{
         block::{Block, UnchainedInstance},
         chain::Chain,
-        data::MetaData,
+        data::Metadata,
         record::Record,
         SqliteChain,
     };
@@ -37,20 +37,20 @@ fn test_blocks() {
         // and collect them into two vectors.
         let records1 = datas1
             .into_iter()
-            .map(|w| Data::new(w).record(keypair.clone(), MetaData::empty()))
+            .map(|w| Data::new(w).record(keypair.clone(), Metadata::empty()))
             .filter(|r| r.is_ok())
             .map(|v| v.unwrap())
             .collect::<Vec<_>>();
         let records2 = datas2
             .into_iter()
-            .map(|w| Data::new(w).record(keypair.clone(), MetaData::empty()))
+            .map(|w| Data::new(w).record(keypair.clone(), Metadata::empty()))
             .filter(|r| r.is_ok())
             .map(|v| v.unwrap())
             .collect::<Vec<_>>();
 
         // create two block builders `UnchainedInstance`'s with nonce and empty metadata
-        let mut builder1 = UnchainedInstance::new(MetaData::empty(), 0);
-        let mut builder2 = UnchainedInstance::new(MetaData::empty(), 1);
+        let mut builder1 = UnchainedInstance::new(Metadata::empty(), 0);
+        let mut builder2 = UnchainedInstance::new(Metadata::empty(), 1);
 
         // push the two vec's content into each UnchainedInstance
         for record in records1 {

@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     crypto::*,
-    data::{MetaData, Nonce, Position, Timestamp},
+    data::{Metadata, Nonce, Position, Timestamp},
     io::{DataBaseError, SerdeError},
     merkle::MerkleTree,
 };
@@ -139,12 +139,12 @@ impl From<ChainError> for BlockError {
 }
 
 pub struct ChainedInstance {
-    nonce: Nonce,
-    position: Position,
-    timestamp: Timestamp,
-    hash: Hash,
-    prev_hash: Hash,
-    merkle_root: Hash,
+    pub nonce: Nonce,
+    pub position: Position,
+    pub timestamp: Timestamp,
+    pub hash: Hash,
+    pub prev_hash: Hash,
+    pub merkle_root: Hash,
 }
 
 impl ChainedInstance {
@@ -205,12 +205,12 @@ impl ChainedInstance {
 pub struct UnchainedInstance<R> {
     records: Vec<SignedRecord<R>>,
     merkle: merkle::MerkleTree,
-    metadata: MetaData,
+    metadata: Metadata,
     nonce: Nonce,
 }
 
 impl<R> UnchainedInstance<R> {
-    pub fn new(metadata: MetaData, nonce: u64) -> Self {
+    pub fn new(metadata: Metadata, nonce: u64) -> Self {
         Self {
             records: vec![],
             merkle: MerkleTree::new(),
