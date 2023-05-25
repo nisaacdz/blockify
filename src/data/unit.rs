@@ -22,15 +22,26 @@ pub struct Quantity {
 
 impl From<i32> for Quantity {
     fn from(val: i32) -> Self {
-        Self {
-            val
-        }
+        Self { val }
     }
 }
 
 impl Quantity {
     pub fn none() -> Self {
         Self { val: 0 }
+    }
+    pub fn new(val: i32) -> Self {
+        Self { val }
+    }
+
+    pub fn increment(&mut self) -> i32 {
+        self.val += 1;
+        self.val
+    }
+
+    pub fn increment_by(&mut self, val: i32) -> i32 {
+        self.val += val;
+        self.val
     }
 }
 
@@ -41,7 +52,9 @@ pub struct Micron {
 
 impl From<i32> for Micron {
     fn from(value: i32) -> Self {
-        Self { id: Category::new(value) }
+        Self {
+            id: Category::new(value),
+        }
     }
 }
 
@@ -69,10 +82,11 @@ impl MicQuan {
     }
 
     pub fn new(micron: Micron, quantity: Quantity) -> Self {
-        Self {
-            micron,
-            quantity,
-        }
+        Self { micron, quantity }
+    }
+
+    pub fn increment(&mut self) -> Quantity {
+        self.quantity.increment().into()
     }
 }
 
@@ -98,23 +112,27 @@ impl<'d, const N: usize> Deserialize<'d> for Units<N> {
         for i in 0..N {
             real[i] = vec[i];
         }
-        
+
         Ok(real.into())
     }
 }
 
-
 #[cfg(debug_assertions)]
 mod test_units {
     #[allow(unused)]
-    use super::{Units, MicQuan};
+    use super::{MicQuan, Units};
 
     #[test]
     fn test_serde() {
-        let units = Units::new([MicQuan::debug_with(0, 0), MicQuan::debug_with(1, 1), MicQuan::debug_with(2, 2)]);
+        let units = Units::new([
+            MicQuan::debug_with(0, 0),
+            MicQuan::debug_with(1, 1),
+            MicQuan::debug_with(2, 2),
+        ]);
         let serde_str = serde_json::to_string(&units).expect("couldn't stringify units");
 
-        let gen_units = serde_json::from_str::<Units<3>>(&serde_str).expect("couldn't unstringify units");
+        let gen_units =
+            serde_json::from_str::<Units<3>>(&serde_str).expect("couldn't unstringify units");
 
         assert_eq!(units, gen_units);
     }
