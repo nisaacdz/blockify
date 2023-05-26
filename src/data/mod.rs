@@ -1,52 +1,8 @@
-use image::DynamicImage;
 use serde::{Deserialize, Serialize};
 
 mod unit;
 
 pub use unit::*;
-
-#[deprecated(note = "Not yet ready")]
-mod under_dev {
-    use super::{Deserialize, DynamicImage, Serialize};
-    #[derive(Debug, Clone)]
-    pub struct Image {
-        img: DynamicImage,
-    }
-
-    impl From<DynamicImage> for Image {
-        fn from(img: DynamicImage) -> Self {
-            Image { img }
-        }
-    }
-
-    impl Eq for Image {}
-
-    impl std::hash::Hash for Image {
-        fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-            state.write(self.img.as_bytes())
-        }
-    }
-
-    impl PartialEq for Image {
-        fn eq(&self, other: &Self) -> bool {
-            self.img.as_bytes() == other.img.as_bytes()
-        }
-    }
-
-    impl<'de> Deserialize<'de> for Image {
-        fn deserialize<D: serde::Deserializer<'de>>(dz: D) -> Result<Self, D::Error> {
-            let buffer = <&[u8]>::deserialize(dz)?;
-            let img = image::load_from_memory(buffer).map_err(serde::de::Error::custom)?;
-            Ok(Image::from(img))
-        }
-    }
-
-    impl Serialize for Image {
-        fn serialize<S: serde::Serializer>(&self, sz: S) -> Result<S::Ok, S::Error> {
-            sz.serialize_bytes(self.img.as_bytes())
-        }
-    }
-}
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
 pub enum Detail {
@@ -54,7 +10,7 @@ pub enum Detail {
     Integer(isize),
     Bytes(Box<[u8]>),
     Timestamp(Timestamp),
-    //Image(Image),
+    Boolean(bool),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
@@ -83,46 +39,32 @@ impl Metadata {
     }
 }
 
-use chrono::{Datelike, Timelike};
-
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub struct Timestamp {
-    millis: u8,
-    second: u8,
-    minute: u8,
-    hour: u8,
-    day: u8,
-    month: u8,
-    year: u16,
+    secs: u64,
 }
 
-impl Default for Timestamp {
-    fn default() -> Self {
-        Self {
-            millis: 0,
-            second: 0,
-            minute: 0,
-            hour: 0,
-            day: 0,
-            month: 0,
-            year: 0,
-        }
-    }
-}
 pub trait ToTimestamp {
     fn to_timestamp(&self) -> Timestamp;
+}
+
+impl ToTimestamp for u64 {
+    fn to_timestamp(&self) -> Timestamp {
+        Timestamp::from_secs(*self)
+    }
+}
+
+#[test]
+fn test_timestamp_for_u64() {
+    let val = 33u64;
+    let _timestamp = val.to_timestamp();
+    assert!(true, "incomplete implementation of to_timestamp for u64")
 }
 
 impl<T: chrono::TimeZone> ToTimestamp for chrono::DateTime<T> {
     fn to_timestamp(&self) -> Timestamp {
         Timestamp {
-            millis: 0,
-            second: self.second() as u8,
-            minute: self.minute() as u8,
-            hour: self.hour() as u8,
-            day: self.day() as u8,
-            month: self.month() as u8,
-            year: self.year() as u16,
+            secs: self.timestamp() as _,
         }
     }
 }
@@ -136,38 +78,48 @@ impl<F: ToTimestamp> From<F> for Timestamp {
 impl ToTimestamp for chrono::NaiveDateTime {
     fn to_timestamp(&self) -> Timestamp {
         Timestamp {
-            millis: 0,
-            second: self.second() as u8,
-            minute: self.minute() as u8,
-            hour: self.hour() as u8,
-            day: self.day() as u8,
-            month: self.month() as u8,
-            year: self.year() as u16,
+            secs: self.timestamp() as _,
         }
     }
 }
 
+pub enum Month {
+    January,
+    February,
+    March,
+    April,
+    May,
+    June,
+    July,
+    August,
+    September,
+    October,
+    November,
+    December,
+}
+
 impl Timestamp {
     pub fn year(&self) -> u16 {
-        self.year
+        todo!()
     }
-    pub fn month(&self) -> u8 {
-        self.month
+    pub fn month(&self) -> Month {
+        todo!()
     }
     pub fn day(&self) -> u8 {
-        self.day
+        todo!()
     }
     pub fn hour(&self) -> u8 {
-        self.hour
+        todo!()
     }
     pub fn minute(&self) -> u8 {
-        self.minute
+        todo!()
     }
     pub fn second(&self) -> u8 {
-        self.second
+        todo!()
     }
-    pub fn millis(&self) -> u8 {
-        self.millis
+
+    pub fn from_secs(secs: u64) -> Self {
+        Self { secs }
     }
 }
 
