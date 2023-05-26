@@ -19,8 +19,6 @@
 //! - Creating and managing consensus mechanisms
 //! - Dealing with `Records`, `Blocks`, and `Chains`.
 
-#![feature(generic_const_exprs)]
-
 pub mod data;
 pub mod io;
 pub mod node;
@@ -37,7 +35,7 @@ mod trans;
 #[cfg(feature = "record")]
 pub use trans::*;
 
-pub mod verification;
+// pub mod verification;
 
 
 mod essentials;

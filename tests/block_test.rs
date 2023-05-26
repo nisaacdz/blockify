@@ -1,6 +1,8 @@
 #![cfg(test)]
 #![cfg(feature = "sqlite")]
 
+use blockify::block::ChainedInstance;
+
 #[test]
 fn test_blocks() {
     use blockify::{
@@ -25,7 +27,7 @@ fn test_blocks() {
 
     fn start() {
         // folder path for the chain and blocks
-        let chain_url = "target2/tmp/bin/main/";
+        let chain_url = "target2/tmp/doc_tests/block_test/";
         // create the folder if it is absent
         std::fs::create_dir_all(chain_url).expect("could not create chain_url");
         // prepare strings for use in creating `Data` instances
@@ -70,21 +72,9 @@ fn test_blocks() {
         let instance1 = chain.append(&builder1).expect("builder1 append erred");
         let instance2 = chain.append(&builder2).expect("builder2 append erred");
 
-        // Deserialize first block from the blockchain
-        let block1 = chain
-            .block_at(instance1.position())
-            .expect("couldn't retrieve block1");
-
-        // Deserialize second block from the blockchain
-        let block2 = chain
-            .block_at(instance2.position())
-            .expect("couldn't retrieve block2");
-
-        // compare the hash, merkle_root, prev_hash, etc of block1 and instance1
-        assert!(block1.validate(&instance1).is_ok());
-
-        // compare the hash, merkle_root, prev_hash, etc of block2 and instance2
-        assert!(block2.validate(&instance2).is_ok());
+        // Get the blocks in the blockchain by means of the PositionInstance values
+        let block1 = instance1.block(&chain).expect("couldn't retrieve block1");
+        let block2 = instance2.block(&chain).expect("couldn't retrieve block2");
 
         // retrieve the original records from the blocks
         let records_from_block1 = block1

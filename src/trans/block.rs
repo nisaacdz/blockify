@@ -1,10 +1,12 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    chain::Chain,
     crypto::*,
     data::{Metadata, Nonce, Position, Timestamp},
     io::{DataBaseError, SerdeError},
     merkle::MerkleTree,
+    SqliteBlock, SqliteChain,
 };
 
 use super::{
@@ -34,45 +36,6 @@ pub trait Block {
 
     /// Returns the merkle root of this block.
     fn merkle_root(&self) -> Result<Hash, BlockError>;
-
-    /// Validates this block against the provided chained instance.
-    ///
-    /// Returns an error if the block is not valid.
-    fn validate(&self, chained: &ChainedInstance) -> Result<(), BlockError> {
-        let ChainedInstance {
-            nonce,
-            position,
-            timestamp,
-            hash,
-            prev_hash,
-            merkle_root,
-        } = chained;
-
-        if self.nonce()? != *nonce {
-            return Err(BlockError::NotValid(BlockData::Nonce));
-        }
-        if self.position()? != *position {
-            return Err(BlockError::NotValid(BlockData::Position));
-        }
-
-        if self.timestamp()? != *timestamp {
-            return Err(BlockError::NotValid(BlockData::Timestamp));
-        }
-
-        if &self.hash()? != hash {
-            return Err(BlockError::NotValid(BlockData::Hash));
-        }
-
-        if &self.prev_hash()? != prev_hash {
-            return Err(BlockError::NotValid(BlockData::PrevHash));
-        }
-
-        if &self.merkle_root()? != merkle_root {
-            return Err(BlockError::NotValid(BlockData::MerkleRoot));
-        }
-
-        Ok(())
-    }
 
     /// Returns the timestamp of this block.
     fn timestamp(&self) -> Result<Timestamp, BlockError>;
@@ -138,66 +101,37 @@ impl From<ChainError> for BlockError {
     }
 }
 
-pub struct ChainedInstance {
-    pub nonce: Nonce,
-    pub position: Position,
-    pub timestamp: Timestamp,
-    pub hash: Hash,
-    pub prev_hash: Hash,
-    pub merkle_root: Hash,
+/// A `ChainedInstance` type represents anything that can be used by a `Chain` type to locate a particular `Block`.
+///
+/// It represents any set of variables that can be used to uniquely specify a `Block` on a blockchain.
+///
+/// The implementation may not depend on the `get` method in the `Chain` trait implementation of it's generic argument
+pub trait ChainedInstance<C: Chain> {
+    fn block(self, chain: &C) -> Result<C::BlockType, ChainError>;
 }
 
-impl ChainedInstance {
-    pub fn new(
-        nonce: Nonce,
-        position: Position,
-        timestamp: Timestamp,
-        hash: Hash,
-        prev_hash: Hash,
-        merkle_root: Hash,
-    ) -> Self {
-        Self {
-            nonce,
-            position,
-            timestamp,
-            hash,
-            prev_hash,
-            merkle_root,
-        }
-    }
-
-    pub fn hash(&self) -> &Hash {
-        &self.hash
-    }
-
-    pub fn prev_hash(&self) -> &Hash {
-        &self.prev_hash
-    }
-
-    pub fn merkle_root(&self) -> &Hash {
-        &self.merkle_root
-    }
-
-    pub fn timestamp(&self) -> Timestamp {
-        self.timestamp
-    }
-
-    pub fn nonce(&self) -> Nonce {
-        self.nonce
-    }
-
-    pub fn position(&self) -> Position {
-        self.position
-    }
-
-    pub fn records<R: Record, B: Block<RecordType = R>>(
-        &self,
-        block: &mut B,
-    ) -> Result<Box<[SignedRecord<R>]>, BlockError> {
-        let res = block.records()?;
-        Ok(res)
+#[cfg(feature = "sqlite")]
+impl<R: Record + Serialize + for<'d> Deserialize<'d> + 'static> ChainedInstance<SqliteChain<R>>
+    for PositionInstance
+{
+    fn block(self, chain: &SqliteChain<R>) -> Result<SqliteBlock<R>, ChainError> {
+        let block = chain.block_at(self.pos)?;
+        Ok(block)
     }
 }
+
+/// A type that may be used as a `ChainedInstance` in any `Chain` that only needs the position of a block to locate a block
+///
+pub struct PositionInstance {
+    pos: Position,
+}
+
+impl PositionInstance {
+    pub fn new(pos: Position) -> Self {
+        Self { pos }
+    }
+}
+
 /// Represents an unchained instance of a block. While a block is being assembled,
 /// it is called an UnchainedInstance. It contains a collection of signed records,
 /// a Merkle tree, and the root hash of the Merkle tree.

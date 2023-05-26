@@ -7,7 +7,7 @@ use std::marker::PhantomData;
 use crate::data::{Nonce, Position, Timestamp};
 use crate::io::SerdeError;
 use crate::{block::Block, record::Record};
-use crate::{Hash, SqliteChainError, WrapperMut};
+use crate::{Hash, SqliteChainError, TempInstance, WrapperMut};
 
 table! {
     records {
@@ -105,22 +105,30 @@ impl<X: Record + Serialize> SqliteBlock<X> {
     pub fn build(
         url: &str,
         records: &[SignedRecord<X>],
-        cc: &ChainedInstance,
+        cc: &TempInstance,
     ) -> Result<Self, SqliteBlockError> {
+        let TempInstance {
+            nonce,
+            position,
+            hash,
+            prev_hash,
+            merkle_root,
+            timestamp,
+        } = cc;
         let val = Self::new(url)?;
         Self::create_tables(val.con.get_mut())?;
 
-        let timestamp = serde_json::to_string(&cc.timestamp()).unwrap();
+        let timestamp = serde_json::to_string(timestamp).unwrap();
 
-        let hash = serde_json::to_string(&cc.hash()).unwrap();
+        let hash = serde_json::to_string(hash).unwrap();
 
-        let prev_hash = serde_json::to_string(&cc.prev_hash()).unwrap();
+        let prev_hash = serde_json::to_string(prev_hash).unwrap();
 
-        let merkle_root = { serde_json::to_string(cc.merkle_root()).unwrap() };
+        let merkle_root = { serde_json::to_string(merkle_root).unwrap() };
 
-        let nonce = { serde_json::to_string(&cc.nonce()).unwrap() };
+        let nonce = { serde_json::to_string(nonce).unwrap() };
 
-        let position = serde_json::to_string(&cc.position()).unwrap();
+        let position = serde_json::to_string(position).unwrap();
 
         let smt = diesel::insert_into(metadata::table).values((
             metadata::timestamp.eq(timestamp),
@@ -143,7 +151,7 @@ impl<X: Record + Serialize> SqliteBlock<X> {
     }
 }
 
-use crate::block::{BlockError, ChainedInstance};
+use crate::block::BlockError;
 use crate::record::SignedRecord;
 use records::dsl::records as rq;
 

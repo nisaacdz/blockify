@@ -1,10 +1,8 @@
 use image::DynamicImage;
 use serde::{Deserialize, Serialize};
 
-#[cfg(feature = "unit")]
 mod unit;
 
-#[cfg(feature = "unit")]
 pub use unit::*;
 
 #[deprecated(note = "Not yet ready")]

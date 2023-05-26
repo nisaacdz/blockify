@@ -3,12 +3,12 @@ use serde::{Deserialize, Serialize};
 use std::{fmt::Debug, marker::PhantomData};
 
 use crate::{
-    block::{Block, ChainedInstance, UnchainedInstance},
+    block::{Block, PositionInstance, UnchainedInstance},
     chain::{Chain, ChainError},
     data::{Position, ToTimestamp},
     io::{DataBaseError, SerdeError},
     record::Record,
-    Hash, SqliteBlock, WrapperMut,
+    Hash, SqliteBlock, TempInstance, WrapperMut,
 };
 
 table! {
@@ -87,10 +87,12 @@ impl<X: Record + Serialize + for<'a> Deserialize<'a> + 'static> Chain for Sqlite
 
     type BlockType = SqliteBlock<X>;
 
+    type ChainInstanceType = PositionInstance;
+
     fn append(
         &mut self,
         block: &UnchainedInstance<Self::RecordType>,
-    ) -> Result<ChainedInstance, ChainError> {
+    ) -> Result<PositionInstance, ChainError> {
         let size = Self::size(self.con.get_mut());
 
         let nonce = block.nonce();
@@ -111,8 +113,7 @@ impl<X: Record + Serialize + for<'a> Deserialize<'a> + 'static> Chain for Sqlite
 
         let hash = crate::hash_block(&block, &prev_hash, &timestamp, &position);
 
-        let chained =
-            ChainedInstance::new(nonce, position, timestamp, hash, prev_hash, merkle_root);
+        let chained = TempInstance::new(nonce, position, timestamp, hash, prev_hash, merkle_root);
 
         let gen_url = Self::gen_url(&self.url, size as _);
 
@@ -121,7 +122,7 @@ impl<X: Record + Serialize + for<'a> Deserialize<'a> + 'static> Chain for Sqlite
 
         SqliteBlock::build(&gen_url, &*block.records(), &chained).unwrap();
 
-        Ok(chained)
+        Ok(PositionInstance::new(position))
     }
 
     fn block_at(&self, pos: Position) -> Result<Self::BlockType, ChainError> {
@@ -147,7 +148,7 @@ mod tests {
     use std::path::Path;
 
     use crate::{
-        block::{Block, UnchainedInstance},
+        block::{Block, UnchainedInstance, ChainedInstance},
         chain::Chain,
         data::Metadata,
         record::{Record, SignedRecord},
@@ -221,18 +222,8 @@ mod tests {
         let instance1 = chain.append(&builder1).expect("builder1 append erred");
         let instance2 = chain.append(&builder2).expect("builder2 append erred");
 
-        assert_eq!(instance1.position(), crate::data::Position::new(1));
-        assert_eq!(instance2.position(), crate::data::Position::new(2));
-
-        let block1 = chain
-            .block_at(instance1.position())
-            .expect("couldn't retrieve block1");
-        let block2 = chain
-            .block_at(instance2.position())
-            .expect("couldn't retrieve block2");
-
-        assert!(block1.validate(&instance1).is_ok());
-        assert!(block2.validate(&instance2).is_ok());
+        let block1 = instance1.block(&chain).expect("couldn't retrieve block1");
+        let block2 = instance2.block(&chain).expect("couldn't retrieve block2");
 
         let records_from_block1 = block1
             .records()

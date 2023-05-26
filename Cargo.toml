@@ -30,6 +30,5 @@ blockify = { path = ".", features = ["full"] }
 default = ["crypto", "record"]
 crypto = []
 record = ["record_derive"]
-unit = []
 sqlite = ["diesel", "libsqlite3-sys"]
-full = ["crypto", "record", "unit", "sqlite"]
+full = ["crypto", "record", "sqlite"]

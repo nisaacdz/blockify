@@ -4,16 +4,6 @@ pub trait UnitManager {
     fn all_units(&self);
     fn all_units_raw(&self);
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Hash, Default)]
-pub struct Category {
-    cat: i32,
-}
-
-impl Category {
-    pub fn new(cat: i32) -> Self {
-        Self { cat }
-    }
-}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Hash, Default)]
 pub struct Quantity {
@@ -28,17 +18,17 @@ impl From<i32> for Quantity {
 
 impl Quantity {
     pub fn none() -> Self {
-        Self { val: 0 }
+        Self::new(0)
     }
     pub fn new(val: i32) -> Self {
         Self { val }
     }
-
+    /// increases the internal count by 1 and returns the new count
     pub fn increment(&mut self) -> i32 {
         self.val += 1;
         self.val
     }
-
+    /// increases the internal count by `val` and returns the new count
     pub fn increment_by(&mut self, val: i32) -> i32 {
         self.val += val;
         self.val
@@ -47,19 +37,17 @@ impl Quantity {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Hash, Default)]
 pub struct Micron {
-    id: Category,
+    id: i32,
 }
 
 impl From<i32> for Micron {
-    fn from(value: i32) -> Self {
-        Self {
-            id: Category::new(value),
-        }
+    fn from(id: i32) -> Self {
+        Self::new(id)
     }
 }
 
 impl Micron {
-    pub fn new(id: Category) -> Self {
+    pub fn new(id: i32) -> Self {
         Self { id }
     }
 }
