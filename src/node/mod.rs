@@ -1,11 +1,12 @@
-mod nodestuff;
-
 use crate::{
     block::{Block, UnchainedInstance},
     chain::{Chain, ChainError},
     record::{Record, SignedRecord},
     PublicKey,
 };
+
+mod consensus;
+pub use consensus::*;
 
 pub enum NodeError {
     ChainError(ChainError),
@@ -42,7 +43,7 @@ pub trait Node: Sized {
     fn push(
         &mut self,
         block: &UnchainedInstance<<Self::ChainType as Chain>::RecordType>,
-        proof: impl MinerProof,
+        proof: ConsensusProof,
     ) -> Result<<Self::ChainType as Chain>::ChainInstanceType, NodeError> {
         if proof.verify() {
             self.chain()?
@@ -59,10 +60,6 @@ pub trait Node: Sized {
 
 pub trait NodeId<N: Node> {
     fn load(self) -> Result<N, NodeError>;
-}
-
-pub trait MinerProof {
-    fn verify(&self) -> bool;
 }
 
 pub enum Feedback {}
