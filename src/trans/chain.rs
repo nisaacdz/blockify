@@ -35,7 +35,7 @@ pub trait Chain: Sized {
     /// The type of record that is stored in the blocks in this chain.
     type RecordType: Record;
 
-    type ChainInstanceType: ChainedInstance<Self>;
+    type ChainedInstanceType: ChainedInstance<Self>;
 
     /// The type of block that is stored in this chain.
     type BlockType: Block<RecordType = Self::RecordType>;
@@ -53,7 +53,7 @@ pub trait Chain: Sized {
     fn append(
         &mut self,
         block: &UnchainedInstance<Self::RecordType>,
-    ) -> Result<Self::ChainInstanceType, ChainError>;
+    ) -> Result<Self::ChainedInstanceType, ChainError>;
 
     /// Gets a block from the chain by its position.
     ///
@@ -63,7 +63,7 @@ pub trait Chain: Sized {
     /// Gets a block from the chain by its chained instance.
     ///
     /// Returns an error if the block is not found.
-    fn get(&self, b: Self::ChainInstanceType) -> Result<Self::BlockType, ChainError> {
+    fn get(&self, b: Self::ChainedInstanceType) -> Result<Self::BlockType, ChainError> {
         let res = b.block(self)?;
         Ok(res)
     }

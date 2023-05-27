@@ -6,8 +6,10 @@ use crate::{
     data::{Metadata, Nonce, Position, Timestamp},
     io::{DataBaseError, SerdeError},
     merkle::MerkleTree,
-    SqliteBlock, SqliteChain,
 };
+
+#[cfg(feature = "sqlite")]
+use crate::{SqliteBlock, SqliteChain};
 
 use super::{
     chain::ChainError,

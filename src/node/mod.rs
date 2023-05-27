@@ -13,11 +13,10 @@ pub enum NodeError {
     VerificationFailed,
 }
 
-pub trait MemPool {
-    type RecordType: Record;
-    fn records(&self) -> Result<Vec<SignedRecord<Self::RecordType>>, MemPoolError>;
-    fn poll(&mut self) -> Result<Option<SignedRecord<Self::RecordType>>, MemPoolError>;
-    fn append(&mut self, record: SignedRecord<Self::RecordType>) -> Result<(), MemPoolError>;
+pub trait MemPool<R: Record> {
+    fn records(&self) -> Result<Vec<SignedRecord<R>>, MemPoolError>;
+    fn poll(&mut self) -> Result<Option<SignedRecord<R>>, MemPoolError>;
+    fn append(&mut self, record: SignedRecord<R>) -> Result<(), MemPoolError>;
 }
 
 pub enum MemPoolError {}
@@ -26,25 +25,15 @@ pub trait Node: Sized {
     type RecordType: Record;
     type BlockType: Block<RecordType = Self::RecordType>;
     type ChainType: Chain<RecordType = Self::RecordType, BlockType = Self::BlockType>;
-    type MemPoolType: MemPool<RecordType = Self::RecordType>;
+    type MemPoolType: MemPool<Self::RecordType>;
     type PeerType: Peer;
     type NodeIdType: NodeId<Self>;
 
-    fn publish(
-        &mut self,
-        record: SignedRecord<<Self::ChainType as Chain>::RecordType>,
-    ) -> Result<Feedback, NodeError>;
+    fn publish(&mut self, record: SignedRecord<Self::RecordType>) -> Result<Feedback, NodeError>;
     fn chain(&self) -> Result<Self::ChainType, NodeError>;
-    fn broadcast(
-        &self,
-        block: <Self::ChainType as Chain>::BlockType,
-    ) -> Result<Feedback, NodeError>;
+    fn broadcast(&self, block: Self::BlockType) -> Result<Feedback, NodeError>;
     fn mem_pool(&self) -> Result<Option<Self::MemPoolType>, NodeError>;
-    fn push(
-        &mut self,
-        block: &UnchainedInstance<<Self::ChainType as Chain>::RecordType>,
-        proof: ConsensusProof,
-    ) -> Result<<Self::ChainType as Chain>::ChainInstanceType, NodeError> {
+    fn push(&mut self, block: &UnchainedInstance<Self::RecordType>, proof: ConsensusProof) -> Result<<Self::ChainType as Chain>::ChainedInstanceType, NodeError> {
         if proof.verify() {
             self.chain()?
                 .append(block)

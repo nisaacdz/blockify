@@ -87,7 +87,7 @@ impl<X: Record + Serialize + for<'a> Deserialize<'a> + 'static> Chain for Sqlite
 
     type BlockType = SqliteBlock<X>;
 
-    type ChainInstanceType = PositionInstance;
+    type ChainedInstanceType = PositionInstance;
 
     fn append(
         &mut self,
@@ -148,7 +148,7 @@ mod tests {
     use std::path::Path;
 
     use crate::{
-        block::{Block, UnchainedInstance, ChainedInstance},
+        block::{Block, ChainedInstance, UnchainedInstance},
         chain::Chain,
         data::Metadata,
         record::{Record, SignedRecord},
