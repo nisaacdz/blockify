@@ -38,7 +38,7 @@ pub use record_derive::Record;
 /// assert!(my_record.verify(&signature, &keypair.into_public_key()).is_ok())
 /// ```
 pub trait Record: Sized {
-    /// Attempts to convert `self` into a `SignedRecord` instance by singing it with the provided `AuthKeyPair`.
+    /// Attempts to convert the given record into a `SignedRecord` instance by singing it with an `AuthKeyPair`.
     ///
     /// This function accepts a `MetaData` type which may be empty (i.e `MetaData::empty()`).
     ///
@@ -111,6 +111,20 @@ pub trait Record: Sized {
         crate::hash(self)
     }
 }
+
+macro_rules! impl_record_for {
+    ($type:ty) => {
+        impl Record for $type {
+            // All default implementations
+        }
+    };
+}
+
+impl_record_for!(String);
+impl_record_for!(bool);
+impl_record_for!(usize);
+impl_record_for!(isize);
+impl_record_for!(Box<[u8]>);
 
 /// A `SignedRecord` is a type of data that can be added to a `block` to be put on a `blockchain`
 ///

@@ -60,9 +60,16 @@ dependencies = [
  "ring",
  "serde",
  "serde_json",
+ "sha",
  "sha2 0.10.6",
  "untrusted 0.9.0",
 ]
+
+[[package]]
+name = "bswap"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e3acc5ce9c60e68df21b877f13f908ef95c89f01cb6c656cf76ba95f10bc72f5"
 
 [[package]]
 name = "bumpalo"
@@ -468,6 +475,15 @@ dependencies = [
  "itoa",
  "ryu",
  "serde",
+]
+
+[[package]]
+name = "sha"
+version = "1.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4208d5a903276a9f3b797afdf6c5bc12a8da1344b053b100abf3565ecc80cb7e"
+dependencies = [
+ "bswap",
 ]
 
 [[package]]

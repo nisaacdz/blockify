@@ -19,6 +19,7 @@ record_derive = { version = "0.2.2", optional = true }
 ring = "0.16.20"
 serde = { version = "1.0.160", features = ["derive"] }
 serde_json = "1.0.96"
+sha = "1.0.3"
 sha2 = "0.10.6"
 untrusted = "0.9.0"
 
@@ -30,4 +31,5 @@ default = ["crypto", "record"]
 crypto = []
 record = ["record_derive"]
 sqlite = ["diesel", "libsqlite3-sys"]
-full = ["crypto", "record", "sqlite"]
+node = []
+full = ["crypto", "record", "sqlite", "node"]

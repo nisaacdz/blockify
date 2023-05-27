@@ -21,6 +21,8 @@
 
 pub mod data;
 pub mod io;
+
+#[cfg(feature = "node")]
 pub mod node;
 
 #[cfg(feature = "crypto")]
