@@ -11,6 +11,7 @@ pub use consensus::*;
 pub enum NodeError {
     ChainError(ChainError),
     VerificationFailed,
+    ConnectionFailed,
 }
 
 pub trait MemPool<R: Record> {
