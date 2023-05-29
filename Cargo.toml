@@ -13,6 +13,7 @@ chrono = "0.4.24"
 diesel = { version = "2.0.4", optional = true, features = ["sqlite"] }
 ed25519-dalek = "1.0.1"
 hex = "0.4.3"
+ink = { version = "4.2.0", optional = true }
 libsqlite3-sys = { version = "0.26.0", features = ["bundled"], optional = true }
 rand = "0.7.3"
 record_derive = { version = "0.2.2", optional = true }
@@ -31,5 +32,6 @@ default = ["crypto", "record"]
 crypto = []
 record = ["record_derive"]
 sqlite = ["diesel", "libsqlite3-sys"]
+contracts = ["ink"]
 node = []
 full = ["crypto", "record", "sqlite", "node"]
