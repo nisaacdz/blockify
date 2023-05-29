@@ -1,4 +1,9 @@
-use crate::{block::Block, chain::Chain, record::Record, io::{SerdeError, DataBaseError}};
+use crate::{
+    block::Block,
+    chain::Chain,
+    io::{DataBaseError, SerdeError},
+    record::Record,
+};
 
 pub mod puzzles;
 
@@ -8,9 +13,9 @@ pub trait ConsensusProtocol {
     type ChainType: Chain<RecordType = Self::RecordType, BlockType = Self::BlockType>;
     type ConsensusRulesType: ConsensusRules<Self::ChainType>;
     type BranchesType: ChainBranches<Self::ChainType, Self::ConsensusRulesType>;
-    fn validate<B: Chain>(&self, block: B) -> bool;
+    fn validate<B: Block<RecordType = Self::RecordType>>(&self, block: B) -> bool;
     fn active_chain(&self) -> Result<Self::ChainType, ConsensusError>;
-    fn branches(&self) -> Result<Self::BranchesType, ConsensusError>;
+    fn branches(&mut self) -> Result<Self::BranchesType, ConsensusError>;
 }
 
 pub trait ConsensusRules<C: Chain> {
@@ -28,4 +33,10 @@ pub enum ConsensusError {
     SerdeError(SerdeError),
     DataBaseError(DataBaseError),
     Unspecified,
+}
+
+impl ConsensusError {
+    pub fn custom(error: Box<dyn std::error::Error>) -> Self {
+        ConsensusError::Custom(error)
+    }
 }
