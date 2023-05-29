@@ -122,8 +122,7 @@ macro_rules! impl_record_for {
 
 impl_record_for!(String);
 impl_record_for!(bool);
-impl_record_for!(usize);
-impl_record_for!(isize);
+impl_record_for!(i64);
 impl_record_for!(Box<[u8]>);
 
 /// A `SignedRecord` is a type of data that can be added to a `block` to be put on a `blockchain`
@@ -190,6 +189,7 @@ impl_record_for!(Box<[u8]>);
 pub struct SignedRecord<R> {
     signer: PublicKey,
     signature: DigitalSignature,
+    
     hash: Hash,
     record: R,
     metadata: Metadata,
