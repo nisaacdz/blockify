@@ -7,7 +7,7 @@ pub use unit::*;
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
 pub enum Detail {
     Text(String),
-    Integer(isize),
+    Integer(i64),
     Bytes(Box<[u8]>),
     Timestamp(Timestamp),
     Boolean(bool),
@@ -28,10 +28,6 @@ impl Metadata {
     #[inline(always)]
     pub fn empty() -> Self {
         Self::new()
-    }
-
-    pub fn get<T>(&self, _title: &str) -> &T {
-        todo!()
     }
 
     pub fn details(&self) -> &[Detail] {
