@@ -43,3 +43,8 @@ pub use trans::*;
 mod essentials;
 
 pub(crate) use essentials::*;
+
+#[cfg(feature = "full")]
+mod blockchain;
+
+pub use blockchain::*;

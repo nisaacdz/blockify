@@ -76,9 +76,12 @@ impl<X> SqliteChain<X> {
         Ok(())
     }
 
-    pub fn size(con: &mut SqliteConnection) -> u64 {
-        let c: i64 = blocks::table.count().get_result(con).unwrap();
-        c as _
+    pub fn size(con: &mut SqliteConnection) -> Result<u64, DataBaseError> {
+        let c = match blocks::table.count().get_result::<i64>(con) {
+            Ok(v) => v as u64,
+            Err(_) => return Err(DataBaseError::NoSuchTable),
+        };
+        Ok(c as _)
     }
 }
 
@@ -93,7 +96,7 @@ impl<X: Record + Serialize + for<'a> Deserialize<'a> + 'static> Chain for Sqlite
         &mut self,
         block: &UnchainedInstance<Self::RecordType>,
     ) -> Result<PositionInstance, ChainError> {
-        let size = Self::size(self.con.get_mut());
+        let size = Self::size(self.con.get_mut()).map_err(|e| ChainError::DataBaseError(e))?;
 
         let nonce = block.nonce();
 
@@ -140,6 +143,10 @@ impl<X: Record + Serialize + for<'a> Deserialize<'a> + 'static> Chain for Sqlite
             .map_err(|_| ChainError::DataBaseError(DataBaseError::ConnectionCannotEstablish))?;
 
         Ok(block)
+    }
+
+    fn len(&self) -> Result<u64, ChainError> {
+        Self::size(self.con.get_mut()).map_err(|e| ChainError::DataBaseError(e))
     }
 }
 

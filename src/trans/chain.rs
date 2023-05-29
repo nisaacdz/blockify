@@ -67,4 +67,15 @@ pub trait Chain: Sized {
         let res = b.block(self)?;
         Ok(res)
     }
+
+    fn len(&self) -> Result<u64, ChainError>;
+
+    fn last_block(&self) -> Result<Option<Self::BlockType>, ChainError> {
+        let last = match self.len()? {
+            0 => return Ok(None),
+            v => v.into(),
+        };
+
+        self.block_at(last).map(|value| Some(value))
+    }
 }

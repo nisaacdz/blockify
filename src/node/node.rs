@@ -7,6 +7,7 @@ use crate::{
 
 pub enum NodeError {
     ChainError(ChainError),
+    Unimplemented,
     VerificationFailed,
     ConnectionFailed,
 }
@@ -52,4 +53,12 @@ pub enum Feedback {}
 
 pub trait Peer {
     fn public_key(&self) -> &PublicKey;
+}
+
+pub enum MiningError {
+
+}
+
+pub trait Miner<R: Record> {
+    fn append(&self, record: SignedRecord<R>) -> Result<(), MiningError>;
 }
