@@ -1,5 +1,4 @@
 #![cfg(test)]
-#![cfg(feature = "sqlite")]
 
 use blockify::block::ChainedInstance;
 

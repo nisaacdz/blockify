@@ -1,9 +1,9 @@
 #![cfg(test)]
 
-#[cfg(feature = "full")]
 #[test]
 fn test() {
     use blockify::{data::Metadata, record::Record};
+    
     use serde::{Deserialize, Serialize};
 
     #[derive(Clone, Serialize, Deserialize, Record)]

@@ -7,7 +7,9 @@ use std::marker::PhantomData;
 use crate::data::{Nonce, Position, Timestamp};
 use crate::io::SerdeError;
 use crate::{block::Block, record::Record};
-use crate::{Hash, SqliteChainError, TempInstance, WrapperMut};
+use crate::{Hash, SqliteChainError, TempInstance};
+
+use super::WrapperMut;
 
 table! {
     records {
@@ -27,6 +29,7 @@ table! {
         position -> Text,
     }
 }
+
 
 pub struct SqliteBlock<X> {
     con: WrapperMut<SqliteConnection>,

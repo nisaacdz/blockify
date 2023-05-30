@@ -37,3 +37,19 @@ impl TempInstance {
         }
     }
 }
+
+pub(super) struct WrapperMut<T> {
+    val: std::cell::UnsafeCell<T>,
+}
+
+impl<T> WrapperMut<T> {
+    pub fn new(value: T) -> Self {
+        Self {
+            val: std::cell::UnsafeCell::new(value),
+        }
+    }
+
+    pub fn get_mut(&self) -> &mut T {
+        unsafe { self.val.get().as_mut().unwrap() }
+    }
+}

@@ -1,6 +1,6 @@
 [package]
 name = "record_derive"
-version = "0.2.2"
+version = "0.2.3"
 description = "Derive attribute macro for Record trait of blockify crate"
 license = "MIT"
 edition = "2021"

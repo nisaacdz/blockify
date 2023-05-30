@@ -5,7 +5,7 @@ use crate::{
     VerificationError,
 };
 
-// pub use record_derive::Record;
+pub use record_derive::Record;
 
 /// The `Record` trait provides a structure and functions for securely and transparently storing data on the blockchain.
 ///  
@@ -83,15 +83,12 @@ pub trait Record: Sized {
     ) -> Result<SignedRecord<Self>, SigningError>;
     /// Computes and returns the hash of the record.
     ///
-    /// All implementations of this function `must not` fail.
+    /// Implementations of this function `must not` fail.
     fn hash(&self) -> Hash;
 }
 
 macro_rules! impl_record_for {
     ($type:ty) => {
-        // I need to make DigitalSignatre, SigningError,
-        // MetaData, VerificationError, AuthKeyPair, PublicKey, SignedRecord, Hash,
-        ///
         impl Record for $type {
             fn sign(
                 &self,
