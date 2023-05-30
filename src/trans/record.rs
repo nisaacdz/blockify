@@ -83,15 +83,12 @@ pub trait Record: Sized {
     ) -> Result<SignedRecord<Self>, SigningError>;
     /// Computes and returns the hash of the record.
     ///
-    /// All implementations of this function `must not` fail.
+    /// Implementations of this function `must not` fail.
     fn hash(&self) -> Hash;
 }
 
 macro_rules! impl_record_for {
     ($type:ty) => {
-        // I need to make DigitalSignatre, SigningError,
-        // MetaData, VerificationError, AuthKeyPair, PublicKey, SignedRecord, Hash,
-        ///
         impl Record for $type {
             fn sign(
                 &self,
