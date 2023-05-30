@@ -8,8 +8,10 @@ use crate::{
     data::{Position, ToTimestamp},
     io::{DataBaseError, SerdeError},
     record::Record,
-    Hash, SqliteBlock, TempInstance, WrapperMut,
+    Hash, SqliteBlock, TempInstance,
 };
+
+use super::WrapperMut;
 
 table! {
     blocks {
@@ -154,15 +156,16 @@ impl<X: Record + Serialize + for<'a> Deserialize<'a> + 'static> Chain for Sqlite
 mod tests {
     use std::path::Path;
 
-    use crate::{
+    use crate as blockify;
+
+    use blockify::{
         block::{Block, ChainedInstance, UnchainedInstance},
         chain::Chain,
-        record::Record,
-        SqliteChain,
+        record::{Record, SignedRecord},
+        SqliteChain, data::Metadata,
     };
     use serde::{Deserialize, Serialize};
-    use record_derive::Record;
-
+    
     #[derive(Debug, Record, Clone, Serialize, Deserialize, PartialEq)]
     struct Vote {
         data: String,

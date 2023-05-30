@@ -1,11 +1,6 @@
-#![cfg(test)]
-
-
 use blockify::block::ChainedInstance;
-use record_derive::Record;
 
-#[test]
-fn test_blocks() {
+fn main() {
     use blockify::{
         block::{Block, UnchainedInstance},
         chain::Chain,

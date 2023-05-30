@@ -5,7 +5,7 @@ use crate::{
     VerificationError,
 };
 
-// pub use record_derive::Record;
+pub use record_derive::Record;
 
 /// The `Record` trait provides a structure and functions for securely and transparently storing data on the blockchain.
 ///  

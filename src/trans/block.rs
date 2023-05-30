@@ -8,7 +8,6 @@ use crate::{
     merkle::MerkleTree,
 };
 
-#[cfg(feature = "sqlite")]
 use crate::{SqliteBlock, SqliteChain};
 
 use super::{
@@ -112,7 +111,7 @@ pub trait ChainedInstance<C: Chain> {
     fn block(self, chain: &C) -> Result<C::BlockType, ChainError>;
 }
 
-#[cfg(feature = "sqlite")]
+
 impl<R: Record + Serialize + for<'d> Deserialize<'d> + 'static> ChainedInstance<SqliteChain<R>>
     for PositionInstance
 {
@@ -125,7 +124,7 @@ impl<R: Record + Serialize + for<'d> Deserialize<'d> + 'static> ChainedInstance<
 /// A type that may be used as a `ChainedInstance` in any `Chain` that only needs the position of a block to locate a block
 ///
 pub struct PositionInstance {
-    pos: Position,
+    pub pos: Position,
 }
 
 impl PositionInstance {

@@ -1,13 +1,13 @@
 //! # Blockify
-//! 
+//!
 //! A Rust blockchain library that provides the building blocks for creating a full-
 //! fledged blockchain application or any application that needs certain blockchain features,allowing you to focus on the higher-
-//! level features of your application without worrying about the low-level details 
+//! level features of your application without worrying about the low-level details
 //! of `block validation`, `data serialization`, and `cryptographic operations`.
-//! 
-//! 
+//!
+//!
 //! This library provides various features and functionalities including:
-//! 
+//!
 //! - hashing
 //! - signing
 //! - signature verification
@@ -22,29 +22,16 @@
 pub mod data;
 pub mod io;
 
-#[cfg(feature = "node")]
 pub mod node;
 
-#[cfg(feature = "crypto")]
-mod crypto;
+pub mod crypto;
 
-#[cfg(feature = "crypto")]
 pub use crypto::*;
 
-#[cfg(feature = "record")]
-mod trans;
+pub mod trans;
 
-#[cfg(feature = "record")]
 pub use trans::*;
 
-// pub mod verification;
-
-
-mod essentials;
-
-pub(crate) use essentials::*;
-
-#[cfg(feature = "full")]
-mod blockchain;
+pub mod blockchain;
 
 pub use blockchain::*;
