@@ -44,7 +44,7 @@ pub enum VerificationError {
     NoMatch,
     BadKey,
     Unspecified,
-    SerializationError,
+    SerdeError,
 }
 
 impl Error for VerificationError {}
@@ -319,4 +319,8 @@ pub fn verify_signature(
     signer: &PublicKey,
 ) -> Result<(), VerificationError> {
     signer.verify(msg, signature)
+}
+
+pub fn serialize<T: Serialize>(value: &T) -> Result<Vec<u8>, SigningError> {
+    bincode::serialize(value).map_err(|_| SigningError::SerializationError)
 }

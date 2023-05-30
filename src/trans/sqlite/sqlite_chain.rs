@@ -157,11 +157,11 @@ mod tests {
     use crate::{
         block::{Block, ChainedInstance, UnchainedInstance},
         chain::Chain,
-        data::Metadata,
-        record::{Record, SignedRecord},
+        record::Record,
         SqliteChain,
     };
     use serde::{Deserialize, Serialize};
+    use record_derive::Record;
 
     #[derive(Debug, Record, Clone, Serialize, Deserialize, PartialEq)]
     struct Vote {
