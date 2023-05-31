@@ -99,7 +99,7 @@ use crate::{
     data::{Position, Timestamp},
     record::Record,
 };
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 /// Hashes a block of records along with other parameters to compute the block's hash using the SHA-256 algorithm.
 ///
@@ -356,7 +356,8 @@ impl From<Vec<u8>> for PrivateKey {
     }
 }
 /// A `PublicKey` is a cryptographic key that can be used to verify digital signatures that are signed with the equivalent `AuthKeyPair` or `PrivateKey`.
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PublicKey {
     buffer: Box<[u8]>,
     algorithm: KeyPairAlgorithm,
@@ -473,7 +474,8 @@ impl AuthKeyPair {
 ///
 /// This can lead to `very little runtime overhead` in some cases but it provides a robust structure for handling any kind of Hashes.
 ///
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Hash {
     buffer: Box<[u8]>,
 }
@@ -555,7 +557,7 @@ impl From<[u8; 32]> for Hash {
 ///
 /// * `buffer`: The raw bytes of the signature.
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct DigitalSignature {
     pub(crate) buffer: Box<[u8]>,
 }

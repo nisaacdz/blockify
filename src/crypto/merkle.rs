@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use super::Hash;
 
-#[derive(Debug, Clone, Serialize, Deserialize, Hash)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MerkleNode {
     hash: Hash,
     left: Option<Box<MerkleNode>>,

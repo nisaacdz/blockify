@@ -137,7 +137,11 @@ impl_record_for!(bool);
 impl_record_for!(i64);
 impl_record_for!(Box<[u8]>);
 
-/// A `SignedRecord` is a type of data that can be added to a `block` to be put on a `blockchain`
+/// A `SignedRecord` is a type of data that can be added to a `block`.
+/// 
+/// `SignedRecord` is producible from any type that implements `Record` and internally consists of the 
+/// `digital signature` on the record, the `public key` of the cryptographic key-pair used for signing the record, the `Hash` of the record, the `key pair algorithm`, and some associated `metadata`.
+///  
 ///
 /// It can be used to ensure that data in the block is authentic and has not been tampered with.
 ///
@@ -197,7 +201,7 @@ impl_record_for!(Box<[u8]>);
 ///    assert!(signed_record.verify().is_ok());
 ///}
 /// ```
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct SignedRecord<R> {
     signer: PublicKey,
     signature: DigitalSignature,
@@ -207,7 +211,7 @@ pub struct SignedRecord<R> {
     metadata: Metadata,
 }
 
-impl<R: Record> SignedRecord<R> {
+impl<R> SignedRecord<R> {
     /// Creates and returns a new `SignedRecord` instance with the given values.
     pub fn new(
         record: R,

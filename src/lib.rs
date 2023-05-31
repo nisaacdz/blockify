@@ -6,12 +6,12 @@
 //! of `block validation`, `data serialization`, and `cryptographic operations`.
 //!
 //!
-//! This library provides various features and functionalities including:
+//! This library provides concise API for:
 //!
 //! - hashing
 //! - signing
 //! - signature verification
-//! - creating a `SignedRecord` - A wrapper around any type that can be stored on a blockchain. It contains information like `hash`, `digital signature`, `public_key` of the signer of the transaction etc.
+//! - creating a `SignedRecord`
 //! - building a block
 //! - appending a block to a blockchain
 //! - Managing `Units` or `Currency`

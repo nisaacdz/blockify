@@ -136,7 +136,7 @@ impl PositionInstance {
 /// Represents an unchained instance of a block. While a block is being assembled,
 /// it is called an UnchainedInstance. It contains a collection of signed records,
 /// a Merkle tree, and the root hash of the Merkle tree.
-#[derive(Serialize, Debug, Deserialize, Clone, Hash)]
+#[derive(Serialize, Debug, Deserialize, Clone)]
 pub struct UnchainedInstance<R> {
     records: Vec<SignedRecord<R>>,
     merkle: merkle::MerkleTree,
