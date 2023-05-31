@@ -9,7 +9,7 @@ pub use record_derive::Record;
 
 /// The `Record` trait provides a structure and functions for securely and transparently storing data on the blockchain.
 ///  
-/// Any type that needs security provided by cryptographic operations can implement this trait.
+/// Any type that needs security provided by cryptographic operations or blockchain technology can implement this trait.
 ///
 /// `Record` contains methods for `signing`, `hashing`, `signature verification` and `recording` of records.
 ///
@@ -87,6 +87,7 @@ pub trait Record: Sized {
     fn hash(&self) -> Hash;
 }
 
+// This macro is not exported in favor of the derive macro Record which is also in this module.
 macro_rules! impl_record_for {
     ($type:ty) => {
         impl Record for $type {
@@ -139,8 +140,13 @@ impl_record_for!(Box<[u8]>);
 
 /// A `SignedRecord` is a type of data that can be added to a `block`.
 /// 
-/// `SignedRecord` is producible from any type that implements `Record` and internally consists of the 
-/// `digital signature` on the record, the `public key` of the cryptographic key-pair used for signing the record, the `Hash` of the record, the `key pair algorithm`, and some associated `metadata`.
+/// 
+/// `SignedRecord` is producible from any type that implements `Record` and internally consists of:
+/// - the `digital signature` on the record
+/// - the `public key` of the signer of the record
+/// - the `algorithm` of the keypair used by the signer
+/// - the `hash` of the record
+/// - any associated `metadata`
 ///  
 ///
 /// It can be used to ensure that data in the block is authentic and has not been tampered with.
