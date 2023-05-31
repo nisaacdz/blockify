@@ -15,14 +15,22 @@ pub enum Detail {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub struct Metadata {
-    details: Box<[Detail]>,
+    details: Vec<Detail>,
 }
 
 impl Metadata {
     pub fn new() -> Self {
         Self {
-            details: Vec::with_capacity(0).into_boxed_slice(),
+            details: Vec::with_capacity(0),
         }
+    }
+
+    pub fn push(&mut self, value: Detail) {
+        self.details.push(value)
+    }
+
+    pub fn pop(&mut self) -> Option<Detail> {
+        self.details.pop()
     }
 
     #[inline(always)]
