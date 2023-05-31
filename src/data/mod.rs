@@ -1,10 +1,14 @@
+//! This module contains different data types that of some importance to this crate.
+//! 
+
+use chrono::DateTime;
 use serde::{Deserialize, Serialize};
 
 mod unit;
 
 pub use unit::*;
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum Detail {
     Text(String),
@@ -14,7 +18,7 @@ pub enum Detail {
     Boolean(bool),
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Metadata {
     details: Vec<Detail>,
 }
@@ -44,7 +48,7 @@ impl Metadata {
     }
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Timestamp {
     secs: u64,
 }
@@ -104,22 +108,26 @@ pub enum Month {
 }
 
 impl Timestamp {
-    pub fn year(&self) -> u16 {
+    pub fn date_time<Z: chrono::TimeZone>(self) -> DateTime<Z> {
+        
         todo!()
     }
-    pub fn month(&self) -> Month {
+    pub fn year(self) -> u16 {
         todo!()
     }
-    pub fn day(&self) -> u8 {
+    pub fn month(self) -> Month {
         todo!()
     }
-    pub fn hour(&self) -> u8 {
+    pub fn day(self) -> u8 {
         todo!()
     }
-    pub fn minute(&self) -> u8 {
+    pub fn hour(self) -> u8 {
         todo!()
     }
-    pub fn second(&self) -> u8 {
+    pub fn minute(self) -> u8 {
+        todo!()
+    }
+    pub fn second(self) -> u8 {
         todo!()
     }
 
@@ -128,7 +136,7 @@ impl Timestamp {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct BufID {
     value: [u8; 16],
 }
@@ -147,7 +155,7 @@ impl BufID {
     }
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Nonce {
     pub nonce: u64,
 }
@@ -164,7 +172,7 @@ impl From<u64> for Nonce {
     }
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Position {
     pub pos: u64,
 }

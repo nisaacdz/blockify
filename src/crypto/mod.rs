@@ -275,7 +275,7 @@ pub fn verify_signature_ed25519(
 ) -> Result<(), VerificationError> {
     let dalek = ed25519_dalek::Signature::from_bytes(signature.buffer())
         .map_err(|_| VerificationError::InvalidSignature)?;
-    match ed25519_dalek::PublicKey::from_bytes(signer.buffer()) {
+    match ed25519_dalek::PublicKey::from_bytes(signer.as_bytes()) {
         Ok(key) => match ed25519_dalek::Verifier::verify(&key, msg, &dalek) {
             Ok(_) => Ok(()),
             Err(_) => Err(VerificationError::NoMatch),
@@ -289,7 +289,7 @@ pub fn verify_signature_ed25519(
 /// # Arguments
 ///
 /// * `msg` - The message to be signed.
-/// * `key` - The authentication key pair used for signing.
+/// * `key` - The cryptographic key pair to be used
 ///
 /// # Returns
 ///
@@ -318,58 +318,58 @@ pub fn verify_signature(
     signer.verify(msg, signature)
 }
 
+/// Serialize the given value into bytes.
+/// 
+/// Internally uses `bincode::serialize`
+/// 
+/// # Trait Bound
+/// - `serde::Serialize`
 pub fn serialize<T: Serialize>(value: &T) -> Result<Vec<u8>, SigningError> {
     bincode::serialize(value).map_err(|_| SigningError::SerializationError)
 }
 
-/// A `PrivateKey` is a cryptographic key that can be used to sign data.
-///
-/// # Fields
-///
-/// * `buffer`: The raw bytes of the private key.
-///
-/// # Methods
-///
-/// * `new()`: Creates a new `PrivateKey` from a slice of bytes.
-/// * `buffer()`: Gets the raw bytes of the private key.
+/// A `PrivateKey` is the secret component of an AuthKeyPair
+/// TODO
+/// Must fill comments here
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct PrivateKey {
-    buffer: Box<[u8]>,
+    bytes: Box<[u8]>,
 }
 
 impl PrivateKey {
     /// Creates a new `PrivateKey` from a boxed slice
-    pub fn new(buffer: Box<[u8]>) -> PrivateKey {
-        Self { buffer }
+    pub fn new(bytes: Box<[u8]>) -> PrivateKey {
+        Self { bytes }
     }
-    /// Returns the raw bytes of the private key.
-    pub fn buffer(&self) -> &[u8] {
-        &self.buffer
+
+    /// Returns a slice of the bytes of this key
+    pub fn as_bytes(&self) -> &[u8] {
+        &self.bytes
     }
 }
 
 impl From<Vec<u8>> for PrivateKey {
-    fn from(buffer: Vec<u8>) -> Self {
+    fn from(bytes: Vec<u8>) -> Self {
         PrivateKey {
-            buffer: buffer.into_boxed_slice(),
+            bytes: bytes.into_boxed_slice(),
         }
     }
 }
-/// A `PublicKey` is a cryptographic key that can be used to verify digital signatures that are signed with the equivalent `AuthKeyPair` or `PrivateKey`.
+/// A `PublicKey` is a cryptographic key that can be used to verify digital signatures that are signed with the equivalent `AuthKeyPair`
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PublicKey {
-    buffer: Box<[u8]>,
+    bytes: Box<[u8]>,
     algorithm: KeyPairAlgorithm,
 }
 
 impl PublicKey {
-    pub fn new(buffer: Box<[u8]>, algorithm: KeyPairAlgorithm) -> PublicKey {
-        Self { buffer, algorithm }
+    pub fn new(bytes: Box<[u8]>, algorithm: KeyPairAlgorithm) -> PublicKey {
+        Self { bytes, algorithm }
     }
 
-    pub fn buffer(&self) -> &[u8] {
-        &self.buffer
+    pub fn as_bytes(&self) -> &[u8] {
+        &self.bytes
     }
 
     pub fn algorithm(&self) -> KeyPairAlgorithm {
@@ -381,17 +381,17 @@ impl PublicKey {
         msg: &[u8],
         signature: &DigitalSignature,
     ) -> Result<(), VerificationError> {
-        self.algorithm.verify(msg, signature, self.buffer())
+        self.algorithm.verify(msg, signature, self.as_bytes())
     }
 
     pub fn to_hex(&self) -> String {
-        hex::encode(&self.buffer)
+        hex::encode(self.as_bytes())
     }
 }
 
 impl AsRef<[u8]> for PublicKey {
     fn as_ref(&self) -> &[u8] {
-        self.buffer()
+        self.as_bytes()
     }
 }
 
@@ -415,7 +415,7 @@ impl From<AuthKeyPair> for PublicKey {
             algorithm,
         } = value;
         Self {
-            buffer: public_key,
+            bytes: public_key,
             algorithm,
         }
     }
@@ -477,36 +477,26 @@ impl AuthKeyPair {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Hash {
-    buffer: Box<[u8]>,
+    bytes: Box<[u8]>,
 }
 
 impl Hash {
-    pub fn new(buffer: Box<[u8]>) -> Hash {
-        Hash { buffer }
+    pub fn new(bytes: Box<[u8]>) -> Hash {
+        Hash { bytes }
     }
-    pub fn buffer(&self) -> &[u8] {
-        &self.buffer
+    pub fn as_bytes(&self) -> &[u8] {
+        &self.bytes
     }
 
     pub fn to_hex(&self) -> String {
-        hex::encode(&self.buffer)
+        hex::encode(self.as_bytes())
     }
 }
 
 impl Default for Hash {
     fn default() -> Self {
-        let buffer = vec![0; 32];
-        Hash::new(buffer.into_boxed_slice())
-    }
-}
-
-impl Into<[u8; 32]> for Hash {
-    fn into(self) -> [u8; 32] {
-        let mut buffer = [0; 32];
-        for i in 0..usize::min(32, self.buffer.len()) {
-            buffer[i] = self.buffer[i];
-        }
-        buffer
+        let bytes = vec![0; 32];
+        Hash::new(bytes.into_boxed_slice())
     }
 }
 
@@ -525,13 +515,13 @@ impl std::fmt::Display for Hash {
 impl std::ops::Deref for Hash {
     type Target = [u8];
     fn deref(&self) -> &Self::Target {
-        self.buffer()
+        self.as_bytes()
     }
 }
 
 impl AsRef<[u8]> for Hash {
     fn as_ref(&self) -> &[u8] {
-        self.buffer()
+        self.as_bytes()
     }
 }
 
@@ -541,21 +531,9 @@ impl From<Vec<u8>> for Hash {
     }
 }
 
-impl From<[u8; 32]> for Hash {
-    fn from(value: [u8; 32]) -> Self {
-        Hash {
-            buffer: value.into(),
-        }
-    }
-}
-
-/// A `DigitalSignature` is a cryptographic signature that can be used to verify the authenticity of a message.
-///
-/// It is composed of a buffer of raw bytes.
-///
-/// # Fields
-///
-/// * `buffer`: The raw bytes of the signature.
+/// A `DigitalSignature` is the output of signing a piece of data with an `AuthKeyPair`.
+/// 
+/// It is used to verify the authenticity of the data signed.
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct DigitalSignature {

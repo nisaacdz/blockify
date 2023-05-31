@@ -211,7 +211,6 @@ impl_record_for!(Box<[u8]>);
 pub struct SignedRecord<R> {
     signer: PublicKey,
     signature: DigitalSignature,
-
     hash: Hash,
     record: R,
     metadata: Metadata,
