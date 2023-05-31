@@ -5,6 +5,7 @@ mod unit;
 pub use unit::*;
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
+#[non_exhaustive]
 pub enum Detail {
     Text(String),
     Integer(i64),
