@@ -1,6 +1,6 @@
 [package]
 name = "record_derive"
-version = "0.2.5"
+version = "0.2.6"
 description = "Derive macro for blockify::Record trait"
 license = "MIT"
 edition = "2021"
