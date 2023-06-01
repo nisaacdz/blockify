@@ -11,7 +11,7 @@ pub mod merkle;
 pub enum SigningError {
     KeyRejected,
     Unspecified,
-    SerializationError,
+    SerdeError(SerdeError),
 }
 
 impl std::fmt::Display for SigningError {
@@ -41,7 +41,7 @@ pub enum VerificationError {
     NoMatch,
     BadKey,
     Unspecified,
-    SerdeError,
+    SerdeError(SerdeError),
 }
 
 impl Error for VerificationError {}
@@ -97,7 +97,7 @@ pub fn hash_bytes(bytes: &[u8]) -> Vec<u8> {
 use crate::{
     block::UnchainedInstance,
     data::{Position, Timestamp},
-    record::Record,
+    record::Record, io::SerdeError,
 };
 use serde::{Deserialize, Serialize};
 
@@ -324,8 +324,8 @@ pub fn verify_signature(
 /// 
 /// # Trait Bound
 /// - `serde::Serialize`
-pub fn serialize<T: Serialize>(value: &T) -> Result<Vec<u8>, SigningError> {
-    bincode::serialize(value).map_err(|_| SigningError::SerializationError)
+pub fn serialize<T: Serialize>(value: &T) -> Result<Vec<u8>, SerdeError> {
+    bincode::serialize(value).map_err(|_| SerdeError::SerializationError)
 }
 
 /// A `PrivateKey` is the secret component of an AuthKeyPair

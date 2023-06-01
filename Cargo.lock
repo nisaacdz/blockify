@@ -402,9 +402,9 @@ dependencies = [
 
 [[package]]
 name = "record_derive"
-version = "0.2.3"
+version = "0.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d78e542bda5440f36bf10c4e8a7f975cc9ffc41d9938f20c03af8cdd1c626b42"
+checksum = "a84938b3c327f5ab2d26862f276b3ad2b671b7b6b075a9c8b9c2463b58a3ac67"
 dependencies = [
  "quote",
  "syn",

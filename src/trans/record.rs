@@ -95,7 +95,7 @@ macro_rules! impl_record_for {
                 &self,
                 key: &crate::AuthKeyPair,
             ) -> Result<crate::DigitalSignature, crate::SigningError> {
-                let msg = crate::serialize(self)?;
+                let msg = crate::serialize(self).map_err(|e| SigningError::SerdeError(e))?;
                 let signature = crate::sign_msg(&msg, key)?;
                 Ok(signature)
             }
@@ -106,7 +106,7 @@ macro_rules! impl_record_for {
                 key: &crate::PublicKey,
             ) -> Result<(), crate::VerificationError> {
                 let msg =
-                    crate::serialize(self).map_err(|_| crate::VerificationError::SerdeError)?;
+                    crate::serialize(self).map_err(|e| crate::VerificationError::SerdeError(e))?;
                 key.verify(&msg, signature)
             }
 
