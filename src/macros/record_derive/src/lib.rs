@@ -46,7 +46,7 @@ fn impl_record(input: &DeriveInput) -> proc_macro::TokenStream {
                 &self,
                 key: &blockify::AuthKeyPair,
             ) -> Result<blockify::DigitalSignature, blockify::SigningError> {
-                let msg = blockify::serialize(self).map_err(|e| SigningError::SerdeError(e))?;
+                let msg = blockify::serialize(self).map_err(|e| blockify::SigningError::SerdeError(e))?;
                 let signature = blockify::sign_msg(&msg, key)?;
                 Ok(signature)
             }
@@ -57,7 +57,7 @@ fn impl_record(input: &DeriveInput) -> proc_macro::TokenStream {
                 key: &blockify::PublicKey,
             ) -> Result<(), blockify::VerificationError> {
                 let msg =
-                    blockify::serialize(self).map_err(|e| crate::VerificationError::SerdeError(e))?;
+                    blockify::serialize(self).map_err(|e| blockify::VerificationError::SerdeError(e))?;
                 key.verify(&msg, signature)
             }
 
