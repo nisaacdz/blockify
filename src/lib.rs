@@ -14,7 +14,7 @@
 //! - `merging of forked chains` based on consensus rules
 
 pub mod data;
-pub mod io;
+pub mod error;
 
 pub mod node;
 
@@ -29,3 +29,16 @@ pub use trans::*;
 pub mod blockchain;
 
 pub use blockchain::*;
+
+#[macro_export]
+macro_rules! impl_display_error {
+    ($type:ty) => {
+        impl std::fmt::Display for $type {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                std::fmt::Debug::fmt(self, f)
+            }
+        }
+
+        impl std::error::Error for $type {}
+    };
+}

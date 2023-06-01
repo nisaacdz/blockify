@@ -97,7 +97,8 @@ pub fn hash_bytes(bytes: &[u8]) -> Vec<u8> {
 use crate::{
     block::UnchainedInstance,
     data::{Position, Timestamp},
-    record::Record, io::SerdeError,
+    error::SerdeError,
+    record::Record,
 };
 use serde::{Deserialize, Serialize};
 
@@ -122,7 +123,7 @@ pub fn hash_block<R: Record + Serialize>(
     let records = bincode::serialize(block.records()).unwrap().into();
     let timestamp = bincode::serialize(timestamp).unwrap().into();
     let position = bincode::serialize(position).unwrap().into();
-    let buffer = sha_from_x([
+    let buffer = sha_all([
         prev_hash,
         &records,
         block.merkle_root(),
@@ -188,7 +189,7 @@ pub fn sha<H: AsRef<[u8]>>(value: &H) -> Hash {
     hasher.finalize().to_vec().into()
 }
 
-/// Computes the combined `SHA-256` hash of an array of values.
+/// Computes the combined `SHA-256` hash of the data in the iterator
 ///
 /// # Arguments
 ///
@@ -202,7 +203,7 @@ pub fn sha<H: AsRef<[u8]>>(value: &H) -> Hash {
 /// # Returns
 ///
 /// The computed hash as a `Hash` type.
-pub fn sha_from_x<H: AsRef<[u8]>, const N: usize>(values: [&H; N]) -> Hash {
+pub fn sha_all<V: AsRef<[u8]>, T: IntoIterator<Item = V>>(values: T) -> Hash {
     let mut hasher = Sha256::new();
     for value in values {
         hasher.update(value);
@@ -319,9 +320,9 @@ pub fn verify_signature(
 }
 
 /// Serialize the given value into bytes.
-/// 
+///
 /// Internally uses `bincode::serialize`
-/// 
+///
 /// # Trait Bound
 /// - `serde::Serialize`
 pub fn serialize<T: Serialize>(value: &T) -> Result<Vec<u8>, SerdeError> {
@@ -532,7 +533,7 @@ impl From<Vec<u8>> for Hash {
 }
 
 /// A `DigitalSignature` is the output of signing a piece of data with an `AuthKeyPair`.
-/// 
+///
 /// It is used to verify the authenticity of the data signed.
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

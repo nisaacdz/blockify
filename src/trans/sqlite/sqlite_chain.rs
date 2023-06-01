@@ -6,7 +6,7 @@ use crate::{
     block::{Block, PositionInstance, UnchainedInstance},
     chain::{Chain, ChainError},
     data::{Position, ToTimestamp},
-    io::{DataBaseError, SerdeError},
+    error::{DataBaseError, SerdeError},
     record::Record,
     Hash, SqliteBlock, TempInstance,
 };

@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use std::marker::PhantomData;
 
 use crate::data::{Nonce, Position, Timestamp};
-use crate::io::SerdeError;
+use crate::error::SerdeError;
 use crate::{block::Block, record::Record};
 use crate::{Hash, SqliteChainError, TempInstance};
 
