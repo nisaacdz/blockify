@@ -4,7 +4,7 @@ use crate::{
     chain::Chain,
     crypto::*,
     data::{Metadata, Nonce, Position, Timestamp},
-    io::{DataBaseError, SerdeError},
+    error::{DataBaseError, SerdeError},
     merkle::MerkleTree,
 };
 

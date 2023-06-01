@@ -1,6 +1,6 @@
 use crate::{
     data::Position,
-    io::{DataBaseError, SerdeError},
+    error::{DataBaseError, SerdeError},
 };
 
 use super::{

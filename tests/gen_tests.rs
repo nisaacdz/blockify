@@ -3,49 +3,9 @@
 use blockify::{record::Record, data::Metadata};
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize)]
-struct Detail<T> {
+#[derive(Serialize, Record)]
+struct Detail<T: Serialize + for<'d> Deserialize<'d>> {
     val: T,
-}
-
-impl<T: Serialize> Record for Detail<T> {
-    fn sign(
-        &self,
-        key: &blockify::AuthKeyPair,
-    ) -> Result<blockify::DigitalSignature, blockify::SigningError> {
-        let msg = blockify::serialize(self)?;
-        let signature = blockify::sign_msg(&msg, key)?;
-        Ok(signature)
-    }
-
-    fn verify(
-        &self,
-        signature: &blockify::DigitalSignature,
-        key: &blockify::PublicKey,
-    ) -> Result<(), blockify::VerificationError> {
-        let msg = blockify::serialize(self).map_err(|_| blockify::VerificationError::SerdeError)?;
-        key.verify(&msg, signature)
-    }
-
-    fn record(
-        self,
-        keypair: blockify::AuthKeyPair,
-        metadata: blockify::data::Metadata,
-    ) -> Result<blockify::record::SignedRecord<Self>, blockify::SigningError> {
-        let signature = self.sign(&keypair)?;
-        let hash = self.hash();
-        Ok(blockify::record::SignedRecord::new(
-            self,
-            signature,
-            keypair.into_public_key(),
-            hash,
-            metadata,
-        ))
-    }
-
-    fn hash(&self) -> blockify::Hash {
-        blockify::hash(self)
-    }
 }
 
 #[test]

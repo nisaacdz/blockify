@@ -1,7 +1,7 @@
 use crate::{
     block::Block,
     chain::Chain,
-    io::{DataBaseError, SerdeError},
+    error::{DataBaseError, SerdeError},
     record::Record,
 };
 

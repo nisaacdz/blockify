@@ -14,7 +14,7 @@ impl<const D: usize> HashPrefixPuzzle<D> {
     }
 
     pub fn test_value(&self, value: &crate::Hash) -> bool {
-        let res = crate::sha_from_x([value, &self.input]);
+        let res = crate::sha_all([value, &self.input]);
         res.starts_with(&self.prefix)
     }
 }
