@@ -197,7 +197,7 @@ mod tests {
 
     #[test]
     fn test_block() {
-        let chain_url = "target2/doc_tests/sqlite/sqlite_chain/test_block/";
+        let chain_url = "target2/tests/sample3/";
         std::fs::create_dir_all(chain_url).expect("could not create chain_url");
         empty_directory(Path::new(chain_url)).expect("couldn't clear the directory");
         let datas1 = vec!["abcd", "efgh", "ijkl"];

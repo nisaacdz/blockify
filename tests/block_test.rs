@@ -26,7 +26,7 @@ fn test_blocks() {
 
     fn start() {
         // folder path for the chain and blocks
-        let chain_url = "target2/tests/block_test/";
+        let chain_url = "target2/tests/sample1/";
         // create the folder if it is absent
         std::fs::create_dir_all(chain_url).expect("could not create chain_url");
         // prepare strings for use in creating `Data` instances
