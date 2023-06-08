@@ -1,7 +1,7 @@
 //! This module contains different data types that of some importance to this crate.
-//! 
+//!
 
-use chrono::DateTime;
+use chrono::{DateTime, Datelike, NaiveDateTime, TimeZone, Timelike};
 use serde::{Deserialize, Serialize};
 
 mod unit;
@@ -107,28 +107,81 @@ pub enum Month {
     December,
 }
 
-impl Timestamp {
-    pub fn date_time<Z: chrono::TimeZone>(self) -> DateTime<Z> {
-        
-        todo!()
+impl Into<u8> for Month {
+    fn into(self) -> u8 {
+        match self {
+            Month::January => 1,
+            Month::February => 2,
+            Month::March => 3,
+            Month::April => 4,
+            Month::May => 5,
+            Month::June => 6,
+            Month::July => 7,
+            Month::August => 8,
+            Month::September => 9,
+            Month::October => 10,
+            Month::November => 11,
+            Month::December => 12,
+        }
     }
+}
+
+impl From<u8> for Month {
+    fn from(value: u8) -> Month {
+        match value {
+            1 => Month::January,
+            2 => Month::February,
+            3 => Month::March,
+            4 => Month::April,
+            5 => Month::May,
+            6 => Month::June,
+            7 => Month::July,
+            8 => Month::August,
+            9 => Month::September,
+            10 => Month::October,
+            11 => Month::November,
+            12 => Month::December,
+            _ => unreachable!(),
+        }
+    }
+}
+
+impl Timestamp {
+    pub fn date_time<Z: TimeZone>(self, tz: &Z) -> DateTime<Z> {
+        let utc = NaiveDateTime::from_timestamp_opt(self.secs as _, 0).unwrap();
+        let res = tz.from_utc_datetime(&utc);
+        res
+    }
+
     pub fn year(self) -> u16 {
-        todo!()
+        let utc = NaiveDateTime::from_timestamp_opt(self.secs as _, 0).unwrap();
+        let dt = utc.and_utc();
+        dt.year() as _
     }
     pub fn month(self) -> Month {
-        todo!()
+        let utc = NaiveDateTime::from_timestamp_opt(self.secs as _, 0).unwrap();
+        let dt = utc.and_utc();
+        (dt.month() as u8).into()
     }
     pub fn day(self) -> u8 {
-        todo!()
+        let utc = NaiveDateTime::from_timestamp_opt(self.secs as _, 0).unwrap();
+        let dt = utc.and_utc();
+        dt.day() as _
     }
     pub fn hour(self) -> u8 {
-        todo!()
+        let utc = NaiveDateTime::from_timestamp_opt(self.secs as _, 0).unwrap();
+        let dt = utc.and_utc();
+        dt.hour() as _
     }
     pub fn minute(self) -> u8 {
-        todo!()
+        let utc = NaiveDateTime::from_timestamp_opt(self.secs as _, 0).unwrap();
+        let dt = utc.and_utc();
+        dt.minute() as _
     }
     pub fn second(self) -> u8 {
-        todo!()
+        let utc = NaiveDateTime::from_timestamp_opt(self.secs as _, 0).unwrap();
+        let dt = utc.and_utc();
+        dt.second() as _
     }
 
     pub fn from_secs(secs: u64) -> Self {
