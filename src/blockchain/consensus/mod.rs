@@ -7,25 +7,24 @@ use crate::{
 
 pub mod puzzles;
 
-pub trait ConsensusProtocol {
-    type RecordType: Record; // transaction type
-    type BlockType: Block<RecordType = Self::RecordType>;
-    type ChainType: Chain<RecordType = Self::RecordType, BlockType = Self::BlockType>;
-    type ConsensusRulesType: ConsensusRules<Self::ChainType>;
-    type BranchesType: ChainBranches<Self::ChainType, Self::ConsensusRulesType>;
-    fn validate<B: Block<RecordType = Self::RecordType>>(&self, block: B) -> bool;
+pub trait ConsensusProtocol<R: Record> {
+    type BlockType: Block<R>;
+    type ChainType: Chain<R, BlockType = Self::BlockType>;
+    type ConsensusRulesType: ConsensusRules<R, Self::ChainType>;
+    type BranchesType: ChainBranches<R, Self::ChainType, Self::ConsensusRulesType>;
+    fn validate<B: Block<R>>(&self, block: B) -> bool;
     fn active_chain(&self) -> Result<Self::ChainType, ConsensusError>;
     fn branches(&mut self) -> Result<Self::BranchesType, ConsensusError>;
 }
 
-pub trait ConsensusRules<C: Chain> {
+pub trait ConsensusRules<R: Record, C: Chain<R>> {
     fn merge(&mut self, branches: Vec<C>) -> Result<C, ConsensusError>;
 }
 
-pub trait ChainBranches<C: Chain, R: ConsensusRules<C>> {
+pub trait ChainBranches<R: Record, C: Chain<R>, X: ConsensusRules<R, C>> {
     fn branches(&self) -> Result<Vec<C>, ConsensusError>;
     /// Merges the branches according to the rules and returns the resulting chain
-    fn merge(&mut self, rules: R) -> Result<C, ConsensusError>;
+    fn merge(&mut self, rules: X) -> Result<C, ConsensusError>;
 }
 
 pub enum ConsensusError {

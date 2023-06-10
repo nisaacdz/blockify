@@ -1,20 +1,10 @@
 #![cfg(test)]
 
-
-use blockify::block::ChainedInstance;
-use record_derive::Record;
+use blockify::{block::{LocalInstance, Block, UnchainedInstance}, record::Record, data::Metadata, SqliteChain, chain::Chain};
+use serde::{Serialize, Deserialize};
 
 #[test]
 fn test_blocks() {
-    use blockify::{
-        block::{Block, UnchainedInstance},
-        chain::Chain,
-        data::Metadata,
-        record::Record,
-        SqliteChain,
-    };
-    use serde::{Deserialize, Serialize};
-
     #[derive(Debug, Clone, Record, Serialize, Deserialize, PartialEq, Eq)]
     struct Data {
         data: String,
@@ -52,8 +42,8 @@ fn test_blocks() {
             .collect::<Vec<_>>();
 
         // create two block builders `UnchainedInstance`'s with nonce and empty metadata
-        let mut builder1 = UnchainedInstance::new(Metadata::empty(), 0);
-        let mut builder2 = UnchainedInstance::new(Metadata::empty(), 1);
+        let mut builder1 = LocalInstance::new(Metadata::empty(), 0);
+        let mut builder2 = LocalInstance::new(Metadata::empty(), 1);
 
         // push the two vec's content into each UnchainedInstance
         for record in records1 {
@@ -81,15 +71,15 @@ fn test_blocks() {
         let records_from_block1 = block1
             .records()
             .expect("couldn't retrieve records from block1");
-        assert_eq!(builder1.records().as_slice(), &*records_from_block1);
+        assert_eq!(builder1.records().unwrap().as_slice(), &*records_from_block1);
 
         let records_from_block2 = block2
             .records()
             .expect("couldn't retrieve records from block2");
 
         // Assert the equality of the records from the two blocks
-        assert_eq!(builder1.records().as_slice(), &*records_from_block1);
-        assert_eq!(builder2.records().as_slice(), &*records_from_block2);
+        assert_eq!(builder1.records().unwrap().as_slice(), &*records_from_block1);
+        assert_eq!(builder2.records().unwrap().as_slice(), &*records_from_block2);
     }
     start()
 }

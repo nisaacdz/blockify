@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::{fmt::Debug, marker::PhantomData};
 
 use crate::{
-    block::{Block, PositionInstance, UnchainedInstance},
+    block::{Block, LocalInstance, PositionInstance, UnchainedInstance},
     chain::{Chain, ChainError},
     data::{Position, ToTimestamp},
     error::{DataBaseError, SerdeError},
@@ -87,26 +87,24 @@ impl<X> SqliteChain<X> {
     }
 }
 
-impl<X: Record + Serialize + for<'a> Deserialize<'a> + 'static> Chain for SqliteChain<X> {
-    type RecordType = X;
+impl<X: Clone + Record + Serialize + for<'a> Deserialize<'a> + 'static> Chain<X> for SqliteChain<X> {
+    type UnchainedInstanceType = LocalInstance<X>;
 
     type BlockType = SqliteBlock<X>;
 
-    type ChainedInstanceType = PositionInstance;
-
     fn append(
         &mut self,
-        block: &UnchainedInstance<Self::RecordType>,
+        block: &Self::UnchainedInstanceType,
     ) -> Result<PositionInstance, ChainError> {
         let size = Self::size(self.con.get_mut()).map_err(|e| ChainError::DataBaseError(e))?;
 
-        let nonce = block.nonce();
+        let nonce = block.nonce().unwrap();
 
         let position = (size + 1).into();
 
         let timestamp = chrono::Utc::now().to_timestamp();
 
-        let merkle_root = block.merkle_root().clone();
+        let merkle_root = block.merkle_root().unwrap().clone();
 
         let prev_hash = match self.block_at(size.into()) {
             Err(ChainError::AbsentValue) => Hash::default(),
@@ -125,7 +123,7 @@ impl<X: Record + Serialize + for<'a> Deserialize<'a> + 'static> Chain for Sqlite
         let smt = insert_into(blocks::table).values(blocks::block.eq(&gen_url));
         smt.execute(self.con.get_mut()).unwrap();
 
-        SqliteBlock::build(&gen_url, &*block.records(), &chained).unwrap();
+        SqliteBlock::build(&gen_url, &*block.records().unwrap(), &chained).unwrap();
 
         Ok(PositionInstance::new(position))
     }
@@ -152,20 +150,22 @@ impl<X: Record + Serialize + for<'a> Deserialize<'a> + 'static> Chain for Sqlite
     }
 }
 
+
 #[cfg(test)]
 mod tests {
     use std::path::Path;
 
-    use crate as blockify;
+    use crate::{self as blockify, block::LocalInstance};
 
     use blockify::{
-        block::{Block, ChainedInstance, UnchainedInstance},
+        block::{Block, UnchainedInstance},
         chain::Chain,
+        data::Metadata,
         record::{Record, SignedRecord},
-        SqliteChain, data::Metadata,
+        SqliteChain,
     };
     use serde::{Deserialize, Serialize};
-    
+
     #[derive(Debug, Record, Clone, Serialize, Deserialize, PartialEq)]
     struct Vote {
         data: String,
@@ -216,8 +216,8 @@ mod tests {
             .map(|v| v.unwrap())
             .collect::<Vec<SignedRecord<Vote>>>();
 
-        let mut builder1 = UnchainedInstance::new(Metadata::empty(), 0);
-        let mut builder2 = UnchainedInstance::new(Metadata::empty(), 1);
+        let mut builder1 = LocalInstance::new(Metadata::empty(), 0);
+        let mut builder2 = LocalInstance::new(Metadata::empty(), 1);
 
         for record in records1 {
             builder1.push(record);
@@ -238,11 +238,11 @@ mod tests {
         let records_from_block1 = block1
             .records()
             .expect("couldn't retrieve records from block1");
-        assert_eq!(builder1.records().as_slice(), &*records_from_block1);
+        assert_eq!(builder1.records().unwrap().as_slice(), &*records_from_block1);
 
         let records_from_block2 = block2
             .records()
             .expect("couldn't retrieve records from block2");
-        assert_eq!(builder2.records().as_slice(), &*records_from_block2);
+        assert_eq!(builder2.records().unwrap().as_slice(), &*records_from_block2);
     }
 }

@@ -1,5 +1,5 @@
 use crate::{
-    block::{Block, UnchainedInstance},
+    block::{Block, PositionInstance, UnchainedInstance},
     chain::{Chain, ChainError},
     record::{Record, SignedRecord},
     PublicKey,
@@ -20,24 +20,25 @@ pub trait MemPool<R: Record> {
 
 pub enum MemPoolError {}
 
-pub trait Node: Sized {
-    type RecordType: Record;
-    type BlockType: Block<RecordType = Self::RecordType>;
-    type ChainType: Chain<RecordType = Self::RecordType, BlockType = Self::BlockType>;
-    type MemPoolType: MemPool<Self::RecordType>;
+pub trait Node<R: Record>: Sized {
+    type UnchainedInstanceType: UnchainedInstance<R>;
+    type BlockType: Block<R>;
+    type ChainType: Chain<
+        R,
+        BlockType = Self::BlockType,
+        UnchainedInstanceType = Self::UnchainedInstanceType,
+    >;
+    type MemPoolType: MemPool<R>;
     type PeerType: Peer;
-    type NodeIdType: NodeId<Self>;
+    type NodeIdType: NodeId;
 
-    fn publish(&mut self, record: SignedRecord<Self::RecordType>) -> Result<Feedback, NodeError>;
+    fn publish(&mut self, record: SignedRecord<R>) -> Result<Feedback, NodeError>;
     fn chain(&self) -> Result<Self::ChainType, NodeError>;
     fn broadcast(&self, block: Self::BlockType) -> Result<Feedback, NodeError>;
     fn mem_pool(&self) -> Result<Option<Self::MemPoolType>, NodeError>;
-    fn push(
-        &mut self,
-        block: &UnchainedInstance<Self::RecordType>,
-    ) -> Result<<Self::ChainType as Chain>::ChainedInstanceType, NodeError> {
+    fn push(&mut self, block: Self::UnchainedInstanceType) -> Result<PositionInstance, NodeError> {
         self.chain()?
-            .append(block)
+            .append(&block)
             .map_err(|e| NodeError::ChainError(e))
     }
 
@@ -45,8 +46,9 @@ pub trait Node: Sized {
     fn network(&self) -> Result<Vec<Self::NodeIdType>, NodeError>;
 }
 
-pub trait NodeId<N: Node> {
-    fn load(self) -> Result<N, NodeError>;
+pub trait NodeId {
+    type NodeType;
+    fn load(self) -> Result<Self::NodeType, NodeError>;
 }
 
 pub enum Feedback {}
@@ -55,9 +57,7 @@ pub trait Peer {
     fn public_key(&self) -> &PublicKey;
 }
 
-pub enum MiningError {
-
-}
+pub enum MiningError {}
 
 pub trait Miner<R: Record> {
     fn append(&self, record: SignedRecord<R>) -> Result<(), MiningError>;

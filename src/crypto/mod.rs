@@ -95,7 +95,7 @@ pub fn hash_bytes(bytes: &[u8]) -> Vec<u8> {
 }
 
 use crate::{
-    block::UnchainedInstance,
+    block::LocalInstance,
     data::{Position, Timestamp},
     error::SerdeError,
     record::Record,
@@ -115,18 +115,18 @@ use serde::{Deserialize, Serialize};
 ///
 /// The computed hash as a `Hash` type.
 pub fn hash_block<R: Record + Serialize>(
-    block: &UnchainedInstance<R>,
-    prev_hash: &Hash,
+    block: &LocalInstance<R>,
+    prevhash: &Hash,
     timestamp: &Timestamp,
     position: &Position,
 ) -> Hash {
-    let records = bincode::serialize(block.records()).unwrap().into();
+    let records = bincode::serialize(block.get_records()).unwrap().into();
     let timestamp = bincode::serialize(timestamp).unwrap().into();
     let position = bincode::serialize(position).unwrap().into();
     let buffer = sha_all([
-        prev_hash,
+        prevhash,
         &records,
-        block.merkle_root(),
+        &block.get_merkle_root(),
         &timestamp,
         &position,
     ]);
@@ -404,7 +404,8 @@ impl From<PublicKey> for String {
 
 impl std::fmt::Display for PublicKey {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.to_hex())
+        let disp = format!("{}-{}", self.algorithm(), self.to_hex()).to_ascii_uppercase();
+        write!(f, "{}", disp)
     }
 }
 
@@ -671,6 +672,23 @@ fn sign_rsa(
     private_key.sign(padding, &rng, &msg, &mut signature_vec)?;
 
     Ok(signature_vec.into())
+}
+
+#[cfg(test)]
+mod tests2 {
+    use crate::record::Record;
+
+    #[test]
+    fn test_others() {
+        let data = "Hello, World".to_owned();
+        let keypair = crate::generate_ed25519_key_pair();
+        let record = data
+            .record(keypair.clone(), crate::data::Metadata::empty())
+            .expect("Couldn't record string!");
+        println!("{}", record.signature());
+        println!("{}", keypair.algorithm);
+        println!("{}", keypair.into_public_key());
+    }
 }
 
 #[cfg(test)]

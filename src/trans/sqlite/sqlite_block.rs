@@ -30,7 +30,6 @@ table! {
     }
 }
 
-
 pub struct SqliteBlock<X> {
     con: WrapperMut<SqliteConnection>,
     _data: PhantomData<X>,
@@ -183,8 +182,7 @@ impl<X> From<RecordValue<X>> for SignedRecord<X> {
     }
 }
 
-impl<X: Record + for<'a> Deserialize<'a> + 'static> Block for SqliteBlock<X> {
-    type RecordType = X;
+impl<X: Record + for<'a> Deserialize<'a> + 'static> Block<X> for SqliteBlock<X> {
     fn records(&self) -> Result<Box<[SignedRecord<X>]>, BlockError> {
         let res = rq
             .select(records::jsonvalues)

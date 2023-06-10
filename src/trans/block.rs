@@ -8,8 +8,6 @@ use crate::{
     merkle::MerkleTree,
 };
 
-use crate::{SqliteBlock, SqliteChain};
-
 use super::{
     chain::ChainError,
     record::{Record, SignedRecord},
@@ -19,12 +17,9 @@ use super::{
 /// previous hash, a position, a hash, a merkle root, a timestamp, and a nonce.
 ///
 /// This `Block` trait provides methods for accessing these properties.
-pub trait Block {
-    /// The type of record that is stored in this block.
-    type RecordType: Record;
-
+pub trait Block<R: Record> {
     /// Returns a reference to the records in this block.
-    fn records(&self) -> Result<Box<[SignedRecord<Self::RecordType>]>, BlockError>;
+    fn records(&self) -> Result<Box<[SignedRecord<R>]>, BlockError>;
 
     /// Returns the previous hash of this block.
     fn prev_hash(&self) -> Result<Hash, BlockError>;
@@ -102,22 +97,19 @@ impl From<ChainError> for BlockError {
     }
 }
 
-/// A `ChainedInstance` type represents anything that can be used by a `Chain` type to locate a particular `Block`.
-///
-/// It represents any set of variables that can be used to uniquely specify a `Block` on a blockchain.
-///
-/// The implementation may not depend on the `get` method in the `Chain` trait implementation of it's generic argument
-pub trait ChainedInstance<C: Chain> {
-    fn block(self, chain: &C) -> Result<C::BlockType, ChainError>;
+impl From<Position> for PositionInstance {
+    fn from(value: Position) -> Self {
+        Self::new(value)
+    }
 }
 
-
-impl<R: Record + Serialize + for<'d> Deserialize<'d> + 'static> ChainedInstance<SqliteChain<R>>
-    for PositionInstance
-{
-    fn block(self, chain: &SqliteChain<R>) -> Result<SqliteBlock<R>, ChainError> {
-        let block = chain.block_at(self.pos)?;
-        Ok(block)
+impl PositionInstance {
+    pub fn block<R: Record, C: Chain<R>>(self, chain: &C) -> Result<C::BlockType, ChainError> {
+        chain.get(self)
+    }
+    pub fn into_inner(self) -> Position {
+        let Self { pos } = self;
+        pos
     }
 }
 
@@ -133,18 +125,15 @@ impl PositionInstance {
     }
 }
 
-/// Represents an unchained instance of a block. While a block is being assembled,
-/// it is called an UnchainedInstance. It contains a collection of signed records,
-/// a Merkle tree, and the root hash of the Merkle tree.
 #[derive(Serialize, Debug, Deserialize, Clone)]
-pub struct UnchainedInstance<R> {
-    records: Vec<SignedRecord<R>>,
-    merkle: merkle::MerkleTree,
-    metadata: Metadata,
-    nonce: Nonce,
+pub struct LocalInstance<R> {
+    pub records: Vec<SignedRecord<R>>,
+    pub merkle: merkle::MerkleTree,
+    pub metadata: Metadata,
+    pub nonce: Nonce,
 }
 
-impl<R> UnchainedInstance<R> {
+impl<R> LocalInstance<R> {
     pub fn new(metadata: Metadata, nonce: u64) -> Self {
         Self {
             records: vec![],
@@ -153,23 +142,46 @@ impl<R> UnchainedInstance<R> {
             nonce: nonce.into(),
         }
     }
-    pub fn merkle_root(&self) -> &Hash {
-        &self.merkle.merkle_root()
-    }
-
-    pub fn records(&self) -> &Vec<SignedRecord<R>> {
-        &self.records
-    }
-
-    pub fn nonce(&self) -> Nonce {
-        self.nonce
-    }
 }
 
-impl<R: Record> UnchainedInstance<R> {
+impl<R> LocalInstance<R> {
     pub fn push(&mut self, item: SignedRecord<R>) {
         let hash = item.hash();
         self.merkle.push(hash);
         self.records.push(item);
+    }
+
+    pub fn get_records(&self) -> &Vec<SignedRecord<R>> {
+        &self.records
+    }
+
+    pub fn get_merkle_root(&self) -> &Hash {
+        self.merkle.root()
+    }
+}
+
+pub trait UnchainedInstance<R> {
+    fn append(&mut self, item: SignedRecord<R>) -> Result<(), BlockError>;
+    fn nonce(&self) -> Result<Nonce, BlockError>;
+    fn records(&self) -> Result<Vec<SignedRecord<R>>, BlockError>;
+    fn merkle_root(&self) -> Result<Hash, BlockError>;
+}
+
+impl<R: Clone> UnchainedInstance<R> for LocalInstance<R> {
+    fn append(&mut self, item: SignedRecord<R>) -> Result<(), BlockError> {
+        self.records.push(item);
+        Ok(())
+    }
+
+    fn nonce(&self) -> Result<Nonce, BlockError> {
+        Ok(self.nonce)
+    }
+
+    fn records(&self) -> Result<Vec<SignedRecord<R>>, BlockError> {
+        Ok(self.records.clone())
+    }
+
+    fn merkle_root(&self) -> Result<Hash, BlockError> {
+        Ok(self.merkle.root().clone())
     }
 }

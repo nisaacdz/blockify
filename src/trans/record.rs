@@ -139,8 +139,8 @@ impl_record_for!(i64);
 impl_record_for!(Box<[u8]>);
 
 /// A `SignedRecord` is a type of data that can be added to a `block`.
-/// 
-/// 
+///
+///
 /// `SignedRecord` is producible from any type that implements `Record` and internally consists of:
 /// - the `digital signature` on the record
 /// - the `public key` of the signer of the record
@@ -239,6 +239,7 @@ impl<R> SignedRecord<R> {
         &self.signature
     }
     /// Returns a reference to the `Record` inside this `SignedRecord` instance
+    #[inline]
     pub fn record(&self) -> &R {
         &self.record
     }
@@ -262,9 +263,15 @@ impl<R> SignedRecord<R> {
     }
 }
 
-impl<R: Record + Serialize> SignedRecord<R> {
+impl<R: Record> SignedRecord<R> {
     /// Verifies the validity of the `DigitalSignature` within this `SignedRecord` instance for the `Record` it holds.
     pub fn verify(&self) -> Result<(), VerificationError> {
         self.record.verify(self.signature(), self.signer())
+    }
+}
+
+impl<R> AsRef<R> for SignedRecord<R> {
+    fn as_ref(&self) -> &R {
+        self.record()
     }
 }

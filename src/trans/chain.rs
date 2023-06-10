@@ -1,10 +1,11 @@
 use crate::{
+    block::UnchainedInstance,
     data::Position,
     error::{DataBaseError, SerdeError},
 };
 
 use super::{
-    block::{Block, BlockError, ChainedInstance, UnchainedInstance},
+    block::{Block, BlockError, PositionInstance},
     record::Record,
 };
 
@@ -31,14 +32,10 @@ impl From<BlockError> for ChainError {
 /// A chain is a collection of blocks.
 ///
 /// The `Chain` trait provides methods for adding blocks to the chain, getting blocks from the chain, and validating the chain.
-pub trait Chain: Sized {
-    /// The type of record that is stored in the blocks in this chain.
-    type RecordType: Record;
-
-    type ChainedInstanceType: ChainedInstance<Self>;
-
+pub trait Chain<R: Record>: Sized {
+    type UnchainedInstanceType: UnchainedInstance<R>;
     /// The type of block that is stored in this chain.
-    type BlockType: Block<RecordType = Self::RecordType>;
+    type BlockType: Block<R>;
 
     /// Appends an `UnchainedInstance` block to the chain.
     ///
@@ -52,8 +49,8 @@ pub trait Chain: Sized {
     /// - `Err(ChainError)` if the operation fails
     fn append(
         &mut self,
-        block: &UnchainedInstance<Self::RecordType>,
-    ) -> Result<Self::ChainedInstanceType, ChainError>;
+        block: &Self::UnchainedInstanceType,
+    ) -> Result<PositionInstance, ChainError>;
 
     /// Gets a block from the chain by its position.
     ///
@@ -63,9 +60,8 @@ pub trait Chain: Sized {
     /// Gets a block from the chain by its chained instance.
     ///
     /// Returns an error if the block is not found.
-    fn get(&self, b: Self::ChainedInstanceType) -> Result<Self::BlockType, ChainError> {
-        let res = b.block(self)?;
-        Ok(res)
+    fn get(&self, b: PositionInstance) -> Result<Self::BlockType, ChainError> {
+        self.block_at(b.into_inner())
     }
 
     fn len(&self) -> Result<u64, ChainError>;

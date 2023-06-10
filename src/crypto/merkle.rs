@@ -68,7 +68,7 @@ pub struct MerkleTree {
 
 impl std::hash::Hash for MerkleTree {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        state.write(self.merkle_root());
+        state.write(self.root());
     }
 }
 
@@ -92,7 +92,7 @@ impl MerkleTree {
     }
 
     /// Returns the Merkle root of the tree.
-    pub fn merkle_root(&self) -> &Hash {
+    pub fn root(&self) -> &Hash {
         &self.root.hash
     }
 
@@ -102,7 +102,7 @@ impl MerkleTree {
         let left_hash = self.root.left().as_deref().unwrap().hash();
 
         if let None = &self.root.center {
-            let new_hash = super::sha_all([hash, left_hash, self.merkle_root()]);
+            let new_hash = super::sha_all([hash, left_hash, self.root()]);
 
             let mut new_node = MerkleNode::build(new_hash, None, None, None);
 
@@ -114,7 +114,7 @@ impl MerkleTree {
             self.root = new_node;
         } else if let None = self.root.right {
             let center_hash = self.root.center().as_deref().unwrap().hash();
-            let new_hash = super::sha_all([hash, left_hash, center_hash, self.merkle_root()]);
+            let new_hash = super::sha_all([hash, left_hash, center_hash, self.root()]);
 
             let mut new_node = MerkleNode::build(new_hash, None, None, None);
 
@@ -129,8 +129,7 @@ impl MerkleTree {
         } else {
             let center_hash = self.root.center().as_deref().unwrap().hash();
             let right_hash = self.root.right().as_deref().unwrap().hash();
-            let new_hash =
-                super::sha_all([hash, left_hash, center_hash, right_hash, self.merkle_root()]);
+            let new_hash = super::sha_all([hash, left_hash, center_hash, right_hash, self.root()]);
 
             let mut new_node = MerkleNode::build(new_hash, None, None, None);
 
