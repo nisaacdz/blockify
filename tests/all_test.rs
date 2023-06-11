@@ -35,7 +35,7 @@ impl MarriageContract {
     pub fn generate_records(amount: usize) -> Vec<SignedRecord<Self>> {
         let mut res = Vec::with_capacity(amount);
         (0..amount).for_each(|_| {
-            match Self::generate().record(blockify::generate_ed25519_key_pair(), Default::default())
+            match Self::generate().record(blockify::generate_ed25519_keypair(), Default::default())
             {
                 Ok(v) => res.push(v),
                 Err(_) => unreachable!("Error occurs"),
@@ -48,7 +48,7 @@ impl MarriageContract {
 #[test]
 fn start() {
     let contract = MarriageContract::new("John", "Julie");
-    let keypair = blockify::generate_ed25519_key_pair();
+    let keypair = blockify::generate_ed25519_keypair();
     let signature = contract.sign(&keypair).unwrap();
     let hash = contract.hash();
     let record = contract.record(keypair, Metadata::empty()).unwrap();
