@@ -8,10 +8,8 @@ use crate::{
 pub use record_derive::Record;
 
 /// The `Record` trait provides a structure and functions for securely and transparently storing data on the blockchain.
-///  
-/// Any type that needs security provided by cryptographic operations or blockchain technology can implement this trait.
 ///
-/// `Record` contains methods for `signing`, `hashing`, `signature verification` and `recording` of records.
+/// It contains functions for `signing`, `hashing`, `verifying` of blockchain transactions and can be implemented by any type that will be stored on a blockchain as a transaction.
 ///
 /// # Examples
 ///
@@ -138,8 +136,7 @@ impl_record_for!(bool);
 impl_record_for!(i64);
 impl_record_for!(Box<[u8]>);
 
-/// A `SignedRecord` is a type of data that can be added to a `block`.
-///
+/// A `SignedRecord` represents a piece of blockchain transaction that is signed and hashed.
 ///
 /// `SignedRecord` is producible from any type that implements `Record` and internally consists of:
 /// - the `digital signature` on the record
@@ -154,7 +151,7 @@ impl_record_for!(Box<[u8]>);
 ///
 /// # Type Parameters
 ///
-/// - `R`: The type of the original record that was signed.
+/// - `R`: The type of transaction that was signed.
 ///
 ///
 /// # Examples
