@@ -5,6 +5,17 @@
 
 A Rust blockchain library that provides the building blocks for creating a full-fledged blockchain application or platform, allowing you to focus on the higher-level features of your application without worrying about the low-level details of `block validation`, `data serialization`, `blockchain technology`, and `cryptographic operations`.
 
+
+# USEFUL FEATURES
+- Generating cryptographic key pairs
+- Signing data with cryptographic keys
+- Serializing data into bytes
+- Hashing different kinds of data
+- Building and blockchains
+- Building and deploying blocks into blockchains
+- Architecture for building fully-fledged blockchain applications
+
+
 # USAGE
 
 - **Example**
@@ -57,7 +68,7 @@ A Rust blockchain library that provides the building blocks for creating a full-
 - **Creating `Records` and `SignedRecords`**
 ```
     let contract = MarriageContract::new("John", "Julie");
-    let keypair = blockify::generate_ed25519_key_pair();
+    let keypair = blockify::generate_ed25519_keypair();
     let signature = contract.sign(&keypair).unwrap();
     let hash = contract.hash();
     let record = contract.record(keypair, Metadata::empty()).unwrap();
