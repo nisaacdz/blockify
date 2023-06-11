@@ -87,7 +87,9 @@ impl<X> SqliteChain<X> {
     }
 }
 
-impl<X: Clone + Record + Serialize + for<'a> Deserialize<'a> + 'static> Chain<X> for SqliteChain<X> {
+impl<X: Clone + Record + Serialize + for<'a> Deserialize<'a> + 'static> Chain<X>
+    for SqliteChain<X>
+{
     type UnchainedInstanceType = LocalInstance<X>;
 
     type BlockType = SqliteBlock<X>;
@@ -150,11 +152,8 @@ impl<X: Clone + Record + Serialize + for<'a> Deserialize<'a> + 'static> Chain<X>
     }
 }
 
-
 #[cfg(test)]
 mod tests {
-    use std::path::Path;
-
     use crate::{self as blockify, block::LocalInstance};
 
     use blockify::{
@@ -177,29 +176,10 @@ mod tests {
         }
     }
 
-    fn empty_directory(path: &Path) -> Result<(), std::io::Error> {
-        let entries = std::fs::read_dir(path)?;
-
-        for entry in entries {
-            let entry = entry?;
-            let entry_path = entry.path();
-
-            if entry_path.is_dir() {
-                empty_directory(&entry_path)?;
-                std::fs::remove_dir(entry_path)?;
-            } else {
-                std::fs::remove_file(entry_path)?;
-            }
-        }
-
-        Ok(())
-    }
-
     #[test]
     fn test_block() {
-        let chain_url = "target2/tests/sample3/";
+        let chain_url = "target2/tests/votestoringstring/";
         std::fs::create_dir_all(chain_url).expect("could not create chain_url");
-        empty_directory(Path::new(chain_url)).expect("couldn't clear the directory");
         let datas1 = vec!["abcd", "efgh", "ijkl"];
         let datas2 = vec!["mnop", "qrst", "uvwx"];
         let keypair = crate::generate_ed25519_key_pair();
@@ -238,11 +218,17 @@ mod tests {
         let records_from_block1 = block1
             .records()
             .expect("couldn't retrieve records from block1");
-        assert_eq!(builder1.records().unwrap().as_slice(), &*records_from_block1);
+        assert_eq!(
+            builder1.records().unwrap().as_slice(),
+            &*records_from_block1
+        );
 
         let records_from_block2 = block2
             .records()
             .expect("couldn't retrieve records from block2");
-        assert_eq!(builder2.records().unwrap().as_slice(), &*records_from_block2);
+        assert_eq!(
+            builder2.records().unwrap().as_slice(),
+            &*records_from_block2
+        );
     }
 }
