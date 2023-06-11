@@ -233,7 +233,7 @@ pub fn verify_hash<T: Sized + serde::Serialize>(obj: &T, value: &Hash) -> bool {
 ///
 /// An `AuthKeyPair` containing the generated key pair and the `KeyPairAlgorithm` used.
 
-pub fn generate_ed25519_key_pair() -> AuthKeyPair {
+pub fn generate_ed25519_keypair() -> AuthKeyPair {
     let mut rng = rand::thread_rng();
 
     // Serialize the private and public keys as byte vectors
@@ -246,8 +246,15 @@ pub fn generate_ed25519_key_pair() -> AuthKeyPair {
     AuthKeyPair::new(
         private_key.into_boxed_slice(),
         public_key.into_boxed_slice(),
-        KeyPairAlgorithm::Ed25519,
+        KeyPairAlgorithm::ED25519,
     )
+}
+
+pub fn generate_ecdsa_keypair(algo: EcdsaSigningAlgorithm) -> AuthKeyPair {
+    let rng = ring::rand::SystemRandom::new();
+    let algo = algo.into();
+    let _res = EcdsaKeyPair::generate_pkcs8(algo, &rng).unwrap();
+    todo!()
 }
 
 /// Verifies the Ed25519 digital signature for the given message using a public key.
@@ -462,20 +469,11 @@ impl AuthKeyPair {
 
     /// Uses this `AuthKeyPair` to sign the given bytes returning a digital signature
     pub fn sign(&self, msg: &[u8]) -> Result<DigitalSignature, SigningError> {
-        self.algorithm.sign(msg, self)
+        self.algorithm.sign(msg, self.private_key_bytes())
     }
 }
 
-/// A `Hash` is the result of hashing a value.
-///
-/// A typical hash produces bytes as the output.
-/// Since the exact size of the buffer varies depending on the hashing algorithm used,
-/// the underlying buffer stored is a slice of bytes instead of `[u8; 32]` or `[u8; 48]` or any other.
-///
-/// This means that the slice of bytes itself will be stored on the heap.
-///
-/// This can lead to `very little runtime overhead` in some cases but it provides a robust structure for handling any kind of Hashes.
-///
+/// A `Hash` is the result of hashing a piece of data.
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Hash {
@@ -579,8 +577,8 @@ impl AsRef<[u8]> for DigitalSignature {
 }
 
 use ring::signature::{
-    EcdsaKeyPair, EcdsaSigningAlgorithm, Ed25519KeyPair, RsaEncoding, RsaKeyPair,
-    UnparsedPublicKey, VerificationAlgorithm,
+    EcdsaKeyPair, Ed25519KeyPair, RsaEncoding, RsaKeyPair, RsaParameters, UnparsedPublicKey,
+    VerificationAlgorithm,
 };
 
 /// An enum representing the different algorithms that can be used to generate key pairs.
@@ -595,9 +593,37 @@ use ring::signature::{
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum KeyPairAlgorithm {
-    Ed25519,
-    Ecdsa256256Fixed,
-    RsaPKCS1256,
+    ED25519,
+    ECDSA,
+    /// An RSA algorithm
+    RSA(RsaSigningAlgorithm),
+}
+
+#[allow(non_camel_case_types)]
+#[non_exhaustive]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum RsaSigningAlgorithm {
+    /// Verification of signatures using RSA keys of 2048-8192 bits, PKCS#1.5 padding, and SHA-256.
+    PKCS1_2048_8192_SHA256,
+
+    /// Verification of signatures using RSA keys of 2048-8192 bits, PKCS#1.5 padding, and SHA-384.
+    PKCS1_2048_8192_SHA384,
+
+    /// Verification of signatures using RSA keys of 2048-8192 bits, PKCS#1.5 padding, and SHA-512.
+    PKCS1_2048_8192_SHA512,
+
+    /*
+    /// Verification of signatures using RSA keys of 3072-8192 bits, PKCS#1.5 padding, and SHA-384.
+    PKCS1_3072_8192_SHA384,
+    */
+    /// Verification of signatures using RSA keys of 2048-8192 bits, PSS padding, and SHA-256.
+    PSS_2048_8192_SHA256,
+
+    /// Verification of signatures using RSA keys of 2048-8192 bits, PSS padding, and SHA-384.
+    PSS_2048_8192_SHA384,
+
+    /// Verification of signatures using RSA keys of 2048-8192 bits, PSS padding, and SHA-512.
+    PSS_2048_8192_SHA512,
 }
 
 impl std::fmt::Display for KeyPairAlgorithm {
@@ -607,15 +633,15 @@ impl std::fmt::Display for KeyPairAlgorithm {
 }
 
 impl KeyPairAlgorithm {
-    fn sign(self, msg: &[u8], key: &AuthKeyPair) -> Result<DigitalSignature, SigningError> {
+    fn sign(self, msg: &[u8], private_key: &[u8]) -> Result<DigitalSignature, SigningError> {
         match self {
-            KeyPairAlgorithm::Ed25519 => sign_ed25519(msg, key),
-            KeyPairAlgorithm::RsaPKCS1256 => {
-                sign_rsa(msg, &key, &ring::signature::RSA_PKCS1_SHA256)
-            }
-            KeyPairAlgorithm::Ecdsa256256Fixed => {
-                sign_ecdsa(msg, key, &ring::signature::ECDSA_P256_SHA256_FIXED_SIGNING)
-            }
+            KeyPairAlgorithm::ED25519 => sign_ed25519(msg, private_key),
+            KeyPairAlgorithm::RSA(algo) => sign_rsa(msg, private_key, algo),
+            KeyPairAlgorithm::ECDSA => sign_ecdsa(
+                msg,
+                private_key,
+                &ring::signature::ECDSA_P256_SHA256_FIXED_SIGNING,
+            ),
         }
     }
 
@@ -626,9 +652,9 @@ impl KeyPairAlgorithm {
         signer: &[u8],
     ) -> Result<(), VerificationError> {
         let algo: &dyn VerificationAlgorithm = match self {
-            KeyPairAlgorithm::Ed25519 => &ring::signature::ED25519,
-            KeyPairAlgorithm::RsaPKCS1256 => &ring::signature::RSA_PKCS1_2048_8192_SHA256,
-            KeyPairAlgorithm::Ecdsa256256Fixed => &ring::signature::ECDSA_P256_SHA256_FIXED,
+            KeyPairAlgorithm::ED25519 => &ring::signature::ED25519,
+            KeyPairAlgorithm::RSA(algo) => algo.into(),
+            KeyPairAlgorithm::ECDSA => &ring::signature::ECDSA_P256_SHA256_FIXED,
         };
 
         let key = UnparsedPublicKey::new(algo, signer);
@@ -639,39 +665,94 @@ impl KeyPairAlgorithm {
 
 fn sign_ecdsa(
     msg: &[u8],
-    key: &AuthKeyPair,
-    algo: &'static EcdsaSigningAlgorithm,
+    key: &[u8],
+    algo: &'static ring::signature::EcdsaSigningAlgorithm,
 ) -> Result<DigitalSignature, SigningError> {
     let rng = ring::rand::SystemRandom::new();
-    let key = EcdsaKeyPair::from_private_key_and_public_key(
-        algo,
-        key.private_key_bytes(),
-        key.public_key_bytes(),
-    )?;
+    let key = EcdsaKeyPair::from_pkcs8(algo, key)?;
     let signature = key.sign(&rng, msg)?;
     let buffer = signature.as_ref().to_vec();
     Ok(buffer.into())
 }
 
-fn sign_ed25519(msg: &[u8], key: &AuthKeyPair) -> Result<DigitalSignature, SigningError> {
-    let key =
-        Ed25519KeyPair::from_seed_and_public_key(key.private_key_bytes(), key.public_key_bytes())?;
+fn sign_ed25519(msg: &[u8], private_key: &[u8]) -> Result<DigitalSignature, SigningError> {
+    let key = Ed25519KeyPair::from_pkcs8_maybe_unchecked(private_key)?;
     let signature = key.sign(msg).as_ref().to_vec();
     Ok(signature.into())
 }
 
 fn sign_rsa(
     msg: &[u8],
-    key: &AuthKeyPair,
-    padding: &'static dyn RsaEncoding,
+    key: &[u8],
+    algo: RsaSigningAlgorithm,
 ) -> Result<DigitalSignature, SigningError> {
     let rng = ring::rand::SystemRandom::new();
-    let private_key = RsaKeyPair::from_der(key.private_key_bytes())?;
+    let private_key = RsaKeyPair::from_der(key)?;
+    let padding = algo.into();
 
     let mut signature_vec = vec![0u8; private_key.public_modulus_len()];
     private_key.sign(padding, &rng, &msg, &mut signature_vec)?;
 
     Ok(signature_vec.into())
+}
+
+impl Into<&'static dyn RsaEncoding> for RsaSigningAlgorithm {
+    fn into(self) -> &'static dyn RsaEncoding {
+        match self {
+            RsaSigningAlgorithm::PKCS1_2048_8192_SHA256 => &ring::signature::RSA_PKCS1_SHA256,
+            RsaSigningAlgorithm::PKCS1_2048_8192_SHA384 => &ring::signature::RSA_PKCS1_SHA384,
+            RsaSigningAlgorithm::PKCS1_2048_8192_SHA512 => &ring::signature::RSA_PKCS1_SHA512,
+            RsaSigningAlgorithm::PSS_2048_8192_SHA256 => &ring::signature::RSA_PSS_SHA256,
+            RsaSigningAlgorithm::PSS_2048_8192_SHA384 => &ring::signature::RSA_PSS_SHA384,
+            RsaSigningAlgorithm::PSS_2048_8192_SHA512 => &ring::signature::RSA_PSS_SHA512,
+        }
+    }
+}
+
+pub enum EcdsaSigningAlgorithm {}
+
+impl Into<&'static ring::signature::EcdsaSigningAlgorithm> for EcdsaSigningAlgorithm {
+    fn into(self) -> &'static ring::signature::EcdsaSigningAlgorithm {
+        match self {}
+    }
+}
+
+impl Into<&'static RsaParameters> for RsaSigningAlgorithm {
+    fn into(self) -> &'static RsaParameters {
+        match self {
+            RsaSigningAlgorithm::PKCS1_2048_8192_SHA256 => {
+                &ring::signature::RSA_PKCS1_2048_8192_SHA256
+            }
+            RsaSigningAlgorithm::PKCS1_2048_8192_SHA384 => {
+                &ring::signature::RSA_PKCS1_2048_8192_SHA384
+            }
+            RsaSigningAlgorithm::PKCS1_2048_8192_SHA512 => {
+                &ring::signature::RSA_PKCS1_2048_8192_SHA512
+            }
+            RsaSigningAlgorithm::PSS_2048_8192_SHA256 => &ring::signature::RSA_PSS_2048_8192_SHA256,
+            RsaSigningAlgorithm::PSS_2048_8192_SHA384 => &ring::signature::RSA_PSS_2048_8192_SHA384,
+            RsaSigningAlgorithm::PSS_2048_8192_SHA512 => &ring::signature::RSA_PSS_2048_8192_SHA512,
+        }
+    }
+}
+
+impl Into<&'static dyn VerificationAlgorithm> for RsaSigningAlgorithm {
+    fn into(self) -> &'static dyn VerificationAlgorithm {
+        match self {
+            RsaSigningAlgorithm::PKCS1_2048_8192_SHA256 => {
+                &ring::signature::RSA_PKCS1_2048_8192_SHA256
+            }
+            RsaSigningAlgorithm::PKCS1_2048_8192_SHA384 => {
+                &ring::signature::RSA_PKCS1_2048_8192_SHA384
+            }
+            RsaSigningAlgorithm::PKCS1_2048_8192_SHA512 => {
+                &ring::signature::RSA_PKCS1_2048_8192_SHA512
+            }
+            RsaSigningAlgorithm::PSS_2048_8192_SHA256 => &ring::signature::RSA_PSS_2048_8192_SHA256,
+            RsaSigningAlgorithm::PSS_2048_8192_SHA384 => &ring::signature::RSA_PSS_2048_8192_SHA384,
+            RsaSigningAlgorithm::PSS_2048_8192_SHA512 => &ring::signature::RSA_PSS_2048_8192_SHA512,
+        }
+    }
 }
 
 #[cfg(test)]
@@ -681,7 +762,7 @@ mod tests2 {
     #[test]
     fn test_others() {
         let data = "Hello, World".to_owned();
-        let keypair = crate::generate_ed25519_key_pair();
+        let keypair = crate::generate_ed25519_keypair();
         let record = data
             .record(keypair.clone(), crate::data::Metadata::empty())
             .expect("Couldn't record string!");
