@@ -77,7 +77,10 @@ A Rust blockchain library that provides the building blocks for creating a full-
 
 - **`SqliteBlock` and `SqliteChain`**
 ```
-    let mut chain = SqliteChain::new("target2/tests/sample4/").unwrap();
+    let chain_url = "target2/tests/marriagecontractchain/";
+    std::fs::create_dir_all(chain_url).expect("could initialize directories");
+    
+    let mut chain = SqliteChain::new(chain_url).unwrap();
     let position = chain.append(&pool).expect("Error appending to SqliteChain");
     let block = position.block(&chain).expect("Error getting block by position");
 
