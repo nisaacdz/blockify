@@ -182,7 +182,7 @@ mod tests {
         std::fs::create_dir_all(chain_url).expect("could not create chain_url");
         let datas1 = vec!["abcd", "efgh", "ijkl"];
         let datas2 = vec!["mnop", "qrst", "uvwx"];
-        let keypair = crate::generate_ed25519_key_pair();
+        let keypair = crate::generate_ed25519_keypair();
         let records1 = datas1
             .into_iter()
             .map(|w| Vote::new(w).record(keypair.clone(), Metadata::empty()))
