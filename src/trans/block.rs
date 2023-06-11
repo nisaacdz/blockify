@@ -17,7 +17,7 @@ use super::{
 /// previous hash, a position, a hash, a merkle root, a timestamp, and a nonce.
 ///
 /// This `Block` trait provides methods for accessing these properties.
-pub trait Block<R: Record> {
+pub trait ChainedInstance<R: Record> {
     /// Returns a reference to the records in this block.
     fn records(&self) -> Result<Box<[SignedRecord<R>]>, BlockError>;
 

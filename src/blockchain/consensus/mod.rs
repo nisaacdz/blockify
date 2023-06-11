@@ -1,8 +1,9 @@
 use crate::{
-    block::Block,
+    block::{Block, BlockError},
     chain::Chain,
     error::{DataBaseError, SerdeError},
     record::Record,
+    Hash
 };
 
 pub mod puzzles;
@@ -15,6 +16,7 @@ pub trait ConsensusProtocol<R: Record> {
     fn validate<B: Block<R>>(&self, block: B) -> bool;
     fn active_chain(&self) -> Result<Self::ChainType, ConsensusError>;
     fn branches(&mut self) -> Result<Self::BranchesType, ConsensusError>;
+    fn hash_block(block: &Self::BlockType) -> Result<Hash, BlockError>;
 }
 
 pub trait ConsensusRules<R: Record, C: Chain<R>> {

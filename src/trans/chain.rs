@@ -5,7 +5,7 @@ use crate::{
 };
 
 use super::{
-    block::{Block, BlockError, PositionInstance},
+    block::{ChainedInstance, BlockError, PositionInstance},
     record::Record,
 };
 
@@ -35,7 +35,7 @@ impl From<BlockError> for ChainError {
 pub trait Chain<R: Record>: Sized {
     type UnchainedInstanceType: UnchainedInstance<R>;
     /// The type of block that is stored in this chain.
-    type BlockType: Block<R>;
+    type BlockType: ChainedInstance<R>;
 
     /// Appends an `UnchainedInstance` block to the chain.
     ///
@@ -45,7 +45,7 @@ pub trait Chain<R: Record>: Sized {
     ///
     /// # Returns
     ///
-    /// - `Ok(ChainedInstance)` If the operation succeeds
+    /// - `Ok(PositionInstance)` If the operation succeeds
     /// - `Err(ChainError)` if the operation fails
     fn append(
         &mut self,

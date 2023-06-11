@@ -1,6 +1,8 @@
 mod sqlite_block;
 mod sqlite_chain;
+mod unchained;
 
+pub use unchained::*;
 pub use sqlite_block::*;
 pub use sqlite_chain::*;
 
@@ -38,7 +40,7 @@ impl TempInstance {
     }
 }
 
-pub(super) struct WrapperMut<T> {
+pub(crate) struct WrapperMut<T> {
     val: std::cell::UnsafeCell<T>,
 }
 

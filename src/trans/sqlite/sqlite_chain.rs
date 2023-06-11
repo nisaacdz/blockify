@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::{fmt::Debug, marker::PhantomData};
 
 use crate::{
-    block::{Block, LocalInstance, PositionInstance, UnchainedInstance},
+    block::{ChainedInstance, LocalInstance, PositionInstance, UnchainedInstance},
     chain::{Chain, ChainError},
     data::{Position, ToTimestamp},
     error::{DataBaseError, SerdeError},
@@ -157,7 +157,7 @@ mod tests {
     use crate::{self as blockify, block::LocalInstance};
 
     use blockify::{
-        block::{Block, UnchainedInstance},
+        block::{ChainedInstance, UnchainedInstance},
         chain::Chain,
         data::Metadata,
         record::{Record, SignedRecord},

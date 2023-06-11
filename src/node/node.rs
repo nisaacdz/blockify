@@ -1,5 +1,5 @@
 use crate::{
-    block::{Block, PositionInstance, UnchainedInstance},
+    block::{ChainedInstance, PositionInstance, UnchainedInstance},
     chain::{Chain, ChainError},
     data::Metadata,
     record::{Record, SignedRecord},
@@ -23,7 +23,7 @@ pub enum MemPoolError {}
 
 pub trait Node<R: Record>: Sized {
     type UnchainedInstanceType: UnchainedInstance<R>;
-    type BlockType: Block<R>;
+    type BlockType: ChainedInstance<R>;
     type ChainType: Chain<
         R,
         BlockType = Self::BlockType,

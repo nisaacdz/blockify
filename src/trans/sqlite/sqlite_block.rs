@@ -6,7 +6,7 @@ use std::marker::PhantomData;
 
 use crate::data::{Nonce, Position, Timestamp};
 use crate::error::SerdeError;
-use crate::{block::Block, record::Record};
+use crate::{block::ChainedInstance, record::Record};
 use crate::{Hash, SqliteChainError, TempInstance};
 
 use super::WrapperMut;
@@ -182,7 +182,7 @@ impl<X> From<RecordValue<X>> for SignedRecord<X> {
     }
 }
 
-impl<X: Record + for<'a> Deserialize<'a> + 'static> Block<X> for SqliteBlock<X> {
+impl<X: Record + for<'a> Deserialize<'a> + 'static> ChainedInstance<X> for SqliteBlock<X> {
     fn records(&self) -> Result<Box<[SignedRecord<X>]>, BlockError> {
         let res = rq
             .select(records::jsonvalues)

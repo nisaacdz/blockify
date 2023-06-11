@@ -67,7 +67,7 @@ fn test_blocks() {
         let mut chain =
             SqliteChain::new(chain_url).expect("sqlite connection cannot be established");
 
-        // append the two UnchainedInstance's into the blockchain and obtain an a ChainedInstance
+        // append the two UnchainedInstance's into the blockchain and obtain an a PositionInstance
         let instance1 = chain.append(&builder1).expect("builder1 append erred");
         let instance2 = chain.append(&builder2).expect("builder2 append erred");
 
