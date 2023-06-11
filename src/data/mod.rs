@@ -48,6 +48,12 @@ impl Metadata {
     }
 }
 
+impl Default for Metadata {
+    fn default() -> Self {
+        Self::empty()
+    }
+}
+
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Timestamp {
     secs: u64,

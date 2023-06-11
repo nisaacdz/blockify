@@ -57,7 +57,7 @@ pub enum BlockError {
 }
 
 /// The data that is stored in a block.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum BlockData {
     /// The hash of the block.
     Hash,
@@ -113,8 +113,7 @@ impl PositionInstance {
     }
 }
 
-/// A type that may be used as a `ChainedInstance` in any `Chain` that only needs the position of a block to locate a block
-///
+/// A type that can represent the position of a block in a blockchain
 pub struct PositionInstance {
     pub pos: Position,
 }
@@ -169,7 +168,7 @@ pub trait UnchainedInstance<R> {
 
 impl<R: Clone> UnchainedInstance<R> for LocalInstance<R> {
     fn append(&mut self, item: SignedRecord<R>) -> Result<(), BlockError> {
-        self.records.push(item);
+        self.push(item);
         Ok(())
     }
 
