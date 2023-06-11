@@ -33,7 +33,7 @@ fn test_blocks() {
         let datas1 = vec!["abcd", "efgh", "ijkl"];
         let datas2 = vec!["mnop", "qrst", "uvwx"];
 
-        let keypair = blockify::generate_ed25519_key_pair();
+        let keypair = blockify::generate_ed25519_keypair();
         // create Data instances from the strings, sign them into SignedRecord's
         // and collect them into two vectors.
         let records1 = datas1

@@ -10,7 +10,7 @@ struct Detail<T: Serialize + for<'d> Deserialize<'d>> {
 
 #[test]
 fn test_derive() {
-    let keypair = blockify::generate_ed25519_key_pair();
+    let keypair = blockify::generate_ed25519_keypair();
     let value = Detail {
         val: String::from("Hello, World!"),
     };
@@ -26,7 +26,7 @@ fn test_derive() {
 
 #[test]
 fn test_record() {
-    let keypair = blockify::generate_ed25519_key_pair();
+    let keypair = blockify::generate_ed25519_keypair();
     let value = Detail {
         val: String::from("Hello, World!"),
     };

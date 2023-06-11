@@ -31,7 +31,7 @@ fn test_blocks() {
         let datas1 = vec!["abcd", "efgh", "ijkl"];
         let datas2 = vec!["mnop", "qrst", "uvwx"];
 
-        let keypair = blockify::generate_ed25519_key_pair();
+        let keypair = blockify::generate_ed25519_keypair();
         // create Data instances from the strings, sign them into SignedRecord's
         // and collect them into two vectors.
         let records1 = datas1
@@ -137,7 +137,7 @@ fn test_2() {
             let mut res = Vec::with_capacity(amount);
             (0..amount).for_each(|_| {
                 match Self::generate()
-                    .record(blockify::generate_ed25519_key_pair(), Default::default())
+                    .record(blockify::generate_ed25519_keypair(), Default::default())
                 {
                     Ok(v) => res.push(v),
                     Err(_) => unreachable!("Error occurs"),
@@ -149,7 +149,7 @@ fn test_2() {
 
     fn main() {
         let contract = MarriageContract::new("John", "Julie");
-        let keypair = blockify::generate_ed25519_key_pair();
+        let keypair = blockify::generate_ed25519_keypair();
         let signature = contract.sign(&keypair).unwrap();
         let hash = contract.hash();
         let record = contract.record(keypair, Metadata::empty()).unwrap();

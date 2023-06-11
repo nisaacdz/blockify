@@ -13,7 +13,7 @@ fn test() {
     }
 
     // Generate a new keypair
-    let keypair = blockify::generate_ed25519_key_pair();
+    let keypair = blockify::generate_ed25519_keypair();
 
     // Clone the public key
     let pub_key = keypair.clone().into_public_key();
