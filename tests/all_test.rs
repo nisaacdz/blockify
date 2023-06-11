@@ -64,7 +64,7 @@ fn start() {
         .into_iter()
         .for_each(|record| pool.append(record).unwrap());
 
-    let chain_url = "target2/tests/marriagecontractchain/";
+    let chain_url = "target2/tests/marriagecontractchain2/";
     std::fs::create_dir_all(chain_url).expect("could create directories");
 
     let mut chain = SqliteChain::new(chain_url).unwrap();
