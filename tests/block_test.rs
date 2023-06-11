@@ -26,7 +26,7 @@ fn test_blocks() {
 
     fn start() {
         // folder path for the chain and blocks
-        let chain_url = "target2/tests/sample1/";
+        let chain_url = "target2/tests/data_struct/";
         // create the folder if it is absent
         std::fs::create_dir_all(chain_url).expect("could not create chain_url");
         // prepare strings for use in creating `Data` instances
@@ -79,15 +79,24 @@ fn test_blocks() {
         let records_from_block1 = block1
             .records()
             .expect("couldn't retrieve records from block1");
-        assert_eq!(builder1.records().unwrap().as_slice(), &*records_from_block1);
+        assert_eq!(
+            builder1.records().unwrap().as_slice(),
+            &*records_from_block1
+        );
 
         let records_from_block2 = block2
             .records()
             .expect("couldn't retrieve records from block2");
 
         // Assert the equality of the records from the two blocks
-        assert_eq!(builder1.records().unwrap().as_slice(), &*records_from_block1);
-        assert_eq!(builder2.records().unwrap().as_slice(), &*records_from_block2);
+        assert_eq!(
+            builder1.records().unwrap().as_slice(),
+            &*records_from_block1
+        );
+        assert_eq!(
+            builder2.records().unwrap().as_slice(),
+            &*records_from_block2
+        );
     }
     start()
 }
