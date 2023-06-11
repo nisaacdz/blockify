@@ -1,8 +1,9 @@
 use crate::{
     block::{Block, PositionInstance, UnchainedInstance},
     chain::{Chain, ChainError},
+    data::Metadata,
     record::{Record, SignedRecord},
-    PublicKey, DigitalSignature,
+    AuthKeyPair, DigitalSignature, PublicKey, SigningError,
 };
 
 pub enum NodeError {
@@ -30,7 +31,7 @@ pub trait Node<R: Record>: Sized {
     >;
     type MemPoolType: MemPool<R>;
     type PeerType: Peer<R>;
-    type NodeIdType: NodeId;
+    type NodeIdType: NodeId<R>;
 
     fn publish(&mut self, record: SignedRecord<R>) -> Result<Feedback, NodeError>;
     fn chain(&self) -> Result<Self::ChainType, NodeError>;
@@ -46,23 +47,31 @@ pub trait Node<R: Record>: Sized {
     fn network(&self) -> Result<Vec<Self::NodeIdType>, NodeError>;
 }
 
-pub trait NodeId {
-    type NodeType;
-    fn load(self) -> Result<Self::NodeType, NodeError>;
+pub trait NodeId<N> {
+    fn load(self) -> Result<N, NodeError>;
 }
 
 pub enum Feedback {}
 
 pub trait Peer<R: Record> {
     fn public_key(&self) -> &PublicKey;
-    fn sign(&self, _: R) -> Result<DigitalSignature, PeerError> {
-        todo!()
+    fn sign(record: &R, keypair: &AuthKeyPair) -> Result<DigitalSignature, SigningError> {
+        record.sign(keypair)
     }
+
+    fn record(
+        record: R,
+        keypair: AuthKeyPair,
+        metadata: Metadata,
+    ) -> Result<SignedRecord<R>, SigningError> {
+        record.record(keypair, metadata)
+    }
+
     fn verify(&self, signature: &DigitalSignature, record: R) -> bool {
         record.verify(signature, self.public_key()).is_ok()
     }
 }
-pub enum PeerError {}
+
 pub enum MiningError {}
 
 pub trait Miner<R: Record> {
