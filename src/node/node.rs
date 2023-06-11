@@ -2,7 +2,7 @@ use crate::{
     block::{Block, PositionInstance, UnchainedInstance},
     chain::{Chain, ChainError},
     record::{Record, SignedRecord},
-    PublicKey,
+    PublicKey, DigitalSignature,
 };
 
 pub enum NodeError {
@@ -29,7 +29,7 @@ pub trait Node<R: Record>: Sized {
         UnchainedInstanceType = Self::UnchainedInstanceType,
     >;
     type MemPoolType: MemPool<R>;
-    type PeerType: Peer;
+    type PeerType: Peer<R>;
     type NodeIdType: NodeId;
 
     fn publish(&mut self, record: SignedRecord<R>) -> Result<Feedback, NodeError>;
@@ -53,10 +53,16 @@ pub trait NodeId {
 
 pub enum Feedback {}
 
-pub trait Peer {
+pub trait Peer<R: Record> {
     fn public_key(&self) -> &PublicKey;
+    fn sign(&self, _: R) -> Result<DigitalSignature, PeerError> {
+        todo!()
+    }
+    fn verify(&self, signature: &DigitalSignature, record: R) -> bool {
+        record.verify(signature, self.public_key()).is_ok()
+    }
 }
-
+pub enum PeerError {}
 pub enum MiningError {}
 
 pub trait Miner<R: Record> {
