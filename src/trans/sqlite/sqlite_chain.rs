@@ -92,7 +92,7 @@ impl<X: Clone + Record + Serialize + for<'a> Deserialize<'a> + 'static> Chain<X>
 {
     type UnchainedInstanceType = LocalInstance<X>;
 
-    type BlockType = SqliteBlock<X>;
+    type ChainedInstanceType = SqliteBlock<X>;
 
     fn append(
         &mut self,
@@ -130,7 +130,7 @@ impl<X: Clone + Record + Serialize + for<'a> Deserialize<'a> + 'static> Chain<X>
         Ok(PositionInstance::new(position))
     }
 
-    fn block_at(&self, pos: Position) -> Result<Self::BlockType, ChainError> {
+    fn block_at(&self, pos: Position) -> Result<Self::ChainedInstanceType, ChainError> {
         if pos.pos == 0 {
             return Err(ChainError::AbsentValue);
         }

@@ -23,10 +23,10 @@ pub enum MemPoolError {}
 
 pub trait Node<R: Record>: Sized {
     type UnchainedInstanceType: UnchainedInstance<R>;
-    type BlockType: ChainedInstance<R>;
+    type ChainedInstanceType: ChainedInstance<R>;
     type ChainType: Chain<
         R,
-        BlockType = Self::BlockType,
+        ChainedInstanceType = Self::ChainedInstanceType,
         UnchainedInstanceType = Self::UnchainedInstanceType,
     >;
     type MemPoolType: MemPool<R>;
@@ -35,7 +35,7 @@ pub trait Node<R: Record>: Sized {
 
     fn publish(&mut self, record: SignedRecord<R>) -> Result<Feedback, NodeError>;
     fn chain(&self) -> Result<Self::ChainType, NodeError>;
-    fn broadcast(&self, block: Self::BlockType) -> Result<Feedback, NodeError>;
+    fn broadcast(&self, block: Self::ChainedInstanceType) -> Result<Feedback, NodeError>;
     fn mem_pool(&self) -> Result<Option<Self::MemPoolType>, NodeError>;
     fn push(&mut self, block: Self::UnchainedInstanceType) -> Result<PositionInstance, NodeError> {
         self.chain()?

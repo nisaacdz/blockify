@@ -5,7 +5,7 @@ use blockify::block::LocalInstance;
 #[test]
 fn test_blocks() {
     use blockify::{
-        block::{Block, UnchainedInstance},
+        block::{ChainedInstance, UnchainedInstance},
         chain::Chain,
         data::Metadata,
         record::Record,

@@ -1,7 +1,7 @@
 #![cfg(test)]
 
 use blockify::{
-    block::{Block, LocalInstance, UnchainedInstance},
+    block::{ChainedInstance, LocalInstance, UnchainedInstance},
     chain::Chain,
     data::Metadata,
     record::Record,

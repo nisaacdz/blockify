@@ -1,5 +1,5 @@
 use crate::{
-    block::{Block, BlockError},
+    block::{ChainedInstance, BlockError},
     chain::Chain,
     error::{DataBaseError, SerdeError},
     record::Record,
@@ -9,14 +9,14 @@ use crate::{
 pub mod puzzles;
 
 pub trait ConsensusProtocol<R: Record> {
-    type BlockType: Block<R>;
-    type ChainType: Chain<R, BlockType = Self::BlockType>;
+    type ChainedInstanceType: ChainedInstance<R>;
+    type ChainType: Chain<R, ChainedInstanceType = Self::ChainedInstanceType>;
     type ConsensusRulesType: ConsensusRules<R, Self::ChainType>;
     type BranchesType: ChainBranches<R, Self::ChainType, Self::ConsensusRulesType>;
-    fn validate<B: Block<R>>(&self, block: B) -> bool;
+    fn validate<B: ChainedInstance<R>>(&self, block: B) -> bool;
     fn active_chain(&self) -> Result<Self::ChainType, ConsensusError>;
     fn branches(&mut self) -> Result<Self::BranchesType, ConsensusError>;
-    fn hash_block(block: &Self::BlockType) -> Result<Hash, BlockError>;
+    fn hash_block(block: &Self::ChainedInstanceType) -> Result<Hash, BlockError>;
 }
 
 pub trait ConsensusRules<R: Record, C: Chain<R>> {

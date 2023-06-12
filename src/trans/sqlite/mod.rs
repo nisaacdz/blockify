@@ -1,8 +1,8 @@
 mod sqlite_block;
 mod sqlite_chain;
-mod unchained;
+mod generic;
 
-pub use unchained::*;
+pub use generic::*;
 pub use sqlite_block::*;
 pub use sqlite_chain::*;
 

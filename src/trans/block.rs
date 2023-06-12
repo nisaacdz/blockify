@@ -104,7 +104,7 @@ impl From<Position> for PositionInstance {
 }
 
 impl PositionInstance {
-    pub fn block<R: Record, C: Chain<R>>(self, chain: &C) -> Result<C::BlockType, ChainError> {
+    pub fn block<R: Record, C: Chain<R>>(self, chain: &C) -> Result<C::ChainedInstanceType, ChainError> {
         chain.get(self)
     }
     pub fn into_inner(self) -> Position {

@@ -35,7 +35,7 @@ impl From<BlockError> for ChainError {
 pub trait Chain<R: Record>: Sized {
     type UnchainedInstanceType: UnchainedInstance<R>;
     /// The type of block that is stored in this chain.
-    type BlockType: ChainedInstance<R>;
+    type ChainedInstanceType: ChainedInstance<R>;
 
     /// Appends an `UnchainedInstance` block to the chain.
     ///
@@ -55,18 +55,18 @@ pub trait Chain<R: Record>: Sized {
     /// Gets a block from the chain by its position.
     ///
     /// Returns an error if the block is not found.
-    fn block_at(&self, pos: Position) -> Result<Self::BlockType, ChainError>;
+    fn block_at(&self, pos: Position) -> Result<Self::ChainedInstanceType, ChainError>;
 
     /// Gets a block from the chain by its chained instance.
     ///
     /// Returns an error if the block is not found.
-    fn get(&self, b: PositionInstance) -> Result<Self::BlockType, ChainError> {
+    fn get(&self, b: PositionInstance) -> Result<Self::ChainedInstanceType, ChainError> {
         self.block_at(b.into_inner())
     }
 
     fn len(&self) -> Result<u64, ChainError>;
 
-    fn last_block(&self) -> Result<Option<Self::BlockType>, ChainError> {
+    fn last_block(&self) -> Result<Option<Self::ChainedInstanceType>, ChainError> {
         let last = match self.len()? {
             0 => return Ok(None),
             v => v.into(),
