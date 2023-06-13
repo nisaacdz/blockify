@@ -272,3 +272,93 @@ impl<R> AsRef<R> for SignedRecord<R> {
         self.record()
     }
 }
+
+impl<R> std::ops::Deref for SignedRecord<R> {
+    type Target = R;
+    fn deref(&self) -> &Self::Target {
+        self.record()
+    }
+}
+
+pub enum Records<'a, R> {
+    Owned(Vec<SignedRecord<R>>),
+    Borrowed(&'a Vec<SignedRecord<R>>),
+}
+
+impl<'a, R> Records<'a, R> {
+    pub const fn new_owned(data: Vec<SignedRecord<R>>) -> Self {
+        Self::Owned(data)
+    }
+
+    pub const fn new_borrowed(data: &'a Vec<SignedRecord<R>>) -> Self {
+        Self::Borrowed(data)
+    }
+
+    pub fn as_slice(&self) -> &[SignedRecord<R>] {
+        match self {
+            Records::Owned(v) => v,
+            Records::Borrowed(u) => *u,
+        }
+    }
+
+    pub fn iter(&self) -> std::slice::Iter<SignedRecord<R>> {
+        self.as_slice().iter()
+    }
+
+    pub fn unwrap(&self) -> &Vec<SignedRecord<R>> {
+        match self {
+            Records::Owned(v) => v,
+            Records::Borrowed(u) => *u,
+        }
+    }
+
+    pub fn unwrap_owned(self) -> Vec<SignedRecord<R>> {
+        match self {
+            Records::Owned(v) => v,
+            Records::Borrowed(_) => panic!("Unwrapping not possible")
+        }
+    }
+
+    pub fn into_inner(self) -> Vec<SignedRecord<R>>
+    where
+        R: Clone,
+    {
+        match self {
+            Records::Owned(u) => u,
+            Records::Borrowed(v) => v.clone(),
+        }
+    }
+}
+
+impl<'a, R: Clone> IntoIterator for Records<'a, R> {
+    type Item = SignedRecord<R>;
+    type IntoIter = std::vec::IntoIter<SignedRecord<R>>;
+    fn into_iter(self) -> Self::IntoIter {
+        self.into_inner().into_iter()
+    }
+}
+
+impl<'a, R> From<&'a Vec<SignedRecord<R>>> for Records<'a, R> {
+    fn from(value: &'a Vec<SignedRecord<R>>) -> Self {
+        Records::Borrowed(value)
+    }
+}
+
+impl<'a, R> From<Vec<SignedRecord<R>>> for Records<'a, R> {
+    fn from(value: Vec<SignedRecord<R>>) -> Self {
+        Records::Owned(value)
+    }
+}
+
+impl<'a, R> AsRef<[SignedRecord<R>]> for Records<'a, R> {
+    fn as_ref(&self) -> &[SignedRecord<R>] {
+        self.as_slice()
+    }
+}
+
+impl<'a, R> std::ops::Deref for Records<'a, R> {
+    type Target = [SignedRecord<R>];
+    fn deref(&self) -> &Self::Target {
+        self.as_slice()
+    }
+}

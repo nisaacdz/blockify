@@ -1,20 +1,71 @@
 use diesel::prelude::*;
+use serde::Serialize;
 use std::marker::PhantomData;
 
 use crate::{
     block::{BlockError, ChainedInstance, UnchainedInstance},
     data::{Nonce, Position, Timestamp},
-    record::{Record, SignedRecord},
-    Hash,
+    record::{Record, Records, SignedRecord},
+    Hash, WrapperMut,
 };
 
-pub struct GenericBlock<R: Record> {
-    _con: SqliteConnection,
-    _dat: PhantomData<R>,
+// records others
+// Metadata
+// Position
+// MerkleTree
+// Nonce
+// Prev-hash
+// Hash
+// seal
+
+table! {
+    records {
+        id -> Integer,
+        jsonvalues -> Text,
+    }
 }
 
-impl<R: Record> GenericBlock<R> {
-    pub fn new(path: &str) -> Result<Self, BlockError> {
+pub struct GenericBlock<R> {
+    con: WrapperMut<SqliteConnection>,
+    _data: PhantomData<R>,
+}
+
+pub enum GenericBlockError {
+    ConnectionError(ConnectionError),
+    QueryNotExecuted,
+}
+
+impl From<ConnectionError> for GenericBlockError {
+    fn from(value: ConnectionError) -> Self {
+        GenericBlockError::ConnectionError(value)
+    }
+}
+
+impl<R> GenericBlock<R> {
+    pub fn new(url: &str) -> Result<Self, GenericBlockError> {
+        let con = SqliteConnection::establish(url)?;
+        let val = Self {
+            con: WrapperMut::new(con),
+            _data: PhantomData,
+        };
+        Ok(val)
+    }
+
+    pub fn build_tables(con: &mut SqliteConnection) -> Result<(), GenericBlockError> {
+        diesel::sql_query(
+            "
+        CREATE TABLE IF NOT EXISTS records (
+            id INTEGER PRIMARY KEY,
+            jsonvalues TEXT
+        )
+        ",
+        )
+        .execute(con)
+        .map_err(|_| GenericBlockError::QueryNotExecuted)?;
+        todo!()
+    }
+
+    pub fn update_merkle(&mut self) -> Result<(), BlockError> {
         todo!()
     }
 
@@ -23,8 +74,19 @@ impl<R: Record> GenericBlock<R> {
     }
 }
 
-impl<R: Record> UnchainedInstance<R> for GenericBlock<R> {
+impl<R: Record + Serialize> UnchainedInstance<R> for GenericBlock<R> {
     fn append(&mut self, item: SignedRecord<R>) -> Result<(), BlockError> {
+        let hash = {
+            let hash = Record::hash(&*item);
+            let prev_hash = self.prev_hash()?;
+            
+            let merkle_root = ChainedInstance::merkle_root(self)?;
+
+            crate::sha_all([hash, prev_hash, merkle_root])
+        };
+        let json_hash = serde_json::to_string(&hash).unwrap();
+        let json_record = serde_json::to_string(&item).unwrap();
+
         todo!()
     }
 
@@ -32,7 +94,7 @@ impl<R: Record> UnchainedInstance<R> for GenericBlock<R> {
         todo!()
     }
 
-    fn records(&self) -> Result<Vec<SignedRecord<R>>, BlockError> {
+    fn records(&self) -> Result<Records<R>, BlockError> {
         todo!()
     }
 
@@ -42,7 +104,7 @@ impl<R: Record> UnchainedInstance<R> for GenericBlock<R> {
 }
 
 impl<R: Record> ChainedInstance<R> for GenericBlock<R> {
-    fn records(&self) -> Result<Box<[SignedRecord<R>]>, BlockError> {
+    fn records(&self) -> Result<Records<R>, BlockError> {
         todo!()
     }
 

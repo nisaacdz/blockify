@@ -124,6 +124,12 @@ pub mod trans;
 
 pub use trans::*;
 
+#[allow(unused)]
+#[cfg(test)]
+mod inner {
+    use crate as blockify;
+}
+
 pub mod blockchain;
 
 pub use blockchain::*;

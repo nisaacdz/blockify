@@ -6,6 +6,7 @@ use crate::{
     data::{Metadata, Nonce, Position, Timestamp},
     error::{DataBaseError, SerdeError},
     merkle::MerkleTree,
+    record::Records,
 };
 
 use super::{
@@ -19,7 +20,7 @@ use super::{
 /// This `Block` trait provides methods for accessing these properties.
 pub trait ChainedInstance<R: Record> {
     /// Returns a reference to the records in this block.
-    fn records(&self) -> Result<Box<[SignedRecord<R>]>, BlockError>;
+    fn records(&self) -> Result<Records<R>, BlockError>;
 
     /// Returns the previous hash of this block.
     fn prev_hash(&self) -> Result<Hash, BlockError>;
@@ -104,7 +105,10 @@ impl From<Position> for PositionInstance {
 }
 
 impl PositionInstance {
-    pub fn block<R: Record, C: Chain<R>>(self, chain: &C) -> Result<C::ChainedInstanceType, ChainError> {
+    pub fn block<R: Record, C: Chain<R>>(
+        self,
+        chain: &C,
+    ) -> Result<C::ChainedInstanceType, ChainError> {
         chain.get(self)
     }
     pub fn into_inner(self) -> Position {
@@ -162,7 +166,7 @@ impl<R> LocalInstance<R> {
 pub trait UnchainedInstance<R> {
     fn append(&mut self, item: SignedRecord<R>) -> Result<(), BlockError>;
     fn nonce(&self) -> Result<Nonce, BlockError>;
-    fn records(&self) -> Result<Vec<SignedRecord<R>>, BlockError>;
+    fn records(&self) -> Result<Records<R>, BlockError>;
     fn merkle_root(&self) -> Result<Hash, BlockError>;
 }
 
@@ -176,8 +180,9 @@ impl<R: Clone> UnchainedInstance<R> for LocalInstance<R> {
         Ok(self.nonce)
     }
 
-    fn records(&self) -> Result<Vec<SignedRecord<R>>, BlockError> {
-        Ok(self.records.clone())
+    fn records(&self) -> Result<Records<R>, BlockError> {
+        let records = &self.records;
+        Ok(records.into())
     }
 
     fn merkle_root(&self) -> Result<Hash, BlockError> {
