@@ -1,6 +1,18 @@
 {
-  "image": "mcr.microsoft.com/devcontainers/universal:2",
-  "features": {
-    "ghcr.io/devcontainers/features/rust:1": {}
-  }
+  "name": "Rust Development Container",
+  "extensions": [
+    "rust-lang.rust",
+    "serayuzgur.crates",
+    "vadimcn.vscode-lldb",
+    "bungcip.better-toml",
+    "gruntfuggly.todo-tree",
+    "alexcvzz.vscode-sqlite",
+    "eamodio.gitlens",
+    "matklad.rust-analyzer",
+    "rust-lang.rust-test-adapter",
+    "rust-lang.rustfmt",
+    "belfz.search-crates-io",
+    "codeLLDB"
+  ],
+  "dockerFile": "Dockerfile"
 }
