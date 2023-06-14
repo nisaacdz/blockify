@@ -14,5 +14,5 @@
     "belfz.search-crates-io",
     "codeLLDB"
   ],
-  "dockerFile": "Dockerfile"
+  "dockerFile": "../Dockerfile"
 }
