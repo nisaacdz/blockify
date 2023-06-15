@@ -14,7 +14,7 @@
         "alexander.error-lens"
       ],
       "settings": {
-        "todo-tree.regex": "(\\/\\/|#|<!--|;|\\/\\*|^|^[ \\t]*(-|\\d+\\.))\\s*($TAGS)|todo!|unimplemented!"
+        "todo-tree.regex": "(\\/\\/|#|<\\!--|;|\\/\\*|\\^|^[ \\t]*(-|\\d+\\.))\\s*($TAGS)|todo!|unimplemented!"
       }
     }
   },
