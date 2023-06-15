@@ -469,7 +469,7 @@ impl AuthKeyPair {
 
     /// Uses this `AuthKeyPair` to sign the given bytes returning a digital signature
     pub fn sign(&self, msg: &[u8]) -> Result<DigitalSignature, SigningError> {
-        self.algorithm.sign(msg, self.private_key_bytes())
+        self.algorithm.sign(msg, self)
     }
 }
 
@@ -633,13 +633,13 @@ impl std::fmt::Display for KeyPairAlgorithm {
 }
 
 impl KeyPairAlgorithm {
-    fn sign(self, msg: &[u8], private_key: &[u8]) -> Result<DigitalSignature, SigningError> {
+    fn sign(self, msg: &[u8], key: &AuthKeyPair) -> Result<DigitalSignature, SigningError> {
         match self {
-            KeyPairAlgorithm::ED25519 => sign_ed25519(msg, private_key),
-            KeyPairAlgorithm::RSA(algo) => sign_rsa(msg, private_key, algo),
+            KeyPairAlgorithm::ED25519 => sign_ed25519(msg, key),
+            KeyPairAlgorithm::RSA(algo) => sign_rsa(msg, key, algo),
             KeyPairAlgorithm::ECDSA => sign_ecdsa(
                 msg,
-                private_key,
+                key,
                 &ring::signature::ECDSA_P256_SHA256_FIXED_SIGNING,
             ),
         }
@@ -665,29 +665,29 @@ impl KeyPairAlgorithm {
 
 fn sign_ecdsa(
     msg: &[u8],
-    key: &[u8],
+    key: &AuthKeyPair,
     algo: &'static ring::signature::EcdsaSigningAlgorithm,
 ) -> Result<DigitalSignature, SigningError> {
     let rng = ring::rand::SystemRandom::new();
-    let key = EcdsaKeyPair::from_pkcs8(algo, key)?;
+    let key = EcdsaKeyPair::from_private_key_and_public_key(algo, key.private_key_bytes(), key.public_key_bytes())?;
     let signature = key.sign(&rng, msg)?;
     let buffer = signature.as_ref().to_vec();
     Ok(buffer.into())
 }
 
-fn sign_ed25519(msg: &[u8], private_key: &[u8]) -> Result<DigitalSignature, SigningError> {
-    let key = Ed25519KeyPair::from_pkcs8_maybe_unchecked(private_key)?;
+pub fn sign_ed25519(msg: &[u8], key: &AuthKeyPair) -> Result<DigitalSignature, SigningError> {
+    let key = Ed25519KeyPair::from_seed_and_public_key(key.private_key_bytes(), key.public_key_bytes())?;
     let signature = key.sign(msg).as_ref().to_vec();
     Ok(signature.into())
 }
 
-fn sign_rsa(
+pub fn sign_rsa(
     msg: &[u8],
-    key: &[u8],
+    key: &AuthKeyPair,
     algo: RsaSigningAlgorithm,
 ) -> Result<DigitalSignature, SigningError> {
     let rng = ring::rand::SystemRandom::new();
-    let private_key = RsaKeyPair::from_der(key)?;
+    let private_key = RsaKeyPair::from_der(key.private_key_bytes())?;
     let padding = algo.into();
 
     let mut signature_vec = vec![0u8; private_key.public_modulus_len()];
