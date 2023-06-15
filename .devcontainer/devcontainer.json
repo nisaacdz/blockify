@@ -1,6 +1,5 @@
 {
   "name": "Rust Development Container",
-  "image": "rust:latest",
   "customizations": {
     "vscode": {
       "extensions": [
@@ -19,6 +18,6 @@
       }
     }
   },
-  "postCreateCommand": "rustup update",
+  "postCreateCommand": "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh",
   "features": {}
 }
