@@ -62,32 +62,38 @@ impl<R> GenericBlock<R> {
         )
         .execute(con)
         .map_err(|_| GenericBlockError::QueryNotExecuted)?;
+        Ok(())
+    }
+
+    pub fn update_merkle(&mut self, _: Hash, _: Position) -> Result<(), BlockError> {
         todo!()
     }
 
-    pub fn update_merkle(&mut self) -> Result<(), BlockError> {
+    pub fn recompute_hash(&self, _record_hash: &Hash) -> Result<Hash, BlockError> {
         todo!()
     }
 
     pub fn seal(&mut self) -> Result<(), BlockError> {
         todo!()
     }
+
+    pub fn len(&self) -> Result<u64, BlockError> {
+        todo!()
+    }
 }
 
 impl<R: Record + Serialize> UnchainedInstance<R> for GenericBlock<R> {
     fn append(&mut self, item: SignedRecord<R>) -> Result<(), BlockError> {
-        let hash = {
-            let hash = Record::hash(&*item);
-            let prev_hash = self.prev_hash()?;
-            
-            let merkle_root = ChainedInstance::merkle_root(self)?;
+        let sz = self.len()?;
 
-            crate::sha_all([hash, prev_hash, merkle_root])
-        };
-        let json_hash = serde_json::to_string(&hash).unwrap();
-        let json_record = serde_json::to_string(&item).unwrap();
+        
+        let _record = serde_json::to_string(&item).unwrap();
+        let _hash = serde_json::to_string(item.hash()).unwrap();
+        
+        let hash = self.recompute_hash(item.hash())?;
+        self.update_merkle(hash, sz.into())?;
 
-        todo!()
+        Ok(())
     }
 
     fn nonce(&self) -> Result<Nonce, BlockError> {
