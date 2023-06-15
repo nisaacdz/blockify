@@ -1,18 +1,24 @@
 {
   "name": "Rust Development Container",
-  "extensions": [
-    "rust-lang.rust",
-    "serayuzgur.crates",
-    "vadimcn.vscode-lldb",
-    "bungcip.better-toml",
-    "gruntfuggly.todo-tree",
-    "alexcvzz.vscode-sqlite",
-    "eamodio.gitlens",
-    "matklad.rust-analyzer",
-    "rust-lang.rust-test-adapter",
-    "rust-lang.rustfmt",
-    "belfz.search-crates-io",
-    "codeLLDB"
-  ],
-  "dockerFile": "../Dockerfile"
+  "image": "rust:latest",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "rust-lang.rust-analyzer",
+        "serayuzgur.crates",
+        "vadimcn.codelldb",
+        "bungcip.better-toml",
+        "gruntfuggly.todo-tree",
+        "alexcvzz.sqlite",
+        "florianklampfer.sqlite-viewer",
+        "eamodio.gitlens",
+        "alexander.error-lens"
+      ],
+      "settings": {
+        "todo-tree.regex": "(\\/\\/|#|<!--|;|\\/\\*|^|^[ \\t]*(-|\\d+\\.))\\s*($TAGS)|todo!|unimplemented!"
+      }
+    }
+  },
+  "postCreateCommand": "rustup update",
+  "features": {}
 }
