@@ -338,6 +338,47 @@ impl<'a, R: Clone> IntoIterator for Records<'a, R> {
     }
 }
 
+impl<'a , R> IntoIterator for &'a Records<'a, R> {
+    type Item = &'a SignedRecord<R>;
+    type IntoIter = std::slice::Iter<'a, SignedRecord<R>>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        match self {
+            Records::Owned(u) => u.into_iter(),
+            Records::Borrowed(v) => v.into_iter(),
+        }
+    }
+}
+
+
+#[cfg(test)]
+
+mod test_iters {
+    use crate::data::Metadata;
+
+    use super::{Record, Records};
+
+    #[test]
+    fn test_owned() {
+        let keypair = crate::generate_ed25519_keypair();
+        let message = String::from("Hello, World");
+        let record = message.record(keypair, Metadata::empty()).expect("Error while recording message");
+        let values = vec![record];
+        let records = Records::new_borrowed(&values);
+        for r in &records {
+            println!("{}", r.as_ref())
+        }
+
+        let records = Records::new_owned(values);
+
+        for r in records {
+            println!("{}", r.as_ref())
+        }
+
+        assert!(true)
+    }
+}
+
 impl<'a, R> From<&'a Vec<SignedRecord<R>>> for Records<'a, R> {
     fn from(value: &'a Vec<SignedRecord<R>>) -> Self {
         Records::Borrowed(value)
